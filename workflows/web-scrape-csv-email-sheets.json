@@ -1,0 +1,95 @@
+{
+  "name": "Web Scrape → CSV → Email, Google Sheets & Excel",
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "fetch",
+      "name": "Fetch website content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "parameters": {
+        "url": "=https://example.com",
+        "options": { "response": { "response": { "responseFormat": "text" } } }
+      }
+    },
+    {
+      "id": "parse",
+      "name": "Parse HTML and extract data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "jsCode": "// Parse HTML from Fetch node and extract structured data.\n// Customize selectors for your target site.\nconst html = $input.first().json.data || $input.first().json.body || $input.first().json;\nconst text = typeof html === 'string' ? html : (html && html.toString ? html.toString() : '');\n\n// Simple extractor: get all links and text (customize for your page).\nconst linkRegex = /<a[^>]+href=[\"']([^\"']+)[\"'][^>]*>([^<]*)</gi;\nconst rows = [];\nlet m;\nwhile ((m = linkRegex.exec(text)) !== null && rows.length < 100) {\n  rows.push({ url: m[1].trim(), text: m[2].trim().replace(/\\s+/g, ' ') });\n}\n\n// If no links found, add a placeholder row so the rest of the workflow runs.\nif (rows.length === 0) {\n  rows.push({ url: 'https://example.com', text: 'No links extracted - customize Parse HTML node' });\n}\n\nreturn rows.map(r => ({ json: r }));"
+      }
+    },
+    {
+      "id": "toCsv",
+      "name": "Convert to CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst headers = ['url', 'text'];\nconst lines = [headers.join(',')];\nfor (const item of items) {\n  const j = item.json;\n  const row = headers.map(h => (j[h] != null ? String(j[h]).replace(/\"/g, '\"\"') : ''));\n  lines.push('\"' + row.join('\",\"') + '\"');\n}\nconst csvString = lines.join('\\n');\nconst fileName = 'scraped-data-' + new Date().toISOString().slice(0,16).replace(/[-T]/g,'-') + '.csv';\nconst binary = await this.helpers.prepareBinaryData(Buffer.from(csvString, 'utf8'), fileName, 'text/csv');\nreturn [{ json: { rowCount: items.length }, binary: { data: binary } }];"
+      }
+    },
+    {
+      "id": "gmail",
+      "name": "Send CSV via email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [880, 0],
+      "parameters": {
+        "sendTo": "marketingteam@entagency.co",
+        "subject": "=Scraped data {{ $now.format('yyyy-MM-dd') }}",
+        "message": "CSV from web scrape workflow is attached.",
+        "options": { "attachments": "data" }
+      }
+    },
+    {
+      "id": "sheets",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [660, 220],
+      "parameters": {
+        "documentId": { "__rl": true, "mode": "id", "value": "" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Sheet1" },
+        "columns": { "mappingMode": "defineBelow", "value": { "url": "={{ $json.url }}", "text": "={{ $json.text }}" } }
+      }
+    },
+    {
+      "id": "excel",
+      "name": "Save to Microsoft Excel 365",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 1,
+      "position": [660, 440],
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "list", "value": "" },
+        "sheetName": { "__rl": true, "mode": "list", "value": "" },
+        "columns": { "mappingMode": "defineBelow", "value": { "url": "={{ $json.url }}", "text": "={{ $json.text }}" } }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Fetch website content", "type": "main", "index": 0 }]] },
+    "Fetch website content": { "main": [[{ "node": "Parse HTML and extract data", "type": "main", "index": 0 }]] },
+    "Parse HTML and extract data": {
+      "main": [
+        [{ "node": "Convert to CSV", "type": "main", "index": 0 }],
+        [{ "node": "Save to Google Sheets", "type": "main", "index": 0 }],
+        [{ "node": "Save to Microsoft Excel 365", "type": "main", "index": 0 }]
+      ]
+    },
+    "Convert to CSV": { "main": [[{ "node": "Send CSV via email", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

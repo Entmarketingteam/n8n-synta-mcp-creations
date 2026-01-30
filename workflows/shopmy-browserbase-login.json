@@ -1,0 +1,126 @@
+{
+  "name": "ShopMy – Browserbase login → CSV → Webhook",
+  "nodes": [
+    {
+      "id": "manual_trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "schedule_trigger",
+      "name": "Schedule (optional)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 220],
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }] } }
+    },
+    {
+      "id": "get_creators",
+      "name": "Get creators to process",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [240, 110],
+      "parameters": {
+        "operation": "read",
+        "base": { "__rl": true, "mode": "id", "value": "" },
+        "table": { "__rl": true, "mode": "id", "value": "" },
+        "returnAll": true,
+        "filterByFormula": "AND({Needs CSV Sync}=1)"
+      }
+    },
+    {
+      "id": "set_creators_fallback",
+      "name": "Set creators (fallback / test)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 320],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            { "id": "creatorId", "name": "creatorId", "value": "creator-1", "type": "string" },
+            { "id": "creatorEmail", "name": "creatorEmail", "value": "creator@example.com", "type": "string" },
+            { "id": "shopmyEmail", "name": "shopmyEmail", "value": "YOUR_SHOPMY_LOGIN_EMAIL", "type": "string" },
+            { "id": "shopmyPassword", "name": "shopmyPassword", "value": "YOUR_SHOPMY_PASSWORD", "type": "string" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "loop_creators",
+      "name": "Loop over creators",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [460, 110],
+      "parameters": { "batchSize": 1 }
+    },
+    {
+      "id": "call_runner",
+      "name": "Call Browserbase runner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 110],
+      "parameters": {
+        "method": "POST",
+        "url": "=YOUR_RUNNER_URL/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"creatorId\": \"{{ $json.creatorId || $json.CreatorId }}\",\n  \"creatorEmail\": \"{{ $json.creatorEmail || $json.CreatorEmail }}\",\n  \"shopmyEmail\": \"{{ $json.shopmyEmail || $json.ShopMyEmail }}\",\n  \"shopmyPassword\": \"{{ $json.shopmyPassword || $json.ShopMyPassword }}\"\n}"
+      }
+    },
+    {
+      "id": "check_csv",
+      "name": "Has CSV?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 110],
+      "parameters": {
+        "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "id": "csv", "leftValue": "={{ $json.csvData }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }], "combinator": "and" }
+      }
+    },
+    {
+      "id": "post_webhook",
+      "name": "POST to ShopMy CSV webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://entagency.app.n8n.cloud/webhook/shopmy-csv-creators",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ creatorId: $json.creatorId, creatorEmail: $json.creatorEmail, csvData: $json.csvData, reportType: 'shopmy_export' }) }}"
+      }
+    },
+    {
+      "id": "no_csv_log",
+      "name": "No CSV (log / notify)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1120, 220],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Set creators (fallback / test)", "type": "main", "index": 0 }]] },
+    "Schedule (optional)": { "main": [[{ "node": "Get creators to process", "type": "main", "index": 0 }]] },
+    "Get creators to process": { "main": [[{ "node": "Loop over creators", "type": "main", "index": 0 }]] },
+    "Set creators (fallback / test)": { "main": [[{ "node": "Loop over creators", "type": "main", "index": 0 }]] },
+    "Loop over creators": { "main": [[{ "node": "Call Browserbase runner", "type": "main", "index": 0 }]] },
+    "Call Browserbase runner": { "main": [[{ "node": "Has CSV?", "type": "main", "index": 0 }]] },
+    "Has CSV?": {
+      "main": [
+        [{ "node": "POST to ShopMy CSV webhook", "type": "main", "index": 0 }],
+        [{ "node": "No CSV (log / notify)", "type": "main", "index": 0 }]
+      ]
+    },
+    "POST to ShopMy CSV webhook": { "main": [[{ "node": "Loop over creators", "type": "main", "index": 0 }]] },
+    "No CSV (log / notify)": { "main": [[{ "node": "Loop over creators", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

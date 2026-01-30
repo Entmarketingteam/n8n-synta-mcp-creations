@@ -1,0 +1,116 @@
+{
+  "name": "ShopMy CSV Processor (Creators)",
+  "nodes": [
+    {
+      "id": "manual_trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "webhook_trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 280],
+      "parameters": {
+        "path": "shopmy-csv-creators",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "normalize",
+      "name": "Normalize creator input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 140],
+      "parameters": {
+        "jsCode": "// Accept input from Manual (one or more items) or Webhook (single body).\n// Ensures creatorId, creatorEmail, csvData, reportType on every item.\nconst items = $input.all();\nconst out = [];\nfor (const item of items) {\n  const b = item.json.body || item.json;\n  const csvData = b.csvData || b.csv_data || '';\n  if (!csvData) {\n    out.push({ json: { creatorId: b.creatorId || b.creator_id || 'unknown', creatorEmail: b.creatorEmail || b.creator_email || '', csvData: '', reportType: b.reportType || 'shopmy_export', _skip: true } });\n    continue;\n  }\n  out.push({\n    json: {\n      creatorId: b.creatorId || b.creator_id || 'unknown',\n      creatorEmail: b.creatorEmail || b.creator_email || '',\n      csvData,\n      reportType: b.reportType || b.report_type || 'shopmy_export'\n    }\n  });\n}\nreturn out.length ? out : [{ json: { creatorId: 'unknown', creatorEmail: '', csvData: '', reportType: 'shopmy_export', _skip: true } }];"
+      }
+    },
+    {
+      "id": "parse",
+      "name": "Parse CSV and tag creator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 140],
+      "parameters": {
+        "jsCode": "// Parse CSV and add CreatorId, CreatorEmail, ReportType, ImportDate to every row.\nconst items = $input.all();\nconst records = [];\nfor (const item of items) {\n  const { creatorId, creatorEmail, csvData, reportType, _skip } = item.json;\n  if (_skip || !csvData) continue;\n  const lines = csvData.trim().split('\\n');\n  const headers = lines[0].split(',').map(h => h.trim().replace(/^\"|\"$/g, ''));\n  for (let i = 1; i < lines.length; i++) {\n    if (!lines[i].trim()) continue;\n    let current = '';\n    let inQuotes = false;\n    const values = [];\n    for (const char of lines[i]) {\n      if (char === '\"') inQuotes = !inQuotes;\n      else if (char === ',' && !inQuotes) { values.push(current.trim()); current = ''; }\n      else current += char;\n    }\n    values.push(current.trim());\n    const record = { ReportType: reportType || 'shopmy_export', ImportDate: new Date().toISOString(), CreatorId: creatorId, CreatorEmail: creatorEmail };\n    headers.forEach((h, idx) => { if (values[idx] !== undefined) record[h] = values[idx].replace(/^\"|\"$/g, ''); });\n    records.push({ json: record });\n  }\n}\nreturn records.length > 0 ? records : [{ json: { error: 'No records parsed', success: false } }];"
+      }
+    },
+    {
+      "id": "dedupe",
+      "name": "Deduplicate Records",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 1,
+      "position": [680, 140],
+      "parameters": {
+        "compare": "allFieldsExcept",
+        "fieldsToExclude": "ImportDate"
+      }
+    },
+    {
+      "id": "split_out",
+      "name": "Split Out Records",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [900, 140],
+      "parameters": {
+        "fieldToSplitOut": "=",
+        "options": {}
+      }
+    },
+    {
+      "id": "airtable",
+      "name": "Store to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1120, 140],
+      "parameters": {
+        "operation": "create",
+        "base": { "__rl": true, "mode": "id", "value": "appQnKyfyRyhHX44h" },
+        "table": { "__rl": true, "mode": "id", "value": "tblZkX1SuNlo2DNOb" },
+        "columns": { "mappingMode": "autoMapInputData", "matchingColumns": [] }
+      }
+    },
+    {
+      "id": "aggregate",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1340, 140],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 140],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, recordsProcessed: $json.data ? $json.data.length : 1, message: 'CSV data stored to Airtable' } }}"
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Normalize creator input", "type": "main", "index": 0 }]] },
+    "Webhook Trigger": { "main": [[{ "node": "Normalize creator input", "type": "main", "index": 0 }]] },
+    "Normalize creator input": { "main": [[{ "node": "Parse CSV and tag creator", "type": "main", "index": 0 }]] },
+    "Parse CSV and tag creator": { "main": [[{ "node": "Deduplicate Records", "type": "main", "index": 0 }]] },
+    "Deduplicate Records": { "main": [[{ "node": "Split Out Records", "type": "main", "index": 0 }]] },
+    "Split Out Records": { "main": [[{ "node": "Store to Airtable", "type": "main", "index": 0 }]] },
+    "Store to Airtable": { "main": [[{ "node": "Aggregate Results", "type": "main", "index": 0 }]] },
+    "Aggregate Results": { "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
