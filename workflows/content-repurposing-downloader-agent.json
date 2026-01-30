@@ -1,0 +1,105 @@
+{
+  "name": "Content Repurposing – The Downloader Agent (by RoboNuggets)",
+  "nodes": [
+    {
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "get_latest_tiktoks",
+      "name": "Get Latest Tiktoks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [280, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/{{ $env.APIFY_TIKTOK_ACTOR_ID || 'YOUR_APIFY_TIKTOK_ACTOR_ID' }}/runs?token={{ $env.APIFY_TOKEN || $credentials.apifyApi?.apiKey || 'YOUR_APIFY_TOKEN' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"hashtags\": [],\n  \"resultsPerPage\": 20,\n  \"shouldDownloadVideos\": false,\n  \"shouldDownloadCovers\": false\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "notesInFlow": true,
+      "notes": "Set APIFY_TOKEN (or Apify credential) and APIFY_TIKTOK_ACTOR_ID. Run returns defaultDatasetId; use 'Get dataset items' next to fetch TikTok rows, or use Apify sync run endpoint."
+    },
+    {
+      "id": "get_dataset_items",
+      "name": "Get dataset items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/datasets/{{ $json.data.defaultDatasetId }}/items?token={{ $env.APIFY_TOKEN || $credentials.apifyApi?.apiKey || 'YOUR_APIFY_TOKEN' }}",
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Fetches TikTok rows from the run. Add a Wait node before this if the run is not finished yet (e.g. wait 60s)."
+    },
+    {
+      "id": "log_to_sheets",
+      "name": "Log to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [720, 0],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "TikTok Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "createTime": "={{ $json.createTime }}",
+            "webVideoUrl": "={{ $json.webVideoUrl }}",
+            "description": "={{ $json.description }}",
+            "authorMeta_name": "={{ $json.authorMeta?.name }}"
+          }
+        },
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Connect Google account; set Document + Sheet. Map columns to your Apify TikTok output fields."
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Get Latest Tiktoks", "type": "main", "index": 0 }]]
+    },
+    "Get Latest Tiktoks": {
+      "main": [[{ "node": "Get dataset items", "type": "main", "index": 0 }]]
+    },
+    "Get dataset items": {
+      "main": [[{ "node": "Log to Sheets", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -456,6 +456,9 @@ Validation: ✅ Nodes and connections passed
 - Connect Tools via `ai_tool` output (can fan out to multiple agents)
 - Use `get_node_as_tool_info(nodeType)` to learn how any node can be an AI tool
 
+### ShopMy Browserbase runner (`shopmy-browserbase-runner/`)
+- After any code change: **redeploy and test always.** Run `railway up --detach` from that directory, wait ~2 min for deploy, then `curl -s -X POST "https://shopmy-browserbase-runner-production.up.railway.app/run-nicki" -H "Content-Type: application/json" --max-time 420` to validate.
+
 ---
 
 **Remember**: Plan first, execute silently, validate thoroughly, and never trust defaults.

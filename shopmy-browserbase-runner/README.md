@@ -30,8 +30,12 @@ npm start
 ## API
 
 - **POST /run**  
-  Body: `{ creatorId?, creatorEmail?, shopmyEmail, shopmyPassword }`  
+  Body: `{ creatorId?, creatorEmail?, shopmyEmail?, shopmyPassword?, cookies? }`  
+  If **cookies** (array from /auth/refresh) is sent, login is skipped and cookies are reused. Otherwise email/password are used to log in.  
   Returns: `{ csvData?, creatorId, creatorEmail, error? }`
+
+- **POST /auth/refresh**  
+  Body: `{ shopmyEmail, shopmyPassword }`. Logs in in the browser and returns **`{ cookies }`** (or `{ error }`). Store `cookies` per creator (n8n credentials or Airtable); send them in **POST /run** as `cookies` so creators don’t hit the login popup every time. See [SHOPMY-CREATOR-AUTH.md](../docs/SHOPMY-CREATOR-AUTH.md).
 
 - **GET /health**  
   Returns `{ ok: true }`.

@@ -1,0 +1,115 @@
+{
+  "name": "Content Repurposing – The Uploader Agent (by RoboNuggets)",
+  "nodes": [
+    {
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "google_sheets",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [280, 0],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "TikTok Log"
+        },
+        "filtersUI": {},
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Read from the same sheet the Downloader Agent writes to (or your repurposing queue). Set Document + Sheet."
+    },
+    {
+      "id": "set_blotato_ids_ready",
+      "name": "Set Blotato IDsReady Video in Blotato",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/videos/creations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $env.BLOTATO_API_KEY || 'YOUR_BLOTATO_API_KEY' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template\": { \"id\": \"base/pov/wakeup\" },\n  \"script\": \"{{ $json.description || $json.script || 'Repurposed from TikTok' }}\",\n  \"style\": \"cinematic\"\n}",
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Uses Blotato API key (env BLOTATO_API_KEY or HTTP Header Auth credential). Adjust URL/body if you use a custom 'IDs ready' or other Blotato endpoint."
+    },
+    {
+      "id": "publish_or_webhook",
+      "name": "Publish or Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://backend.blotato.com/v2/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "={{ $env.BLOTATO_API_KEY || 'YOUR_BLOTATO_API_KEY' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"videoId\": \"{{ $json.item?.id || $json.id }}\",\n  \"platform\": \"tiktok\"\n}",
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Optional: publish to Blotato /v2/posts or call another webhook. Configure URL and body to match your repurposing pipeline."
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Google Sheets", "type": "main", "index": 0 }]]
+    },
+    "Google Sheets": {
+      "main": [[{ "node": "Set Blotato IDsReady Video in Blotato", "type": "main", "index": 0 }]]
+    },
+    "Set Blotato IDsReady Video in Blotato": {
+      "main": [[{ "node": "Publish or Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

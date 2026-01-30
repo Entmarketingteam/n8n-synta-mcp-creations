@@ -1,0 +1,272 @@
+{
+  "name": "ShopMy API (Creators)",
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "webhook_trigger",
+      "name": "Webhook (API run)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 200],
+      "parameters": {
+        "path": "shopmy-api-creators",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "normalize_webhook",
+      "name": "Normalize webhook body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 200],
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body || $input.first().json;\nreturn [{ json: {\n  creatorId: b.creatorId || b.creator_id || 'unknown',\n  creatorEmail: b.creatorEmail || b.creator_email || '',\n  shopmyEmail: b.shopmyEmail || b.shopmy_email || '',\n  shopmyPassword: b.shopmyPassword || b.shopmy_password || ''\n} }];"
+      }
+    },
+    {
+      "id": "set_input",
+      "name": "Set creator & credentials",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "creatorId", "value": "nicki-entenmann", "type": "string" },
+            { "id": "a2", "name": "creatorEmail", "value": "Nicki Entenmann", "type": "string" },
+            { "id": "a3", "name": "shopmyEmail", "value": "SET_IN_N8N_OR_WEBHOOK", "type": "string" },
+            { "id": "a4", "name": "shopmyPassword", "value": "SET_IN_N8N_OR_WEBHOOK", "type": "string" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http_login",
+      "name": "ShopMy Login",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://apiv3.shopmy.us/api/Auth/session",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Origin", "value": "https://shopmy.us" },
+            { "name": "Referer", "value": "https://shopmy.us/" },
+            { "name": "x-apicache-bypass", "value": "true" },
+            { "name": "x-session-id", "value": "={{ $now.toMillis() }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ username: $json.shopmyEmail, password: $json.shopmyPassword }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "code_cookies",
+      "name": "Extract cookies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "parameters": {
+        "jsCode": "// Get login response (full: body, headers, statusCode) and trigger item for creatorId/Email\nconst loginItem = $input.first().json;\nlet triggerItem = {};\ntry { const s = $('Set creator & credentials').first().json; if (s && s.creatorId) triggerItem = s; } catch (_) {}\nif (!triggerItem.creatorId) try { triggerItem = $('Normalize webhook body').first().json; } catch (_) {}\nconst headers = loginItem.headers || {};\nconst setCookie = headers['set-cookie'] || headers['Set-Cookie'];\nlet cookieHeader = '';\nlet csrfToken = '';\nif (Array.isArray(setCookie)) {\n  cookieHeader = setCookie.map(c => c.split(';')[0].trim()).join('; ');\n  const m = setCookie.find(c => c.includes('shopmy_csrf_token='));\n  if (m) { const part = m.split(';')[0]; const i = part.indexOf('='); if (i !== -1) csrfToken = part.slice(i + 1); }\n} else if (typeof setCookie === 'string') {\n  cookieHeader = setCookie.split('\\n')[0].trim();\n  const match = setCookie.match(/shopmy_csrf_token=([^;\\s]+)/);\n  if (match) csrfToken = match[1];\n}\nreturn [{\n  json: {\n    cookieHeader,\n    csrfToken,\n    creatorId: triggerItem.creatorId,\n    creatorEmail: triggerItem.creatorEmail,\n    shopmyEmail: triggerItem.shopmyEmail\n  }\n}];"
+      }
+    },
+    {
+      "id": "http_find_user",
+      "name": "Find user by email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://apiv3.shopmy.us/api/Users/find_by_email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Origin", "value": "https://shopmy.us" },
+            { "name": "Referer", "value": "https://shopmy.us/" },
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "x-apicache-bypass", "value": "true" },
+            { "name": "x-session-id", "value": "={{ $now.toMillis() }}" },
+            { "name": "x-csrf-token", "value": "={{ $json.csrfToken }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $json.shopmyEmail }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "code_user_id",
+      "name": "Extract User_id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "parameters": {
+        "jsCode": "// find_by_email returns user/shop data; extract User_id for API calls\nconst findUser = $input.first().json;\nconst prev = $('Extract cookies').first().json;\nconst body = findUser.body ?? findUser;\nlet userId = body.User_id ?? body.userId ?? body.id;\nif (!userId && body.user) userId = body.user.User_id ?? body.user.userId ?? body.user.id;\nif (!userId && Array.isArray(body.users) && body.users[0]) userId = body.users[0].User_id ?? body.users[0].userId ?? body.users[0].id;\nif (!userId && body.tier) userId = body.tier.User_id;\nif (!userId) throw new Error('User_id not found in find_by_email response');\nreturn [{\n  json: {\n    userId: String(userId),\n    cookieHeader: prev.cookieHeader,\n    csrfToken: prev.csrfToken,\n    creatorId: prev.creatorId,\n    creatorEmail: prev.creatorEmail\n  }\n}];"
+      }
+    },
+    {
+      "id": "http_payments",
+      "name": "GET Payments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, -120],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://apiv3.shopmy.us/api/Payments/by_user/{{ $json.userId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Origin", "value": "https://shopmy.us" },
+            { "name": "Referer", "value": "https://shopmy.us/" },
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "x-csrf-token", "value": "={{ $json.csrfToken }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http_payouts",
+      "name": "GET Payout summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://apiv3.shopmy.us/api/Payouts/payout_summary/{{ $json.userId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Origin", "value": "https://shopmy.us" },
+            { "name": "Referer", "value": "https://shopmy.us/" },
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "x-csrf-token", "value": "={{ $json.csrfToken }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http_pins",
+      "name": "GET Pins",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 120],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://apiv3.shopmy.us/api/Pins",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "User_id", "value": "={{ $json.userId }}" },
+            { "name": "limit", "value": 500 },
+            { "name": "offset", "value": 0 }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Origin", "value": "https://shopmy.us" },
+            { "name": "Referer", "value": "https://shopmy.us/" },
+            { "name": "Cookie", "value": "={{ $json.cookieHeader }}" },
+            { "name": "x-csrf-token", "value": "={{ $json.csrfToken }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "merge_api",
+      "name": "Merge API results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1540, 0],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      }
+    },
+    {
+      "id": "code_combine",
+      "name": "Build CSV & send to processor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0],
+      "parameters": {
+        "jsCode": "// Read from the 3 API nodes by name (Merge just triggers after all 3 complete)\nconst extractUserId = $('Extract User_id').first().json;\nconst creatorId = extractUserId.creatorId || 'unknown';\nconst creatorEmail = extractUserId.creatorEmail || '';\nconst rows = [];\nconst header = 'Source';\n\nfunction addPayments(j) {\n  if (j && j.payments && Array.isArray(j.payments)) {\n    rows.push(header);\n    for (const p of j.payments)\n      rows.push('payments,' + [p.id, p.amount, p.user_amount, p.User_id, p.source, p.sent_date].join(','));\n  }\n}\nfunction addPayouts(j) {\n  if (j && j.data && j.data.months) {\n    rows.push(header);\n    for (const [month, data] of Object.entries(j.data.months))\n      rows.push('payout_summary,' + month + ',' + (data.user_payout_total ?? '') + ',' + (data.user_payout_total_paid ?? ''));\n  }\n}\nfunction addPins(j) {\n  if (j && j.pins && Array.isArray(j.pins)) {\n    rows.push(header);\n    for (const pin of j.pins)\n      rows.push('pins,' + (pin.id ?? '') + ',' + (pin.User_id ?? '') + ',' + (pin.orderVolumeTotal ?? ''));\n  }\n}\n\ntry {\n  const paymentsItem = $('GET Payments').first().json;\n  addPayments(paymentsItem.body ?? paymentsItem);\n} catch (_) {}\ntry {\n  const payoutsItem = $('GET Payout summary').first().json;\n  addPayouts(payoutsItem.body ?? payoutsItem);\n} catch (_) {}\ntry {\n  const pinsItem = $('GET Pins').first().json;\n  addPins(pinsItem.body ?? pinsItem);\n} catch (_) {}\n\nconst csvData = rows.length > 0 ? rows.join('\\n') : 'Source\\nno_data';\nreturn [{ json: { creatorId, creatorEmail, csvData, reportType: 'shopmy_api' } }];"
+      }
+    },
+    {
+      "id": "http_webhook",
+      "name": "POST to CSV processor webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://entagency.app.n8n.cloud/webhook/shopmy-csv-creators",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ creatorId: $json.creatorId, creatorEmail: $json.creatorEmail, csvData: $json.csvData, reportType: 'shopmy_api' }) }}"
+      }
+    },
+    {
+      "id": "respond_webhook",
+      "name": "Respond to webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2200, 200],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, creatorId: $('Build CSV & send to processor').first().json.creatorId, message: 'ShopMy API data sent to CSV processor' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Set creator & credentials", "type": "main", "index": 0 }]] },
+    "Webhook (API run)": { "main": [[{ "node": "Normalize webhook body", "type": "main", "index": 0 }]] },
+    "Normalize webhook body": { "main": [[{ "node": "ShopMy Login", "type": "main", "index": 0 }]] },
+    "Set creator & credentials": { "main": [[{ "node": "ShopMy Login", "type": "main", "index": 0 }]] },
+    "ShopMy Login": { "main": [[{ "node": "Extract cookies", "type": "main", "index": 0 }]] },
+    "Extract cookies": { "main": [[{ "node": "Find user by email", "type": "main", "index": 0 }]] },
+    "Find user by email": { "main": [[{ "node": "Extract User_id", "type": "main", "index": 0 }]] },
+    "Extract User_id": { "main": [[{ "node": "GET Payments", "type": "main", "index": 0 }, { "node": "GET Payout summary", "type": "main", "index": 0 }, { "node": "GET Pins", "type": "main", "index": 0 }]] },
+    "GET Payments": { "main": [[{ "node": "Merge API results", "type": "main", "index": 0 }]] },
+    "GET Payout summary": { "main": [[{ "node": "Merge API results", "type": "main", "index": 1 }]] },
+    "GET Pins": { "main": [[{ "node": "Merge API results", "type": "main", "index": 2 }]] },
+    "Merge API results": { "main": [[{ "node": "Build CSV & send to processor", "type": "main", "index": 0 }]] },
+    "Build CSV & send to processor": { "main": [[{ "node": "POST to CSV processor webhook", "type": "main", "index": 0 }]] },
+    "POST to CSV processor webhook": { "main": [[{ "node": "Respond to webhook", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
