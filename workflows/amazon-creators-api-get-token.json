@@ -1,0 +1,74 @@
+{
+  "name": "Amazon Creators API – Get Token",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-amazon-creators",
+      "name": "Manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://creatorsapi.auth.us-east-1.amazoncognito.com/oauth2/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type", "value": "client_credentials" },
+            { "name": "client_id", "value": "={{ $env.AMAZON_CREATORS_API_CLIENT_ID || 'YOUR_CREDENTIAL_ID' }}" },
+            { "name": "client_secret", "value": "={{ $env.AMAZON_CREATORS_API_CLIENT_SECRET || 'YOUR_CREDENTIAL_SECRET' }}" },
+            { "name": "scope", "value": "creatorsapi/default" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-get-token-amazon-creators",
+      "name": "Get Creators API Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 240],
+      "notes": "POST OAuth2 token. Set env AMAZON_CREATORS_API_CLIENT_ID and AMAZON_CREATORS_API_CLIENT_SECRET, or replace with your Credential ID/Secret."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            { "id": "out-token", "name": "access_token", "value": "={{ $json.access_token }}", "type": "string" },
+            { "id": "out-expires", "name": "expires_in", "value": "={{ $json.expires_in }}", "type": "number" },
+            { "id": "out-version", "name": "credential_version", "value": "2.1", "type": "string" }
+          ]
+        }
+      },
+      "id": "set-output-amazon-creators",
+      "name": "Output Token",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 240],
+      "notes": "Use access_token in Authorization: Bearer <token>, Version <credential_version> for catalog API calls."
+    }
+  ],
+  "connections": {
+    "Manual": { "main": [[{ "node": "Get Creators API Token", "type": "main", "index": 0 }]] },
+    "Get Creators API Token": { "main": [[{ "node": "Output Token", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-02-02T00:00:00.000Z",
+  "versionId": "1"
+}

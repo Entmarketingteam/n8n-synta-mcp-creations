@@ -1,0 +1,88 @@
+{
+  "name": "Amazon Associates Report Ingest",
+  "nodes": [
+    {
+      "id": "manual_amazon_ingest",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "webhook_amazon_ingest",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 200],
+      "parameters": {
+        "path": "amazon-report-ingest",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "normalize_input_amazon",
+      "name": "Normalize input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 100],
+      "parameters": {
+        "jsCode": "// Accept Manual or Webhook body: creator_id, csvData (or xmlData).\nconst items = $input.all();\nconst out = [];\nfor (const item of items) {\n  const b = item.json.body || item.json;\n  const creatorId = b.creator_id || b.creatorId || 'unknown';\n  const csvData = b.csvData || b.csv_data || '';\n  const xmlData = b.xmlData || b.xml_data || '';\n  const periodStart = b.period_start || b.periodStart || null;\n  const periodEnd = b.period_end || b.periodEnd || null;\n  out.push({\n    json: {\n      creator_id: creatorId,\n      csvData: csvData,\n      xmlData: xmlData,\n      period_start: periodStart,\n      period_end: periodEnd\n    }\n  });\n}\nreturn out.length ? out : [{ json: { creator_id: 'unknown', csvData: '', xmlData: '', period_start: null, period_end: null } }];"
+      }
+    },
+    {
+      "id": "parse_csv_amazon",
+      "name": "Parse Amazon CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 100],
+      "parameters": {
+        "jsCode": "// Parse CSV from Associates report; output one item per row with creator_id and raw row.\nconst items = $input.all();\nconst out = [];\nfor (const item of items) {\n  const { creator_id, csvData, period_start, period_end } = item.json;\n  if (!csvData || typeof csvData !== 'string') continue;\n  const lines = csvData.trim().split(/\\r?\\n/);\n  if (lines.length < 2) continue;\n  const headers = lines[0].split(',').map(h => h.trim().replace(/^\"|\"$/g, ''));\n  for (let i = 1; i < lines.length; i++) {\n    const line = lines[i];\n    if (!line.trim()) continue;\n    const values = [];\n    let current = '';\n    let inQuotes = false;\n    for (let j = 0; j < line.length; j++) {\n      const c = line[j];\n      if (c === '\"') inQuotes = !inQuotes;\n      else if (c === ',' && !inQuotes) { values.push(current.trim().replace(/^\"|\"$/g, '')); current = ''; }\n      else current += c;\n    }\n    values.push(current.trim().replace(/^\"|\"$/g, ''));\n    const row = { creator_id, period_start, period_end };\n    headers.forEach((h, idx) => { if (values[idx] !== undefined) row[h] = values[idx]; });\n    out.push({ json: row });\n  }\n}\nreturn out.length ? out : [{ json: { error: 'No rows parsed', creator_id: items[0]?.json?.creator_id } }];"
+      }
+    },
+    {
+      "id": "normalize_canonical_amazon",
+      "name": "Normalize to canonical schema",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 100],
+      "parameters": {
+        "jsCode": "// Map each row to canonical creator earnings schema (see CREATOR-EARNINGS-CANONICAL-SCHEMA.md).\nconst items = $input.all();\nconst earningsKeys = ['Earnings','Commission','Commission Income','Bounty','Revenue','Order Total','Amount','Total','Payout','Shipped Revenue','Advertising Fee'];\nconst dateKeys = ['Date','Transaction Date','Earning Period Start Date','Earning Period End Date','Payment Date'];\nconst out = [];\nfor (const item of items) {\n  const row = item.json;\n  if (row.error) { out.push({ json: row }); continue; }\n  const creator_id = row.creator_id || 'unknown';\n  let normalized_earnings = null;\n  let raw_type = 'commission';\n  const allKeys = Object.keys(row).filter(k => !['creator_id','period_start','period_end'].includes(k));\n  for (const key of earningsKeys) {\n    const v = row[key];\n    if (v !== undefined && v !== null && v !== '') {\n      const num = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.-]/g, ''));\n      if (!isNaN(num)) { normalized_earnings = num; raw_type = key.toLowerCase().replace(/\\s+/g,'_'); break; }\n    }\n  }\n  if (normalized_earnings === null && allKeys.length) {\n    for (const k of allKeys) {\n      const v = row[k];\n      if (v !== undefined && v !== null && v !== '') {\n        const num = parseFloat(String(v).replace(/[^0-9.-]/g, ''));\n        if (!isNaN(num)) { normalized_earnings = num; raw_type = k.toLowerCase().replace(/\\s+/g,'_'); break; }\n    }\n  }\n  }\n  let period_start = row.period_start || null;\n  let period_end = row.period_end || null;\n  for (const key of dateKeys) {\n    const v = row[key];\n    if (v && !period_start && (key.includes('Start') || key === 'Date' || key === 'Transaction Date')) period_start = v;\n    if (v && !period_end && (key.includes('End') || key === 'Payment Date')) period_end = v;\n  }\n  if (!period_start && row.Date) period_start = row.Date;\n  if (!period_end && row.Date) period_end = row.Date;\n  const currency = row.Currency || row.currency || 'USD';\n  out.push({\n    json: {\n      creator_id,\n      source_platform: 'amazon',\n      period_start: period_start || new Date().toISOString().slice(0,10),\n      period_end: period_end || new Date().toISOString().slice(0,10),\n      normalized_earnings: normalized_earnings ?? 0,\n      currency,\n      raw_type,\n      raw_payload: row,\n      recorded_at: new Date().toISOString()\n    }\n  });\n}\nreturn out.length ? out : [{ json: { error: 'No normalized records' } }];"
+      }
+    },
+    {
+      "id": "aggregate_amazon_ingest",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [900, 100],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond_amazon_ingest",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, recordsProcessed: $json.data ? $json.data.length : 0, message: 'Amazon report ingested; connect Store to Airtable/DB for persistence' } }}"
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Normalize input", "type": "main", "index": 0 }]] },
+    "Webhook": { "main": [[{ "node": "Normalize input", "type": "main", "index": 0 }]] },
+    "Normalize input": { "main": [[{ "node": "Parse Amazon CSV", "type": "main", "index": 0 }]] },
+    "Parse Amazon CSV": { "main": [[{ "node": "Normalize to canonical schema", "type": "main", "index": 0 }]] },
+    "Normalize to canonical schema": { "main": [[{ "node": "Aggregate", "type": "main", "index": 0 }]] },
+    "Aggregate": { "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
