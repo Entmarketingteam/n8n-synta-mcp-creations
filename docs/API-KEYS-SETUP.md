@@ -35,7 +35,7 @@ These can be set as **environment variables on your n8n instance** (if you have 
 | **piapi.ai / Midjourney** | Advanced Content Creator (CREATE IMAGE, GET IMAGES) | Node header `x-api-key` or env `PIAPI_API_KEY`. (Add when you have it.) |
 | **Creatomate** | Advanced Content Creator (CREATE LONGFORM / SHORTS / SQUARE) | Node header `Authorization: Bearer <key>` or env `CREATOMATE_API_KEY`. (Add when you have it.) |
 | **Apify** | Content Repurposing – Downloader Agent | Node URL/query or env `APIFY_TOKEN` + `APIFY_TIKTOK_ACTOR_ID`. |
-| **Blotato** | Content Repurposing – Uploader Agent | Node header `blotato-api-key` or env `BLOTATO_API_KEY`. (Add when you have it.) |
+| **Blotato** | Content Repurposing – Uploader Agent | Node header `blotato-api-key` or env `BLOTATO_API_KEY`. Set in the two HTTP nodes (“Set Blotato IDsReady…” and “Publish or Webhook”). |
 
 ---
 

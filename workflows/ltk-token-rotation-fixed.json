@@ -1,0 +1,218 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 8
+            }
+          ]
+        }
+      },
+      "id": "513cb66f-9087-41b3-b2b9-32a04ce44754",
+      "name": "Every 8 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 208]
+    },
+    {
+      "parameters": {},
+      "id": "dbc6f987-27e7-4fed-bd2f-b376d4d70e31",
+      "name": "Manual Test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "appQnKyfyRyhHX44h", "mode": "id" },
+        "table": { "__rl": true, "value": "tbl5TEfzBwGPeT1rX", "mode": "id" },
+        "filterByFormula": "={Creator}=\"Nicki Entenmann\"",
+        "options": {}
+      },
+      "id": "4e069040-90c3-4d77-8bf7-d700d851aa93",
+      "name": "Read Token from Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [256, 112],
+      "credentials": {
+        "airtableTokenApi": { "id": "dAoeOLbTnBUK1gTy", "name": "Airtable - ShopMy Creators" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://creator-auth.shopltk.com/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"grant_type\": \"refresh_token\",\n  \"client_id\": \"iKyQz7GfBMBPqUqCbbKSNBUlM2VpNWUT\",\n  \"refresh_token\": \"{{ $json.Refresh_Token }}\"\n}",
+        "options": {}
+      },
+      "id": "72dff17a-60bb-4cad-beed-096b271375de",
+      "name": "Refresh LTK Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [512, 112],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-access-token",
+              "leftValue": "={{ $json.access_token }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "exists" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "80592bc4-42e5-416c-9fe1-e7ed27c3aa32",
+      "name": "Token Refreshed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [752, 112]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            { "id": "fmt-id", "name": "id", "value": "={{ $node['Read Token from Airtable'].json.id }}", "type": "string" },
+            { "id": "fmt-refresh", "name": "Refresh_Token", "value": "={{ $json.refresh_token }}", "type": "string" },
+            { "id": "fmt-access", "name": "Access_Token", "value": "={{ $json.access_token }}", "type": "string" },
+            { "id": "fmt-idtoken", "name": "ID_Token", "value": "={{ $json.id_token }}", "type": "string" },
+            { "id": "fmt-last", "name": "Last_Refreshed", "value": "={{ $now.toISO() }}", "type": "string" },
+            { "id": "fmt-status", "name": "Status", "value": "active", "type": "string" }
+          ]
+        }
+      },
+      "id": "format-for-airtable-node-id",
+      "name": "Format for Airtable",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [904, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "appQnKyfyRyhHX44h", "mode": "id" },
+        "table": { "__rl": true, "value": "tbl5TEfzBwGPeT1rX", "mode": "id" },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": ["id"]
+        },
+        "options": {}
+      },
+      "id": "560f06d5-eb25-45b2-a115-612470f8a53c",
+      "name": "Save New Tokens to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1056, 0],
+      "credentials": {
+        "airtableTokenApi": { "id": "WBk93xMXltbzuUIT", "name": "Airtable ENT AGENCY Personal Access Token account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "appQnKyfyRyhHX44h", "mode": "id" },
+        "table": { "__rl": true, "value": "tbl5TEfzBwGPeT1rX", "mode": "id" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $node['Read Token from Airtable'].json.id }}",
+            "Last_Refreshed": "={{ $now.toISO() }}",
+            "Status": "error"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            { "id": "id", "displayName": "id", "required": false, "defaultMatch": true, "display": true, "type": "string", "readOnly": true, "removed": false },
+            { "id": "Creator", "displayName": "Creator", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false },
+            { "id": "Refresh_Token", "displayName": "Refresh_Token", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false },
+            { "id": "Access_Token", "displayName": "Access_Token", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false },
+            { "id": "ID_Token", "displayName": "ID_Token", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false },
+            { "id": "Last_Refreshed", "displayName": "Last_Refreshed", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": false },
+            { "id": "Status", "displayName": "Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{ "name": "active", "value": "active" }, { "name": "expired", "value": "expired" }, { "name": "error", "value": "error" }], "readOnly": false, "removed": false }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "07089bb8-eb7e-42a9-bea2-8c4231fadab1",
+      "name": "Mark Status Error",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1056, 256],
+      "credentials": {
+        "airtableTokenApi": { "id": "WBk93xMXltbzuUIT", "name": "Airtable ENT AGENCY Personal Access Token account" }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "result-success", "name": "status", "value": "={{ 'Token refreshed at ' + $now.toISO() }}", "type": "string" },
+            { "id": "result-creator", "name": "creator", "value": "Nicki Entenmann", "type": "string" },
+            { "id": "result-expires", "name": "expires_in_hours", "value": "10", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "04f51789-5763-4179-8494-8c23c0d0af70",
+      "name": "Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1312, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "error-status", "name": "status", "value": "=TOKEN REFRESH FAILED: {{ $json.error_description || $json.error || 'Unknown error' }}", "type": "string" },
+            { "id": "error-creator", "name": "creator", "value": "Nicki Entenmann", "type": "string" },
+            { "id": "error-action", "name": "action_needed", "value": "Log into LTK, grab fresh refresh token from DevTools, paste into Airtable", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "98789a5d-1308-4f2f-b959-56ae58e4931a",
+      "name": "Error - Needs Manual Token",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1312, 256]
+    }
+  ],
+  "connections": {
+    "Every 8 Hours": { "main": [[{ "node": "Read Token from Airtable", "type": "main", "index": 0 }]] },
+    "Manual Test": { "main": [[{ "node": "Read Token from Airtable", "type": "main", "index": 0 }]] },
+    "Read Token from Airtable": { "main": [[{ "node": "Refresh LTK Token", "type": "main", "index": 0 }]] },
+    "Refresh LTK Token": { "main": [[{ "node": "Token Refreshed?", "type": "main", "index": 0 }]] },
+    "Token Refreshed?": {
+      "main": [
+        [{ "node": "Format for Airtable", "type": "main", "index": 0 }],
+        [{ "node": "Mark Status Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format for Airtable": { "main": [[{ "node": "Save New Tokens to Airtable", "type": "main", "index": 0 }]] },
+    "Save New Tokens to Airtable": { "main": [[{ "node": "Success", "type": "main", "index": 0 }]] },
+    "Mark Status Error": { "main": [[{ "node": "Error - Needs Manual Token", "type": "main", "index": 0 }]] }
+  }
+}
