@@ -133,15 +133,17 @@ curl -X POST "https://creatorsapi.amazon/catalog/v1/searchItems" \
 ## 4. Storing credentials in n8n
 
 - **Do not** put Credential ID or Secret in workflow JSON or in plain text in the editor.
-- Use n8n **Credentials**:
+- **Airtable (recommended for per-creator credentials):** Nicki Entenmann’s (and other creators’) Creators API credentials are stored in Airtable: base `appQnKyfyRyhHX44h`, table `tblNovDWyu1iHoJf0`. The **Amazon Creators API – Get Token** workflow reads from this table (filter by Creator, e.g. "Nicki Entenmann") and uses **Credential_ID** and **Credential_Secret** to request a Bearer token. See [AIRTABLE-CREATORS-API.md](AIRTABLE-CREATORS-API.md) for the table schema and field names.
+- **Alternative – n8n Credentials or env vars:**
   1. Create a credential that can hold two secret values (e.g. **Header Auth** with two headers, or a **Custom** credential type if your n8n supports it).
   2. Or store **Credential ID** and **Credential Secret** in n8n **Environment Variables** (e.g. `AMAZON_CREATORS_API_CLIENT_ID`, `AMAZON_CREATORS_API_CLIENT_SECRET`) and reference them in a Code node or HTTP Request node.
 - **Get Creators API Token** in n8n:
-  - Use an **HTTP Request** node: POST to the token endpoint for your region, body `grant_type=client_credentials&client_id={{ $env.AMAZON_CREATORS_API_CLIENT_ID }}&client_secret={{ $env.AMAZON_CREATORS_API_CLIENT_SECRET }}&scope=creatorsapi/default`.
+  - **With Airtable:** Manual → **Read from Airtable** (base `appQnKyfyRyhHX44h`, table `tblNovDWyu1iHoJf0`, filter by Creator) → **HTTP Request** (POST token using `Credential_ID` and `Credential_Secret` from the row) → **Output Token**.
+  - **Without Airtable:** Use an **HTTP Request** node: POST to the token endpoint for your region, body `grant_type=client_credentials&client_id={{ $env.AMAZON_CREATORS_API_CLIENT_ID }}&client_secret={{ $env.AMAZON_CREATORS_API_CLIENT_SECRET }}&scope=creatorsapi/default`.
   - Or use a **Code** node that uses `$getWorkflowStaticData()` to cache the token and refresh when `expires_in` is near (e.g. refresh when &lt; 5 minutes left).
 - Other workflows that call Creators API can use **Execute Workflow** to run the "Get Creators API Token" workflow first and pass the returned `access_token` (and version) into the next node.
 
-A minimal workflow that only fetches and returns a valid Bearer token is in `workflows/amazon-creators-api-get-token.json` (import into n8n and configure credentials).
+A minimal workflow that reads from Airtable and returns a valid Bearer token is in `workflows/amazon-creators-api-get-token.json` (import into n8n and attach your Airtable credential to the "Read from Airtable" node).
 
 ---
 

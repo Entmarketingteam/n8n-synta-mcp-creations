@@ -42,12 +42,12 @@ To use **Synta MCP** in Cursor for this repo (build/edit workflows via AI):
 
 ### 2. Import each workflow from file
 
-Workflow JSON files are in the repo under **`workflows/`**:
+Workflow JSON files are in the repo under **`workflows/`**. For RoboNuggets and other template workflows (UGC, Split AI, Ad Creator, etc.), see **`workflows/robonuggets/`** and its [README](../workflows/robonuggets/README.md); import from file or use `node scripts/import-workflows-to-n8n.js workflows/robonuggets/<filename>.json`.
 
 | Workflow | File |
 |----------|------|
-| Content Repurposing – Downloader Agent | `workflows/content-repurposing-downloader-agent.json` |
-| Content Repurposing – Uploader Agent | `workflows/content-repurposing-uploader-agent.json` |
+| Content Repurposing – Downloader Agent | `workflows/robonuggets/content-repurposing-downloader-agent.json` |
+| Content Repurposing – Uploader Agent | `workflows/robonuggets/content-repurposing-uploader-agent.json` |
 | Advanced Content Creator Agent | `workflows/advanced-content-creator-agent.json` |
 
 **Steps (repeat for each file):**
@@ -60,7 +60,7 @@ Workflow JSON files are in the repo under **`workflows/`**:
 ### 3. Configure after import
 
 - **Content Repurposing (Downloader / Uploader)**  
-  See **`workflows/README-content-repurposing.md`** for Apify token, Blotato API key, and Google Sheet doc/sheet names.
+  See **`workflows/robonuggets/README-content-repurposing.md`** for Apify token, Blotato API key, and Google Sheet doc/sheet names.
 
 - **Advanced Content Creator**  
   See **`workflows/README-advanced-content-creator.md`** for Google Sheets, OpenAI, ElevenLabs, piapi.ai, Creatomate, and Slack.
@@ -90,13 +90,14 @@ export N8N_API_KEY="your-api-key"   # or use value from ~/.cursor/mcp.json
 node scripts/import-workflows-to-n8n.js
 ```
 
-To import only one workflow:
+To import only one workflow (path relative to `workflows/`):
 
 ```bash
 node scripts/import-workflows-to-n8n.js advanced-content-creator-agent.json
+node scripts/import-workflows-to-n8n.js robonuggets/content-repurposing-downloader-agent.json
 ```
 
-The script reads workflow JSON from `workflows/` and sends it to `POST /api/v1/workflows`.  
+The script discovers all `*.json` under `workflows/` (including `workflows/robonuggets/`) and sends each to `POST /api/v1/workflows`.  
 If the API or key is not configured, the script will exit with a short message; use **Option A** instead.
 
 ---
@@ -125,5 +126,5 @@ If the API or key is not configured, the script will exit with a short message; 
 ## Quick links
 
 - n8n: **https://entagency.app.n8n.cloud**
-- Repurposing: **`workflows/README-content-repurposing.md`**
+- Repurposing: **`workflows/robonuggets/README-content-repurposing.md`**
 - Advanced Content Creator: **`workflows/README-advanced-content-creator.md`**

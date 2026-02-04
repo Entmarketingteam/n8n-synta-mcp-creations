@@ -12,9 +12,12 @@ Create one base (e.g. **Affiliate Sync**) and one table **LTK_Credentials**.
 | **Refresh_Token**| Long text        | Yes | From browser Local Storage (`auth._refresh_token.auth0`) |
 | **Access_Token** | Long text        | No  | Filled by workflow after first refresh |
 | **ID_Token**     | Long text        | No  | Filled by workflow after first refresh |
+| **Email**        | Single line text | No  | LTK login email (for manual re-login / reference only) |
+| **Password**    | Long text        | No  | LTK login password (for manual re-login only; restrict base access) |
 
 - **Refresh_Token** must be set once per creator (see README: get from DevTools).
 - **Access_Token** and **ID_Token** are updated by n8n on every run so the next run can use them; you can leave them empty initially.
+- **Email** / **Password**: Optional. Use only if you need to re-login at creator.shopltk.com to grab a new refresh token (e.g. when refresh fails). Prefer storing these in a secure env (e.g. `LTK_NICKI_EMAIL`, `LTK_NICKI_PASSWORD` in `.env`) and restrict Airtable base access if you store them there.
 
 ---
 

@@ -1,0 +1,211 @@
+{
+  "name": "LTK Reports to Google Sheets (Airtable Token)",
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "trigger-schedule",
+      "name": "Every 12 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 200],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 12 }]
+        }
+      }
+    },
+    {
+      "id": "read-token",
+      "name": "Read Token from Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [240, 100],
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "appQnKyfyRyhHX44h", "mode": "id" },
+        "table": { "__rl": true, "value": "tbl5TEfzBwGPeT1rX", "mode": "id" },
+        "filterByFormula": "={Creator}=\"Nicki Entenmann\"",
+        "options": {}
+      },
+      "credentials": { "airtableTokenApi": { "id": "dAoeOLbTnBUK1gTy", "name": "Airtable - ShopMy Creators" } }
+    },
+    {
+      "id": "http-user",
+      "name": "Get User Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api-gateway.rewardstyle.com/api/co-api/v1/get_user_info",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.Access_Token }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http-commissions",
+      "name": "Get Commissions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 120],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api-gateway.rewardstyle.com/api/creator-analytics/v1/commissions_summary?currency=USD",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.Access_Token }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http-performance",
+      "name": "Get Performance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 240],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api-gateway.rewardstyle.com/api/creator-analytics/v1/performance_summary?start_date={{ $now.minus(30, 'days').toFormat('yyyy-MM-dd') }}&end_date={{ $now.toFormat('yyyy-MM-dd') }}&timezone=UTC",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.Access_Token }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http-items-sold",
+      "name": "Get Items Sold",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 360],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api-gateway.rewardstyle.com/api/creator-analytics/v1/items_sold/?limit=100&start={{ $now.minus(30, 'days').toFormat('yyyy-MM-dd') }}&end={{ $now.toFormat('yyyy-MM-dd') }}&currency=USD",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.Access_Token }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "aggregate",
+      "name": "Combine All Reports",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [760, 180],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "data",
+        "include": "allFields"
+      }
+    },
+    {
+      "id": "format-row",
+      "name": "Format Row for Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 180],
+      "parameters": {
+        "jsCode": "const data = $input.first().json.data || [];\nlet userInfo = {}, commissions = {}, performance = {}, itemsSold = {};\nfor (const item of data) {\n  if (item.publisher_id !== undefined || item.email !== undefined) userInfo = item;\n  else if (item.total_commissions !== undefined || item.commissions !== undefined) commissions = item;\n  else if (item.clicks !== undefined && item.conversions !== undefined) performance = item;\n  else if (item.items !== undefined || item.total_count !== undefined) itemsSold = item;\n}\nconst count = Array.isArray(itemsSold.items) ? itemsSold.items.length : (itemsSold.total_count || 0);\nreturn [{\n  json: {\n    extracted_at: new Date().toISOString(),\n    creator_name: 'Nicki Entenmann',\n    user_info: JSON.stringify(userInfo),\n    commissions: JSON.stringify(commissions),\n    performance: JSON.stringify(performance),\n    items_sold: JSON.stringify(itemsSold),\n    items_sold_count: count\n  }\n}];"
+      }
+    },
+    {
+      "id": "sheets-append",
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1200, 180],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "" },
+        "sheetName": { "__rl": true, "mode": "list", "value": "" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "extracted_at": "={{ $json.extracted_at }}",
+            "creator_name": "={{ $json.creator_name }}",
+            "user_info": "={{ $json.user_info }}",
+            "commissions": "={{ $json.commissions }}",
+            "performance": "={{ $json.performance }}",
+            "items_sold": "={{ $json.items_sold }}",
+            "items_sold_count": "={{ $json.items_sold_count }}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "supabase-insert",
+      "name": "Insert LTK Snapshot to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 340],
+      "parameters": {
+        "method": "POST",
+        "url": "https://abhhegllhwbmanwvqanc.supabase.co/rest/v1/ltk_snapshots",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ extracted_at: $json.extracted_at, creator_name: $json.creator_name, source: \"n8n_airtable\", user_info: typeof $json.user_info === \"string\" ? JSON.parse($json.user_info || \"{}\") : ($json.user_info || {}), commissions: typeof $json.commissions === \"string\" ? JSON.parse($json.commissions || \"{}\") : ($json.commissions || {}), performance: typeof $json.performance === \"string\" ? JSON.parse($json.performance || \"{}\") : ($json.performance || {}), items_sold: typeof $json.items_sold === \"string\" ? JSON.parse($json.items_sold || \"{}\") : ($json.items_sold || {}), items_sold_count: $json.items_sold_count ?? 0 }) }}"
+      },
+      "notesInFlow": true,
+      "notes": "Attach Header Auth credential with Supabase service_role key (Authorization: Bearer <key>)."
+    }
+  ],
+  "connections": {
+    "Manual Test": { "main": [[{ "node": "Read Token from Airtable", "type": "main", "index": 0 }]] },
+    "Every 12 Hours": { "main": [[{ "node": "Read Token from Airtable", "type": "main", "index": 0 }]] },
+    "Read Token from Airtable": {
+      "main": [
+        [
+          { "node": "Get User Info", "type": "main", "index": 0 },
+          { "node": "Get Commissions", "type": "main", "index": 0 },
+          { "node": "Get Performance", "type": "main", "index": 0 },
+          { "node": "Get Items Sold", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get User Info": { "main": [[{ "node": "Combine All Reports", "type": "main", "index": 0 }]] },
+    "Get Commissions": { "main": [[{ "node": "Combine All Reports", "type": "main", "index": 0 }]] },
+    "Get Performance": { "main": [[{ "node": "Combine All Reports", "type": "main", "index": 0 }]] },
+    "Get Items Sold": { "main": [[{ "node": "Combine All Reports", "type": "main", "index": 0 }]] },
+    "Combine All Reports": { "main": [[{ "node": "Format Row for Sheet", "type": "main", "index": 0 }]] },
+    "Format Row for Sheet": {
+      "main": [
+        [
+          { "node": "Append to Google Sheet", "type": "main", "index": 0 },
+          { "node": "Insert LTK Snapshot to Supabase", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

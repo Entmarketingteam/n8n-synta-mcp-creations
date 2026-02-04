@@ -11,6 +11,21 @@
     },
     {
       "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "appQnKyfyRyhHX44h", "mode": "id" },
+        "table": { "__rl": true, "value": "tblNovDWyu1iHoJf0", "mode": "id" },
+        "filterByFormula": "={Creator}=\"Nicki Entenmann\"",
+        "options": {}
+      },
+      "id": "read-airtable-creators-api",
+      "name": "Read from Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [220, 240],
+      "notes": "Base appQnKyfyRyhHX44h, table tblNovDWyu1iHoJf0. One row per creator: Creator, Credential_ID, Credential_Secret, Version. See docs/AIRTABLE-CREATORS-API.md."
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "=https://creatorsapi.auth.us-east-1.amazoncognito.com/oauth2/token",
         "sendHeaders": true,
@@ -27,8 +42,8 @@
         "bodyParameters": {
           "parameters": [
             { "name": "grant_type", "value": "client_credentials" },
-            { "name": "client_id", "value": "={{ $env.AMAZON_CREATORS_API_CLIENT_ID || 'YOUR_CREDENTIAL_ID' }}" },
-            { "name": "client_secret", "value": "={{ $env.AMAZON_CREATORS_API_CLIENT_SECRET || 'YOUR_CREDENTIAL_SECRET' }}" },
+            { "name": "client_id", "value": "={{ $json.Credential_ID ?? $json.Client_ID ?? $json['Client ID'] ?? $env.AMAZON_CREATORS_API_CLIENT_ID ?? '' }}" },
+            { "name": "client_secret", "value": "={{ $json.Credential_Secret ?? $json.Secret ?? $json.Secret_Key ?? $json['Secret Key'] ?? $env.AMAZON_CREATORS_API_CLIENT_SECRET ?? '' }}" },
             { "name": "scope", "value": "creatorsapi/default" }
           ]
         },
@@ -38,8 +53,8 @@
       "name": "Get Creators API Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [240, 240],
-      "notes": "POST OAuth2 token. Set env AMAZON_CREATORS_API_CLIENT_ID and AMAZON_CREATORS_API_CLIENT_SECRET, or replace with your Credential ID/Secret."
+      "position": [440, 240],
+      "notes": "Uses Credential_ID and Credential_Secret from Airtable (or env fallback). Token URL is NA (2.1); for EU/FE change URL per docs."
     },
     {
       "parameters": {
@@ -48,7 +63,7 @@
           "assignments": [
             { "id": "out-token", "name": "access_token", "value": "={{ $json.access_token }}", "type": "string" },
             { "id": "out-expires", "name": "expires_in", "value": "={{ $json.expires_in }}", "type": "number" },
-            { "id": "out-version", "name": "credential_version", "value": "2.1", "type": "string" }
+            { "id": "out-version", "name": "credential_version", "value": "={{ $node['Read from Airtable'].json.Version || '2.1' }}", "type": "string" }
           ]
         }
       },
@@ -56,12 +71,13 @@
       "name": "Output Token",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [460, 240],
+      "position": [660, 240],
       "notes": "Use access_token in Authorization: Bearer <token>, Version <credential_version> for catalog API calls."
     }
   ],
   "connections": {
-    "Manual": { "main": [[{ "node": "Get Creators API Token", "type": "main", "index": 0 }]] },
+    "Manual": { "main": [[{ "node": "Read from Airtable", "type": "main", "index": 0 }]] },
+    "Read from Airtable": { "main": [[{ "node": "Get Creators API Token", "type": "main", "index": 0 }]] },
     "Get Creators API Token": { "main": [[{ "node": "Output Token", "type": "main", "index": 0 }]] }
   },
   "pinData": {},

@@ -17,15 +17,42 @@ const http = require('http');
 const N8N_BASE_URL = process.env.N8N_BASE_URL || 'https://entagency.app.n8n.cloud';
 const N8N_API_KEY = process.env.N8N_API_KEY;
 
-const WORKFLOWS = process.argv.slice(2).length
-  ? process.argv.slice(2)
-  : [
-      'content-repurposing-downloader-agent.json',
-      'content-repurposing-uploader-agent.json',
-      'advanced-content-creator-agent.json',
-    ];
+const projectRoot = path.join(__dirname, '..');
+const workflowsDir = path.join(projectRoot, 'workflows');
 
-const workflowsDir = path.join(__dirname, '..', 'workflows');
+/**
+ * Recursively find all .json files under dir, pushing paths relative to baseDir onto out.
+ * Skips package.json and paths containing node_modules.
+ */
+function discoverWorkflowFiles(dir, baseDir, out) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const ent of entries) {
+    const full = path.join(dir, ent.name);
+    const rel = path.relative(baseDir, full).split(path.sep).join('/');
+    if (ent.isDirectory()) {
+      if (ent.name !== 'node_modules') discoverWorkflowFiles(full, baseDir, out);
+    } else if (ent.isFile() && ent.name.endsWith('.json') && ent.name !== 'package.json') {
+      out.push(rel);
+    }
+  }
+}
+
+const argv = process.argv.slice(2);
+const WORKFLOWS = argv.length
+  ? argv
+  : (() => {
+      const list = [];
+      discoverWorkflowFiles(workflowsDir, workflowsDir, list);
+      return list.sort();
+    })();
+
+/** Resolve workflow path: "workflows/robonuggets/x.json" or "x.json" (under workflows/). */
+function resolveWorkflowPath(file) {
+  if (file.includes(path.sep) || file.includes('/') || file.startsWith('workflows/')) {
+    return path.join(workflowsDir, file.replace(/^workflows\//, ''));
+  }
+  return path.join(workflowsDir, file);
+}
 
 function parseUrl(url) {
   const u = new URL(url);
@@ -103,7 +130,7 @@ async function main() {
   console.log(`Importing workflows to ${base} ...\n`);
 
   for (const file of WORKFLOWS) {
-    const filePath = path.join(workflowsDir, file);
+    const filePath = resolveWorkflowPath(file);
     if (!fs.existsSync(filePath)) {
       console.warn(`Skip (not found): ${file}`);
       continue;

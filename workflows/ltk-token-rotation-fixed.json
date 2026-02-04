@@ -167,6 +167,17 @@
     },
     {
       "parameters": {
+        "source": "database",
+        "workflowId": { "__rl": true, "value": "2Rr3f3YCgy3OIZWX", "mode": "id" }
+      },
+      "id": "run-ltk-reports-node",
+      "name": "Run LTK Reports",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1184, 0]
+    },
+    {
+      "parameters": {
         "assignments": {
           "assignments": [
             { "id": "result-success", "name": "status", "value": "={{ 'Token refreshed at ' + $now.toISO() }}", "type": "string" },
@@ -212,7 +223,8 @@
       ]
     },
     "Format for Airtable": { "main": [[{ "node": "Save New Tokens to Airtable", "type": "main", "index": 0 }]] },
-    "Save New Tokens to Airtable": { "main": [[{ "node": "Success", "type": "main", "index": 0 }]] },
+    "Save New Tokens to Airtable": { "main": [[{ "node": "Run LTK Reports", "type": "main", "index": 0 }]] },
+    "Run LTK Reports": { "main": [[{ "node": "Success", "type": "main", "index": 0 }]] },
     "Mark Status Error": { "main": [[{ "node": "Error - Needs Manual Token", "type": "main", "index": 0 }]] }
   }
 }

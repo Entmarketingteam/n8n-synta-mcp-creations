@@ -1,0 +1,542 @@
+{
+  "name": "tweetRobo v0.1 by RoboNuggets",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        -180
+      ],
+      "id": "6304c8b0-65ee-4691-81e6-4cf6a25362de",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apidojo~tweet-scraper/run-sync-get-dataset-items?token=apify_api_12345",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"includeSearchTerms\": false,\n    \"maxItems\": 50,\n    \"minimumFavorites\": 100,\n    \"onlyImage\": false,\n    \"onlyQuote\": false,\n    \"onlyTwitterBlue\": false,\n    \"onlyVerifiedUsers\": false,\n    \"onlyVideo\": true,\n    \"searchTerms\": [\n        \"{{ $json.topic }}\"\n    ],\n    \"sort\": \"Top\",\n    \"tweetLanguage\": \"en\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        -180
+      ],
+      "id": "754db4b4-c633-4d51-b988-e25f4ffb130e",
+      "name": "Get Tweets"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI",
+          "mode": "list",
+          "cachedResultName": "tweetRobo v0.1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "tweets_created",
+              "lookupValue": "for creation"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        480,
+        -180
+      ],
+      "id": "babb3ed0-89c4-4835-ae3a-1ebbcd00aa8a",
+      "name": "Get Topic",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WmDBwEhcrLeG9D67",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tweets = $input.all().map(item => {\n  const likeCount = item.json.likeCount || 0;\n  const viewCount = item.json.viewCount || 1; // Avoid division by zero\n\n  return {\n    twitterUrl: item.json.twitterUrl,\n    text: item.json.text,\n    likeViewRate: likeCount / viewCount\n  };\n});\n\nreturn [\n  {\n    json: {\n      tweets\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        -180
+      ],
+      "id": "fbdb912c-f52a-40c9-ab9b-4a72a5bc6d11",
+      "name": "Group Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const threads = $input.item.json.output.threads;\n\n// Map each thread object into its own item\nconst result = threads.map(thread => {\n  return { json: thread };\n});\n\nreturn result;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -20
+      ],
+      "id": "afc37f61-f702-493b-a58f-578adbce520a",
+      "name": "Ungroup Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://backend.blotato.com/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"twitter\"\n    },\n    \"content\": {\n      \"text\": {{ JSON.stringify($json.tweet1) }},\n      \"platform\": \"twitter\",\n      \"mediaUrls\": [],\n      \"additionalPosts\": [\n        {\n          \"text\": \"{{ $json.tweet2 }}\",\n          \"mediaUrls\": []\n        },\n        {\n          \"text\": \"{{ $json.tweet3 }}\",\n          \"mediaUrls\": []\n        },\n        {\n          \"text\": \"{{ $json.tweet4 }}\",\n          \"mediaUrls\": []\n        },\n        {\n          \"text\": \"{{ $json.tweet5 }}\",\n          \"mediaUrls\": []\n        },\n        {\n          \"text\": \"{{ $json.closingTweet }}\",\n          \"mediaUrls\": []\n        }\n      ]\n    },\n    \"accountId\": \"784\"\n  },\n  \"scheduledTime\": \"{{ $json.scheduledTime }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        -20
+      ],
+      "id": "cf879ede-5491-4721-99ad-8b57c6ae09bb",
+      "name": "Schedule on X",
+      "executeOnce": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PALbCt4SkGzvuqFN",
+          "name": "Blotato Credential v2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI",
+          "mode": "list",
+          "cachedResultName": "tweetRobo v0.1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Get Topic').first().json.id }}",
+            "tweets_created": "done",
+            "twitter_thread_1": "={{ $('TweetRobo AI Agent 💬 ').item.json.output.threads[0] }}",
+            "twitter_thread_2": "={{ $('TweetRobo AI Agent 💬 ').item.json.output.threads[1] }}",
+            "twitter_thread_3": "={{ $('TweetRobo AI Agent 💬 ').item.json.output.threads[2] }}",
+            "schedule_1": "={{ $('TweetRobo AI Agent 💬 ').item.json.output.threads[0].scheduledTime }}",
+            "schedule_2": "={{ $('TweetRobo AI Agent 💬 ').item.json.output.threads[1].scheduledTime }}",
+            "schedule_3": "={{ $('TweetRobo AI Agent 💬 ').item.json.output.threads[2].scheduledTime }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_added",
+              "displayName": "date_added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tweets_created",
+              "displayName": "tweets_created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "twitter_thread_1",
+              "displayName": "twitter_thread_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "twitter_thread_2",
+              "displayName": "twitter_thread_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "twitter_thread_3",
+              "displayName": "twitter_thread_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "schedule_1",
+              "displayName": "schedule_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "schedule_2",
+              "displayName": "schedule_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "schedule_3",
+              "displayName": "schedule_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        760,
+        -20
+      ],
+      "id": "92e940d9-3b64-454c-bf5a-6e6d7987180d",
+      "name": "Log Items",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WmDBwEhcrLeG9D67",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here are the set of tweets you need to choose from:\n{{ JSON.stringify($json.tweets, null, 2) }}\n\nAvoid those that look scammy, or crypto-related",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=✅ SYSTEM PROMPT\nUse the Think tool to carefully evaluate your output before responding.\n\nYour output: 3 Twitter Threads\n\nYour role is to act as a content curator AI that transforms a set of tweets into multiple, high-quality Twitter threads. \n\n***\n\nTopic:{{ $('Get Topic').first().json.topic }}\nDescription of topic: {{ $('Get Topic').first().json.description }}\nBrand: @tweetrobo\nEmoji: 💬\n\n\nTone of voice: Write with calm clarity and sharp insight, like someone who knows their stuff and enjoys making it understandable. Keep the tone intelligent but unpretentious—curious, thoughtful, and clear. Use plain words, short sentences, and clean structure, avoiding hype or fluff. Sound like a smart friend who shares useful ideas because they’re genuinely interesting, not to impress. The goal is to help people see things differently—with a quiet confidence that invites attention, not demands it.\n\n***\n\n🔧 THREAD STRUCTURE\nEach thread contains 6 parts, following this structure:\n\n🟩 tweet1 (the main tweet)\nThis should clearly introduce the theme of the thread and match the best-practice format used in the examples. It must use line breaks to improve readability.\n\nUse this format as a template:\n\n\"\"\"\nMidjourney Video V1 can generate YouTube and TikTok influencer videos.\n\nThese are not real 😳\n\n5 great examples + resources:\n\n1/ Product review vlog https://twitter.com/example/status/123\n\"\"\"\n\nIt must include the intro (1–2 lines)\nA surprising or exciting statement\nThe “5 great examples + resources” line\nThe first example starting with 1/, all in the same tweet\n\n🟨 tweet2 to tweet5\nEach of these tweets:\nBegins with a numbered prefix: 2/, 3/, 4/, 5/\nIncludes a short and relevant caption (under ~10 words)\nEnds with the original tweet URL\nFollows the same formatting as the examples\nPrioritizes awe, surprise, or clear topical relevance\nShould not repeat tweet content across threads\n\n🟥 closingTweet\nThis is a short, high-impact call-to-action that encourages engagement.\n\nUse this format as a baseline:\n\nIf you liked this thread, follow [@brand] and comment/repost/like so we can provide more AI knowledge! Cheers\n\nVary the wording each time to keep it fresh. But keep the tone intelligent, professional, but still young and informal.\n\nBut always include:\n[@brand given above]\nthe [emoji given above]\nsome version of a “Follow + engage” CTA (e.g., like/comment/repost)\n\n\n**\n\n🧠 THINKING & SELECTION CRITERIA\nAlways prioritize tweets with a high like-to-view ratio (likeViewRate) when deciding what to include in the thread.\n\nMake sure selected tweets align with the topic/hook of the thread and represent the strongest and most surprising examples of that theme.\n\nDo not reuse or repeat tweets across all the threads generated.\n\nMaintain variation across tweets — avoid repeating styles, captions, or tones unless intentional for emphasis.\n\n\n***\n\n🧾 OUTPUT FORMAT (JSON)\nEach thread must be structured like this:\n\n{\n  \"tweet1\": \"Midjourney Video V1 can generate YouTube and TikTok influencer videos.\\n\\nThese are not real 😳\\n\\n5 great examples + resources:\\n\\n1/ Product review vlog https://twitter.com/example/status/123\",\n  \"tweet2\": \"2/ Lifestyle vlog https://twitter.com/example/status/456\",\n  \"tweet3\": \"3/ Pet vlog https://twitter.com/example/status/789\",\n  \"tweet4\": \"4/ Makeup tutorial https://twitter.com/example/status/101112\",\n  \"tweet5\": \"5/ Reaction video https://twitter.com/example/status/131415\",\n  \"closingTweet\": \"If you liked this thread, follow [@brand] and comment/repost/like so we can provide more AI knowledge! Cheers\",\n  \"scheduledTime\": \"2025-07-02T05:40:00Z\"\n}\n\nscheduledTime must be in ISO 8601 format (UTC) and indicate when the post should be published\n\nThe first thread should be scheduled for the next upcoming hour. The time now in UTC is {{ new Date().toISOString() }}, so just add an hour after that. \n\nThe second and third threads should be spaced 12 to 24 hours apart from the first. But make the final time random.\n\nYou must follow this structure exactly, including the key names, ordering, and formatting."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        900,
+        -180
+      ],
+      "id": "7e503a60-7fa8-44da-9d9e-6a2f3fe2c4e9",
+      "name": "TweetRobo AI Agent 💬 "
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        620,
+        180
+      ],
+      "id": "b7425c8b-71b5-4f56-be0e-fc544569b4c3",
+      "name": "ChatGPT",
+      "credentials": {
+        "openAiApi": {
+          "id": "NyuhXI96tWK9dR2J",
+          "name": "OpenAi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        620,
+        320
+      ],
+      "id": "cc3619a2-5309-4ecf-bbd6-7508511eaa9d",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"threads\": [\n    {\n      \"tweet1\": \"Midjourney Video V1 can generate YouTube and TikTok influencer videos.\\n\\nThese are not real 😳\\n\\n5 great examples + resources:\\n\\n1/ Product review vlog https://twitter.com/example/status/123\",\n      \"tweet2\": \"2/ Lifestyle vlog https://twitter.com/example/status/456\",\n      \"tweet3\": \"3/ Pet vlog https://twitter.com/example/status/789\",\n      \"tweet4\": \"4/ Makeup tutorial https://twitter.com/example/status/101112\",\n      \"tweet5\": \"5/ Reaction video https://twitter.com/example/status/131415\",\n      \"closingTweet\": \"If you liked this thread, follow @robonuggets 🥚 and comment/repost/like so we can provide more AI knowledge! Cheers\",\n      \"scheduledTime\": \"2025-07-02T05:40:00Z\"\n    },\n    {\n      \"tweet1\": \"Midjourney Video V1 can recreate iconic movie scenes.\\n\\nThis is unreal 😵\\n\\n5 jaw-dropping examples:\\n\\n1/ Neo dodging bullets https://twitter.com/example/status/222\",\n      \"tweet2\": \"2/ The T-Rex from Jurassic Park https://twitter.com/example/status/333\",\n      \"tweet3\": \"3/ Interstellar docking scene https://twitter.com/example/status/444\",\n      \"tweet4\": \"4/ Inception hallway fight https://twitter.com/example/status/555\",\n      \"tweet5\": \"5/ Titanic’s final shot https://twitter.com/example/status/666\",\n      \"closingTweet\": \"Enjoyed this? Follow @robonuggets 🥚 and smash that like/repost/comment button. More coming soon.\",\n      \"scheduledTime\": \"2025-07-03T05:40:00Z\"\n    },\n    {\n      \"tweet1\": \"AI-generated sports clips are starting to feel real.\\n\\nThese aren’t real games 🏀😮\\n\\n5 examples that’ll blow your mind:\\n\\n1/ Slam dunk showdown https://twitter.com/example/status/777\",\n      \"tweet2\": \"2/ AI Messi free kick https://twitter.com/example/status/888\",\n      \"tweet3\": \"3/ Slow-mo tennis rally https://twitter.com/example/status/999\",\n      \"tweet4\": \"4/ Goalkeeper reaction drill https://twitter.com/example/status/101010\",\n      \"tweet5\": \"5/ Basketball no-look pass https://twitter.com/example/status/111111\",\n      \"closingTweet\": \"For more insane AI sports content, follow @robonuggets 🥚 and show some love with a comment/repost/like!\",\n      \"scheduledTime\": \"2025-07-04T05:40:00Z\"\n    }\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        620,
+        440
+      ],
+      "id": "2f1fa791-f257-45f0-a54f-77f868d8a38c",
+      "name": "Structure"
+    },
+    {
+      "parameters": {
+        "content": "## Step 1: Create Twitter Threads\n",
+        "height": 100,
+        "width": 560,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -180
+      ],
+      "id": "03629e7f-e162-4aac-a603-fcbe65de714f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Step 2: Post Twitter Threads",
+        "height": 100,
+        "width": 560,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -20
+      ],
+      "id": "a66496ac-978a-42ba-b266-f227932ff381",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# 🍳 tweetRobo v0.1\n# (by RoboNuggets)\n## How to Set Up for Your Own Space  \n\n**Author:** Jay E from [robonuggets.com](https://robonuggets.com)\n\nThis guide shows you how to set up this workflow for your own space. Hope you find this of value!\n\n---\n\n## 🔳 Part 1: Set Up OpenAI for Ideation\n1. Go to [OpenAI API Platform](https://platform.openai.com/api-keys)  \n2. Create an account (if you don’t have one).  \n3. Generate an API key.  \n4. Create a credential using that key via the **ChatGPT Chat Model** node.\n\n---\n\n## 🔳 Part 2: Set Up the Google Sheet Logger  \n1. Make a copy of the [Google Sheet template](https://docs.google.com/spreadsheets/d/1LbcUBbjU7rq1gQKt-h3obKyBV65K9rnJIzaLSL_6mQg/edit?usp=sharing) provided.  \n2. Use it to log results generated in your workflow.  \n3. Connect the sheet in n8n using the **Google Sheets node** and create a credential if needed.\n\n---\n\n## 🔳 Part 3: Configure Blotato\n1. Go to [Blotato](https://blotato.com/?ref=robonuggets) and sign in.  \n2. Generate your API key in the Settings\n3. In n8n, create new HTTP credentials with **Header Auth** using your keys  \n4. Use this credential in the relevant HTTP Request nodes.\n\n---\n\n## 🔳 Part 4: Customize the System Prompts  \n1. Choose the niche or theme for your content\n2. Edit the system prompt in the \"TweetRobo AI Agent\", especially the tone of voice and brand\n",
+        "height": 1340,
+        "width": 420,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -500
+      ],
+      "id": "412f0020-3f3a-4201-a7f4-e8f2b84df18f",
+      "name": "Sticky Note12"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Tweets": {
+      "main": [
+        [
+          {
+            "node": "Group Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Topic": {
+      "main": [
+        [
+          {
+            "node": "Get Tweets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group Items": {
+      "main": [
+        [
+          {
+            "node": "TweetRobo AI Agent 💬 ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ungroup Items": {
+      "main": [
+        [
+          {
+            "node": "Schedule on X",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule on X": {
+      "main": [
+        [
+          {
+            "node": "Log Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TweetRobo AI Agent 💬 ": {
+      "main": [
+        [
+          {
+            "node": "Ungroup Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatGPT": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "TweetRobo AI Agent 💬 ",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "TweetRobo AI Agent 💬 ",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "TweetRobo AI Agent 💬 ",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "61e9f5c6-34ae-42a6-829b-d61c77ace46a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "addaa68bf5af965c06c3765c811549851eb65db8df4677e0c6253726ffcac493"
+  },
+  "id": "G7y5VFT5erjfRp8K",
+  "tags": []
+}

@@ -1,0 +1,833 @@
+{
+  "name": "R36 | The Ad Creator AI Agent (by RoboNuggets)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1740,
+        -440
+      ],
+      "id": "c6870c87-29c0-4506-9daf-aeda526e5b42",
+      "name": "Telegram Trigger",
+      "webhookId": "259d7669-e8a0-450f-a153-afcb589ebfbe",
+      "credentials": {
+        "telegramApi": {
+          "id": "pzInIPWCmzUAL9tS",
+          "name": "adrobonugget_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2260,
+        -620
+      ],
+      "id": "1544d0d8-6cd5-41ab-9817-0c5fbd740b9c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zDZ32auFKuRIohXt",
+          "name": "OpenAi account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"image_prompt\": \"string\",\n  \"video_prompt\": \"stringified JSON\",\n  \"caption\": \"short caption\",\n  \"creative_summary\": \"summary of the combined visual concept\",\n  \"aspect_ratio\": \"vertical or horizontal\",\n  \"video_model\": \"veo3 or veo3_fast\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2560,
+        -620
+      ],
+      "id": "f39c9f99-d934-457c-86d2-7ec8da5a5bad",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        -620
+      ],
+      "id": "d03fdbab-929d-4c33-be34-59bb128fa1aa",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "amount": 240
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2380,
+        -260
+      ],
+      "id": "d5fcb2e7-4fb4-4f20-b530-2451c4f7b8d9",
+      "name": "Wait",
+      "webhookId": "af082111-d00f-4289-8278-d4a0a96c8988"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot[yourbot-token-here]/getFile?file_id={{ $('Telegram Trigger').item.json.message.photo[3].file_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        -160
+      ],
+      "id": "9d04ccd6-bef9-468e-a734-fab23032ae84",
+      "name": "Get Image Path"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "text": "Describe the product and brand in this image in full detail. Fully ignore the background. Focus ONLY on the product.",
+        "imageUrls": "=https://api.telegram.org/file/bot[your-bot-token-here]/{{ $json.result.file_path }}",
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1740,
+        -20
+      ],
+      "id": "50f946c0-29be-4659-9fe7-9cb5089d791f",
+      "name": "Analyze Image",
+      "credentials": {
+        "openAiApi": {
+          "id": "zDZ32auFKuRIohXt",
+          "name": "OpenAi account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"prompt\": {{ $('Set Prompts').item.json.video_prompt }},\n  \"model\": \"{{ $('Set Prompts').item.json.video_model }}\",\n  \"aspectRatio\": \"{{ $('Set Prompts').item.json.aspect_ratio }}\",\n  \"imageUrls\": \"{{ $('Get GPT-Image').item.json.data.response.resultUrls[0] }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2260,
+        -120
+      ],
+      "id": "1757e90a-6aa1-4de6-9083-69fcddb86c87",
+      "name": "Create Veo3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GY8EwBg1KMzSwh9X",
+          "name": "Kie AI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# THE AD CREATOR \n### Author: Jay E from RoboNuggets",
+        "width": 1100,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1900,
+        -40
+      ],
+      "id": "16f0b657-59cf-46d6-bf22-c1f3d9fa9324",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e46f416f-7609-455f-8795-72f52ba1e563",
+              "name": "image_prompt",
+              "value": "={{ $json.output.image_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "6ae1e83d-d93f-497f-b1cb-23b71d219907",
+              "name": "video_prompt",
+              "value": "={{ $json.output.video_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "0237134f-13d5-4c42-8ea0-2b8ec76be67d",
+              "name": "caption",
+              "value": "={{ $json.output.caption }}",
+              "type": "string"
+            },
+            {
+              "id": "4b03ccd0-8a8a-40b3-bbf6-ff4d3aa64dec",
+              "name": "creative_summary",
+              "value": "={{ $json.output.creative_summary }}",
+              "type": "string"
+            },
+            {
+              "id": "87963f3e-497f-44e4-9d4b-02bf95cebe6a",
+              "name": "aspect_ratio",
+              "value": "={{ $json.output.aspect_ratio }}",
+              "type": "string"
+            },
+            {
+              "id": "6de93348-769a-47c5-88c2-471cd0807fbf",
+              "name": "video_model",
+              "value": "={{ $json.output.video_model }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2260,
+        -460
+      ],
+      "id": "e01a9b26-2040-4156-bbef-f386f57fe1db",
+      "name": "Set Prompts"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "message": "=**📣 CAPTION**\n{{ $json.caption.replace(/[*_`]/g, '') }}\n\n**📝 CREATIVE SUMMARY**\n{{ $json.creative_summary.replace(/[*_`]/g, '') }}",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Approve",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Comments",
+              "placeholder": "Type your comments here"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2380,
+        -460
+      ],
+      "id": "7eec1139-700b-4126-ad6d-c8b32146b72d",
+      "name": "Get Approval",
+      "webhookId": "f7cce7b0-24fe-441b-bc0c-df7044203869",
+      "credentials": {
+        "telegramApi": {
+          "id": "pzInIPWCmzUAL9tS",
+          "name": "adrobonugget_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# INPUT",
+        "height": 640,
+        "width": 180,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1700,
+        -520
+      ],
+      "id": "6953c814-ac25-4e94-9259-e73c7fae0d32",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=This is the initial creative brief:\n{{ $('Telegram Trigger').item.json.message.caption }}\n\nDescription of the product:\n{{ $json.choices[0].message.content }}\n\nUse the Think tool to double check your output\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=system_prompt: |\n  ## 🎨 SYSTEM PROMPT: Image + Video Prompt Generator for Product Creatives\n\n  A – Ask:\n    Generate an image prompt and a video prompt (both stringified as JSON), plus a short caption and a structured creative summary, based on a product reference image and the user’s creative intent.\n\n  G – Guidance:\n    role: Seasoned creative director with deep expertise in visual storytelling, branding, and advertising\n    output_count: 1\n    character_limit: No hard limit, but each output should remain focused and readable\n\n    constraints: \n      - Prioritise dynamic backgrounds and elements, with scenes that are fully detailed out (unless otherwise specified by the user)\n      - Reference image must be mentioned and used for detailed visual context\n      - Preserve product label, color, and packaging fidelity\n      - Avoid vague, generic, or brand-inaccurate descriptions\n      - If the reference image contains background elements, ignore them unless essential—focus solely on the product as the visual centerpiece\n      - If the user’s brief lacks detail, creatively interpret their intent and propose a well-directed image and video concept. Be imaginative — act like a creative director, not a mirror.\n      - When the brief is vague, choose from one of the provided inspirational examples below and adapt its style, tone, and structure to fit the specific product and context.\n      - The video setting must align with the image setting \n\n      - \"image_prompt\" must be a string and include the following. Make sure to mention to Keep the product’s packaging, label, text, logo and all design details 100% sharp, clear and untouched. Make sure the background color matches or complements the dominant packaging color. Use realistic shadows and depth. :\n        - description\n        - setting\n        - background\n        - composition\n        - elements\n        - lighting\n        - camera_type\n        - camera_settings\n        - effects\n        - style\n\n      - \"video_prompt\" must be stringified JSON and include:\n        - description (scene must always start with the product already in frame)\n        - setting (describe a setting same as the image)\n        - camera_type (including camera settings)\n        - camera_movement (prioritise simple camera movement)\n        - action (what the product will do, if any)\n        - lighting\n        - other_details\n        - dialogue (optional, depending on user intent)\n        - music\n        - ending (optional)\n        - keywords (optional)\n\n      - \"creative_summary\" must begin with a short, non-technical paragraph summarizing where the video is, what's the style, and what will happen. Then use:\n\n        📢 One-paragraph overview of what will happen in the video\n\n        🖼️ IMAGE:\n        - just summarize the image prompt above but in bullet points\n\n        🎬 VIDEO:\n        - just summarize the video prompt above but in bullet points\n\n        📐 Aspect Ratio: 16:9 or 9:16  (default is 9:16)\n        🧠 Model: veo3 or veo3_fast (default is veo3_fast)\n\n      - \"caption\" must include at least one emoji and 1–2 relevant hashtags. Keep it punchy and optimized for social sharing.\n\n  E – Examples:\n    🟢 good_examples:\n\n      Eye-Catchy Product Video:\n      Capture a cinematic shot of a sunlit Scandinavian bedroom. A sealed IKEA box trembles, opens, and flat pack furniture assembles rapidly into a serene, styled room highlighted by a yellow IKEA throw on the bed. Elements include a fixed wide-angle camera, natural warm lighting with cool accents, and details such as the IKEA box (logo visible), bed with yellow throw, bedside tables, lamps, wardrobe, shelves, mirror, art, rug, curtains, reading chair, and plants. The motion features the box opening and furniture assembling precisely and rapidly. It ends in a calm, modern space with the signature yellow IKEA accent. Keywords include 16:9, IKEA, Scandinavian, fast assembly, no text, warm & cool tones. No text should appear on screen.\n\n      Product Photoshoot:\n      Create a hyper-realistic, high-energy product photo using my exact product from the reference image I provide. Keep the product’s packaging, label, text, logo and all design details 100% sharp, clear and untouched — do NOT blur or change any part of the label or text. Place the product in the center with an explosion of its natural flavor ingredients (for example: cereal balls, chocolate pieces, milk splashes, strawberries, or other matching ingredients). Make sure the background color matches or complements the dominant packaging color. Add dynamic lighting and a vivid splash effect to create energy, but keep the product label perfectly readable and in focus. Use realistic shadows and depth. The final image should feel delicious, fun and eye-catching, with every product detail fully visible and sharp.\n\n      Stylized Editorial Portrait:\n      Capture a cinematic 90s neo-noir portrait of a femme fatale lounging on a bed, legs bent upward and face half-shadowed beneath a sharp black bob. She wears a dark scoop-neck top, bold red lipstick, and holds a smoldering cigarette, its smoke curling into the moody atmosphere. Style the scene with faux 35mm film aesthetics — sepia-tinted shadows, faded blacks, light leaks, timestamp overlays, and soft grain. Use studio-grade top-down lighting mixed with ambient TV or lamp glow to emphasize glossy skin, smoke diffusion, and tactile surfaces like leather and paper. Contrast should be high but natural, blending sultry allure with analog realism. The mood: *Pulp Fiction* meets *American Apparel*, raw yet editorial.\n\n      Street Style Product Ad:\n      Capture a cinematic eyewear portrait from a low angle as a model looks skyward, chin raised in defiance beneath thick, acid-toned sunglasses that wrap tightly across their face. Behind them, rooftops and textures fade into bokeh, contrasting with the glossy sharpness of the sculptural frames. Style with street-meets-sci-fi minimalism — raw skin, matte or sweaty, with clean-lined hair and expressive stillness. Let harsh midday or early golden light cast crisp shadows across the scene. Overlay the warped, melting GlassEye™ logo across the lens or subtly floating in space — a symbol of visual rebellion. Mood: confident, elusive, and hyper-modern.\n\n      Realistic Influencer Portrait:\n      Ultra-realistic fashion portrait of a real zoonan with natural beauty, light skin and soft Ancial features, minimal makeup, locking directly at the camera with a calm expression. She is wearing a clean white high-neck top. Her pose includes one or both arms raised above her head in a graceful editorial gesture. The image is cropped vertically from the chest up, centered composition. Studio lighting is soft and flattering, emphasizing real skin texture pores, natural tones, no airbrushing. Shot on a plain white background. The style of the image is elegant, minimalistic, and high-end like a Vogue magazine editorial.\n\n\n  N – Notation:\n    format: JSON\n    example_output: |\n        {\n          \"image_prompt\": \"string\",\n          \"video_prompt\": \"stringified JSON\",\n          \"caption\": \"short caption\",\n          \"creative_summary\": \"summary of the combined visual concept\",\n          \"aspect_ratio\": \"vertical or horizontal\",\n          \"video_model\": \"veo3 or veo3_fast\"\n        }\n\n\n  T – Tools:\n    You have access to the following tools. Each one is described clearly:\n    - Think Tool: Use this to reflect and reason before responding.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1940,
+        -460
+      ],
+      "id": "b97967c1-2eca-4713-9e31-687c737fc92e",
+      "name": "Initial Prompt AI Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=This is the initial creative brief:\n{{ $('Telegram Trigger').item.json.message.caption }}\n\nHere are additional comments\n{{ $json.data.Comments }}\n\nDescription of the image provided to you. Make sure to focus on just the product:\n{{ $('Analyze Image').item.json.choices[0].message.content }}\n\nUse the Think tool to make sure the image_prompt and video_prompt are in stringified JSON format\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=system_prompt: |\n  ## 🎨 SYSTEM PROMPT: Image + Video Prompt Generator for Product Creatives\n\n  A – Ask:\n    Generate an image prompt and a video prompt (both stringified as JSON), plus a short caption and a structured creative summary, based on a product reference image and the user’s creative intent.\n\n  G – Guidance:\n    role: Seasoned creative director with deep expertise in visual storytelling, branding, and advertising\n    output_count: 1\n    character_limit: No hard limit, but each output should remain focused and readable\n    constraints: \n      - Reference image must be mentioned and used for detailed visual context\n      - Preserve product label, color, and packaging fidelity\n      - Avoid vague, generic, or brand-inaccurate descriptions\n      - If the reference image contains background elements, ignore them unless essential—focus solely on the product as the visual centerpiece\n      - If the user’s brief lacks detail, creatively interpret their intent and propose a well-directed image and video concept. Be imaginative — act like a creative director, not a mirror.\n      - The video setting must align with the image setting unless the user specifies otherwise.\n\n      - \"image_prompt\" must be stringified JSON and include:\n        - description\n        - setting\n        - background\n        - composition\n        - elements\n        - lighting\n        - camera_type\n        - camera_settings\n        - effects\n        - style\n\n      - \"video_prompt\" must be stringified JSON and include:\n        - description\n        - setting\n        - background\n        - camera_type\n        - camera_movement\n        - camera_settings\n        - action\n        - lighting\n        - other_details\n        - dialogue\n        - music\n        - style\n        - ending (optional)\n        - keywords (optional)\n        - aspect_ratio (default: 16:9)\n        - model (default: veo3_fast)\n\n      - \"creative_summary\" must begin with a short, non-technical paragraph summarizing where the video is, what's the style, and what will happen. Then use:\n\n        📢 One-paragraph overview\n\n        🖼️ IMAGE:\n        - Setting  \n        - Background  \n        - Composition  \n        - Elements  \n        - Lighting  \n        - Camera Type  \n        - Camera Settings  \n        - Effects  \n        - Style  \n\n        🎬 VIDEO:\n        - Setting  \n        - Background  \n        - Camera Type  \n        - Camera Movement  \n        - Camera Settings  \n        - Action  \n        - Lighting  \n        - Other Details  \n        - Dialogue  \n        - Music  \n        - Style  \n        - Ending (optional)  \n        - Keywords (optional)  \n\n        📐 Aspect Ratio: 16:9 or 9:16  \n        🧠 Model: veo3 or veo3_fast\n\n      - \"caption\" must include at least one emoji and 1–2 relevant hashtags. Keep it punchy and optimized for social sharing.\n\n  E – Examples:\n    🟢 good_examples:\n      {\n        \"image_prompt\": \"{\\\"description\\\":\\\"Crisp cereal pack with splash and freeze-frame milk burst.\\\",\\\"setting\\\":\\\"Studio\\\",\\\"background\\\":\\\"Gradient blue\\\",\\\"composition\\\":\\\"Centered, eye-level\\\",\\\"elements\\\":[\\\"cereal flakes\\\",\\\"splash arcs\\\"],\\\"lighting\\\":\\\"Top-down with soft bounce\\\",\\\"camera_type\\\":\\\"Canon EOS R5\\\",\\\"camera_settings\\\":\\\"f/4.0, 1/250s, ISO 320\\\",\\\"effects\\\":[\\\"milk splash\\\",\\\"floating particles\\\"],\\\"style\\\":\\\"Hyper-clean\\\"}\",\n        \"video_prompt\": \"{\\\"description\\\":\\\"Splashy cereal particles flying past the camera before revealing product.\\\",\\\"setting\\\":\\\"Studio\\\",\\\"background\\\":\\\"Gradient blue\\\",\\\"camera_type\\\":\\\"RED Komodo\\\",\\\"camera_movement\\\":\\\"dolly out\\\",\\\"camera_settings\\\":\\\"f/4.0, 1/60s, 24fps\\\",\\\"action\\\":\\\"Ingredients swirl and dissolve into logo\\\",\\\"lighting\\\":\\\"High contrast backlight\\\",\\\"other_details\\\":\\\"Light particle trails and lens flare\\\",\\\"dialogue\\\":\\\"No\\\",\\\"music\\\":\\\"Funky breakbeat\\\",\\\"style\\\":\\\"Energetic\\\",\\\"aspect_ratio\\\":\\\"16:9\\\",\\\"model\\\":\\\"veo3_fast\\\"}\",\n        \"caption\": \"Start fresh, start fierce! 🥣✨ #CerealGoals #SplashShot\",\n        \"creative_summary\": \"📢 The product launches into frame as ingredients swirl dramatically around it, building energy before landing clean on the logo.\\n\\n🖼️ IMAGE:\\n- Setting: Studio\\n- Background: Gradient blue\\n- Composition: Product center, camera level\\n- Elements: Milk arcs, cereal flakes\\n- Lighting: Top-down with fill bounce\\n- Camera Type: Canon EOS R5\\n- Camera Settings: f/4.0, 1/250s, ISO 320\\n- Effects: Splash, flake particles\\n- Style: Hyper-clean\\n\\n🎬 VIDEO:\\n- Setting: Same blue studio\\n- Background: Swirl particle sim\\n- Camera Type: RED Komodo\\n- Camera Movement: Dolly out\\n- Camera Settings: f/4.0, 1/60s, 24fps\\n- Action: Particle burst, logo lock-on\\n- Lighting: Bright edge + back glow\\n- Other Details: Particles, overlay text\\n- Dialogue: No\\n- Music: Funky breakbeat\\n- Style: Energetic\\n- Aspect Ratio: 16:9\\n- Model: veo3_fast\"\n      }\n\n    🔴 bad_examples:\n      - \"Product on a table. Looks cool.\"\n      - \"Just shoot the pack and maybe add some text.\"\n\n  N – Notation:\n    format: JSON\n    example_output: |\n      {\n        \"image_prompt\": \"{\\\"description\\\":\\\"...\\\",\\\"setting\\\":\\\"...\\\",\\\"background\\\":\\\"...\\\",\\\"composition\\\":\\\"...\\\",\\\"elements\\\":[\\\"...\\\"],\\\"lighting\\\":\\\"...\\\",\\\"camera_type\\\":\\\"...\\\",\\\"camera_settings\\\":\\\"...\\\",\\\"effects\\\":[\\\"...\\\"],\\\"style\\\":\\\"...\\\"}\",\n        \"video_prompt\": \"{\\\"description\\\":\\\"...\\\",\\\"setting\\\":\\\"...\\\",\\\"background\\\":\\\"...\\\",\\\"camera_type\\\":\\\"...\\\",\\\"camera_movement\\\":\\\"...\\\",\\\"camera_settings\\\":\\\"...\\\",\\\"action\\\":\\\"...\\\",\\\"lighting\\\":\\\"...\\\",\\\"other_details\\\":\\\"...\\\",\\\"dialogue\\\":\\\"...\\\",\\\"music\\\":\\\"...\\\",\\\"style\\\":\\\"...\\\",\\\"aspect_ratio\\\":\\\"16:9\\\",\\\"model\\\":\\\"veo3_fast\\\"}\",\n        \"caption\": \"Visual wow incoming 🚀 #FreshDrop #VisualVibes\",\n        \"creative_summary\": \"📢 [One-line overview]\\n\\n🖼️ IMAGE:\\n- ...\\n\\n🎬 VIDEO:\\n- ...\\n\\n📐 Aspect Ratio: ...\\n🧠 Model: ...\",\n        \"aspect_ratio\": \"vertical or horizontal\",\n        \"video_model\": \"veo3 or veo3_fast\"\n      }\n\n  T – Tools:\n    You have access to the following tools. Each one is described clearly:\n    - Think Tool: Use this to reflect and reason before responding.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        -460
+      ],
+      "id": "0ef3450b-3489-4506-982f-f6bf3fdb30fe",
+      "name": "Revised Prompt AI Agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/gpt4o-image/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filesUrl\": [\n    \"https://api.telegram.org/file/bot[your-bot-token-here]/{{ $('Get Image Path').item.json.result.file_path }}\"\n  ],\n  \"prompt\": \"Take the product in the image and place it in this scenario:  {{ $('Set Prompts').item.json.image_prompt.replace(/\\\"/g, '\\\\\\\"') }}\",\n  \"size\": \"3:2\",\n  \"nVariants\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2260,
+        -260
+      ],
+      "id": "2fa7ad34-ce4b-4216-aeb1-2c51de849ae4",
+      "name": "Create GPT-Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GY8EwBg1KMzSwh9X",
+          "name": "Kie AI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/gpt4o-image/record-info",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2500,
+        -260
+      ],
+      "id": "5e00f370-6946-40f8-9906-9de000b90135",
+      "name": "Get GPT-Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GY8EwBg1KMzSwh9X",
+          "name": "Kie AI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 360
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2380,
+        -120
+      ],
+      "id": "e9626359-6016-4246-a8fd-10b174d3ad04",
+      "name": "Wait 1",
+      "webhookId": "adfe449b-9612-47ba-b366-417da4485885"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/veo/record-info",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2500,
+        -120
+      ],
+      "id": "0955b432-43e1-44f1-a1fe-dbd50d396e48",
+      "name": "Get Veo3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GY8EwBg1KMzSwh9X",
+          "name": "Kie AI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Great! Your creative is now in progress. This will take a few minutes...",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2140,
+        -260
+      ],
+      "id": "9273a436-50a1-484b-9bc7-1c89e8da8376",
+      "name": "In Progress",
+      "webhookId": "991c4161-4375-4b3c-b00e-ef0afa9cc36c",
+      "credentials": {
+        "telegramApi": {
+          "id": "pzInIPWCmzUAL9tS",
+          "name": "adrobonugget_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "file": "={{ $('Get GPT-Image').item.json.data.response.resultUrls[0] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2620,
+        -260
+      ],
+      "id": "4513991e-ae0a-41ee-83a1-3d064c02e670",
+      "name": "Send Image",
+      "webhookId": "0b80f29f-4ecf-40df-9163-b4e5f48fb9e9",
+      "credentials": {
+        "telegramApi": {
+          "id": "pzInIPWCmzUAL9tS",
+          "name": "adrobonugget_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "418d8b43-2c8e-45a9-8055-dd77d2ff9b13",
+              "leftValue": "={{ $json.data.Approve }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2500,
+        -460
+      ],
+      "id": "35f298ca-f6fc-4208-a627-3f983ffe3255",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Got it! I'm now crafting your prompts...",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1740,
+        -300
+      ],
+      "id": "7f2b7c5a-2a61-42a5-b8b2-f50c5c55acb7",
+      "name": "Received",
+      "webhookId": "3aecef87-d2e6-4970-a25e-8a6767dc4f81",
+      "credentials": {
+        "telegramApi": {
+          "id": "pzInIPWCmzUAL9tS",
+          "name": "adrobonugget_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "file": "={{ $('Get Veo3').item.json.data.response.resultUrls[0] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3060,
+        -20
+      ],
+      "id": "61381d12-6465-4952-960b-9f59efc5df61",
+      "name": "Send Video",
+      "webhookId": "beff1778-d0f4-4a14-a42d-ba3ce3b663ea",
+      "credentials": {
+        "telegramApi": {
+          "id": "pzInIPWCmzUAL9tS",
+          "name": "adrobonugget_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# OUTPUT",
+        "height": 640,
+        "width": 180,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3020,
+        -520
+      ],
+      "id": "ff18fa69-3932-4340-9a97-73713630d149",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Initial Prompt AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Revised Prompt AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Initial Prompt AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          },
+          {
+            "node": "Revised Prompt AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Initial Prompt AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Revised Prompt AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get GPT-Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image Path": {
+      "main": [
+        [
+          {
+            "node": "Analyze Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Image": {
+      "main": [
+        [
+          {
+            "node": "Initial Prompt AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Veo3": {
+      "main": [
+        [
+          {
+            "node": "Wait 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Prompts": {
+      "main": [
+        [
+          {
+            "node": "Get Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Approval": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial Prompt AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revised Prompt AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create GPT-Image": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get GPT-Image": {
+      "main": [
+        [
+          {
+            "node": "Send Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1": {
+      "main": [
+        [
+          {
+            "node": "Get Veo3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Veo3": {
+      "main": [
+        [
+          {
+            "node": "Send Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In Progress": {
+      "main": [
+        [
+          {
+            "node": "Create GPT-Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Image": {
+      "main": [
+        [
+          {
+            "node": "Create Veo3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revised Prompt AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Received": {
+      "main": [
+        [
+          {
+            "node": "Get Image Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f823e94d-43f8-4510-b2d1-e5e7790d160a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "addaa68bf5af965c06c3765c811549851eb65db8df4677e0c6253726ffcac493"
+  },
+  "id": "PrU5YahvzSgngqtS",
+  "tags": []
+}

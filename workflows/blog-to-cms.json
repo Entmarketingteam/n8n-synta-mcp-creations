@@ -1,0 +1,92 @@
+{
+  "name": "Blog to CMS (canonical shape → Webflow or WordPress)",
+  "nodes": [
+    {
+      "id": "trigger_blog_cms",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "source_sheet_blog",
+      "name": "Read blog briefs (Sheet)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [220, 0],
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "mode": "id", "value": "" },
+        "sheetName": { "__rl": true, "mode": "list", "value": "" },
+        "filtersUI": { "values": [] },
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "One row per post. Columns: topic, optional title, slug, etc. Add filters (e.g. status=ready) if needed. See README-blog-to-cms.md."
+    },
+    {
+      "id": "llm_placeholder_blog",
+      "name": "Generate content (add OpenAI/LLM node)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "jsCode": "// Placeholder: pass through sheet row. Replace this node with an OpenAI (or AI) node that\n// generates title, slug, body, excerpt, featured_image_url, featured_image_alt, meta_title, meta_description.\n// Output should be one item per row with those fields (or merge with sheet row).\nconst items = $input.all();\nreturn items.map(item => {\n  const j = item.json;\n  return {\n    json: {\n      title: j.title || j.topic || 'Untitled',\n      slug: j.slug || (j.topic || '').toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, ''),\n      body_html: j.body_html || j.content || '',\n      excerpt: j.excerpt || '',\n      featured_image_url: j.featured_image_url || '',\n      featured_image_alt: j.featured_image_alt || '',\n      meta_title: j.meta_title || j.title || j.topic,\n      meta_description: j.meta_description || j.excerpt || '',\n      status: j.status || 'draft',\n      published_at: j.published_at || null\n    }\n  };\n});\n"
+      },
+      "notesInFlow": true,
+      "notes": "Swap for OpenAI/LLM node: input = sheet row (topic etc), output = canonical blog fields. See docs/CONTENT-CANONICAL-SCHEMAS.md."
+    },
+    {
+      "id": "normalize_canonical_blog",
+      "name": "Normalize to canonical blog",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [660, 0],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            { "id": "title", "name": "title", "value": "={{ $json.title }}", "type": "string" },
+            { "id": "slug", "name": "slug", "value": "={{ $json.slug }}", "type": "string" },
+            { "id": "body_html", "name": "body_html", "value": "={{ $json.body_html }}", "type": "string" },
+            { "id": "excerpt", "name": "excerpt", "value": "={{ $json.excerpt }}", "type": "string" },
+            { "id": "featured_image_url", "name": "featured_image_url", "value": "={{ $json.featured_image_url }}", "type": "string" },
+            { "id": "featured_image_alt", "name": "featured_image_alt", "value": "={{ $json.featured_image_alt }}", "type": "string" },
+            { "id": "meta_title", "name": "meta_title", "value": "={{ $json.meta_title }}", "type": "string" },
+            { "id": "meta_description", "name": "meta_description", "value": "={{ $json.meta_description }}", "type": "string" },
+            { "id": "status", "name": "status", "value": "={{ $json.status }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Canonical shape per docs/CONTENT-CANONICAL-SCHEMAS.md. Next node = CMS adapter (Webflow or WordPress)."
+    },
+    {
+      "id": "cms_adapter_http",
+      "name": "HTTP Request (CMS adapter)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.webflow.com/v2/collections/{{ $env.WEBFLOW_COLLECTION_ID || 'YOUR_COLLECTION_ID' }}/items",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"name\": {{ JSON.stringify($json.title) }},\n    \"slug\": {{ JSON.stringify($json.slug) }},\n    \"post-body\": {{ JSON.stringify($json.body_html) }},\n    \"excerpt\": {{ JSON.stringify($json.excerpt) }},\n    \"featured-image-url\": {{ JSON.stringify($json.featured_image_url) }}\n  }\n}",
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Webflow example. For WordPress: POST /wp/v2/posts with body mapping per CONTENT-CANONICAL-SCHEMAS. Swap URL and body for your CMS."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Read blog briefs (Sheet)", "type": "main", "index": 0 }]] },
+    "Read blog briefs (Sheet)": { "main": [[{ "node": "Generate content (add OpenAI/LLM node)", "type": "main", "index": 0 }]] },
+    "Generate content (add OpenAI/LLM node)": { "main": [[{ "node": "Normalize to canonical blog", "type": "main", "index": 0 }]] },
+    "Normalize to canonical blog": { "main": [[{ "node": "HTTP Request (CMS adapter)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

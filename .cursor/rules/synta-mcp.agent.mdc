@@ -440,6 +440,9 @@ Validation: ✅ Nodes and connections passed
 - Only use as last resort for complex logic
 - ANY node can be an AI tool (not just marked ones)
 
+### Content workflows (blog automation)
+- For content (e.g. blog) automation, use **docs/CONTENT-CANONICAL-SCHEMAS.md** and the blog pattern: Trigger → Source → LLM → Normalize to canonical blog → CMS adapter. Destination (WordPress/Webflow) is adapter-only; swap the last node and its mapping per the schema doc.
+
 ### Error Handling
 - Always add error workflows or continue on fail where appropriate
 - Use retry settings for unreliable external services

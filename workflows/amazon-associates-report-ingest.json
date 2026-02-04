@@ -53,6 +53,34 @@
       }
     },
     {
+      "id": "append_earnings_sheet",
+      "name": "Append to Creator Earnings Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [900, 0],
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Earnings" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "creator_id": "={{ $json.creator_id }}",
+            "source_platform": "={{ $json.source_platform }}",
+            "period_start": "={{ $json.period_start }}",
+            "period_end": "={{ $json.period_end }}",
+            "normalized_earnings": "={{ $json.normalized_earnings }}",
+            "currency": "={{ $json.currency }}",
+            "raw_type": "={{ $json.raw_type }}",
+            "recorded_at": "={{ $json.recorded_at }}"
+          }
+        },
+        "options": {}
+      },
+      "notesInFlow": true,
+      "notes": "Set Document ID + sheet name 'Earnings' in n8n. Header row: creator_id, source_platform, period_start, period_end, normalized_earnings, currency, raw_type, recorded_at. See docs/CREATOR-DASHBOARD-DATA-FLOW.md."
+    },
+    {
       "id": "aggregate_amazon_ingest",
       "name": "Aggregate",
       "type": "n8n-nodes-base.aggregate",
@@ -81,7 +109,7 @@
     "Webhook": { "main": [[{ "node": "Normalize input", "type": "main", "index": 0 }]] },
     "Normalize input": { "main": [[{ "node": "Parse Amazon CSV", "type": "main", "index": 0 }]] },
     "Parse Amazon CSV": { "main": [[{ "node": "Normalize to canonical schema", "type": "main", "index": 0 }]] },
-    "Normalize to canonical schema": { "main": [[{ "node": "Aggregate", "type": "main", "index": 0 }]] },
+    "Normalize to canonical schema": { "main": [[{ "node": "Aggregate", "type": "main", "index": 0 }, { "node": "Append to Creator Earnings Sheet", "type": "main", "index": 0 }]] },
     "Aggregate": { "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" }

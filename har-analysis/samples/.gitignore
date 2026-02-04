@@ -1,0 +1,2 @@
+# Keep HAR files out of version control (may contain tokens/cookies)
+*.har

@@ -1,0 +1,391 @@
+{
+  "name": "researchRobo v0.1 by RoboNuggets",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5f230c72-acf9-4b48-88d2-e895d4e876a9",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -140
+      ],
+      "id": "70500665-5f8e-4410-8af3-16d01eb78f52",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "model": "sonar",
+        "messages": {
+          "message": [
+            {
+              "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('message0_Text', ``, 'string') }}"
+            }
+          ]
+        },
+        "simplify": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Simplify_Output', ``, 'boolean') }}",
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexityTool",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -140
+      ],
+      "id": "a76691a9-2235-4d94-b11a-19a391143c34",
+      "name": "Perplexity",
+      "credentials": {
+        "perplexityApi": {
+          "id": "POWoGNx7eaDsTbTe",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"topic\": \"cdance ai\",\n    \"description\": \"CDance is a new AI model that animates still images into dance videos — and Twitter is full of wild, funny, and surreal demos right now.\"\n  },\n  {\n    \"topic\": \"midjourney video\",\n    \"description\": \"Midjourney just released video generation — users are sharing realistic, stylized motion clips made from simple prompts. Big buzz across creative AI Twitter.\"\n  },\n  {\n    \"topic\": \"veo google\",\n    \"description\": \"Google's Veo model is producing cinematic video clips from text prompts, and creators are already testing its filmmaking potential online.\"\n  },\n  {\n    \"topic\": \"suno v3\",\n    \"description\": \"Suno V3 recently dropped with major improvements in AI music generation. Tons of examples are popping up with AI-made vocals and full songs.\"\n  },\n  {\n    \"topic\": \"ideogram ai\",\n    \"description\": \"Ideogram just launched a major update that dramatically improves text rendering in images — people are posting clean logos and typography samples everywhere.\"\n  }\n]\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        -140
+      ],
+      "id": "b8506c7b-eaa6-44b5-a61e-339ca648df58",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        60,
+        -140
+      ],
+      "id": "d45c325c-3cd3-45ed-aae7-11222afc330f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "NyuhXI96tWK9dR2J",
+          "name": "OpenAi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI",
+          "mode": "list",
+          "cachedResultName": "tweetRobo v0.1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJsPX8i-kU8u60g9tKTKd4oweGECoNqXGlppIfiSaKI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "==ROW()-1",
+            "topic": "={{ $json.topic }}",
+            "description": "={{ $json.description }}",
+            "date_added": "={{new Date().toISOString().split('T')[0]}}",
+            "tweets_created": "for creation"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_added",
+              "displayName": "date_added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tweets_created",
+              "displayName": "tweets_created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "twitter_thread_1",
+              "displayName": "twitter_thread_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "twitter_thread_2",
+              "displayName": "twitter_thread_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "twitter_thread_3",
+              "displayName": "twitter_thread_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "schedule_1",
+              "displayName": "schedule_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "schedule_2",
+              "displayName": "schedule_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "schedule_3",
+              "displayName": "schedule_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        600,
+        0
+      ],
+      "id": "276d7b4e-0994-4fcc-9582-242af2ded53b",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WmDBwEhcrLeG9D67",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// This code takes an array where each item has an \"output\" array\n// It flattens all inner \"output\" entries into separate items\n\nconst results = [];\n\nfor (const item of $input.all()) {\n  const outputs = item.json.output;\n  for (const entry of outputs) {\n    results.push({ json: entry });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "c116e3c6-dae5-4423-942f-869764a2c6a7",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Give me topics",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=✅ SYSTEM PROMPT\nUse the Think tool to carefully evaluate your output before responding.\n\nUse the Perplexity Tool to search the internet for the recent topics.\n\nYour output: 5 recent topic ideas with strong hook potential\n\nYour role is to act as a research assistant AI that discovers timely, compelling, and relevant content ideas based on the topic provided. You must analyze recent news, emerging trends, viral content, or public discourse around the user’s chosen theme. Your job is to suggest 5 standout subtopics that would be ideal for repurposing into Twitter threads, videos, or short-form content.\n\n🧾 INPUTS\n\nWhat I'm interested in:\n\"\"\"\nI run RoboNuggets, an AI education platform. I'm looking for **recent AI model releases or product updates** that are generating a lot of discussion and examples on Twitter.\n\nThe ideal topic is:\n- A newly released AI model (e.g. Midjourney Video, Veo, Seedance, Stable Diffusion update, etc.)\n- Actively being demoed by creators or developers on Twitter\n- Visually impressive, surprising, or useful\n- Easy to turn into a Twitter thread with links to example tweets\n\nAvoid: generic AI news, opinion pieces, or content without strong visual examples.\n\nMy goal is to help my audience stay ahead by showcasing the most **recent**, **practical**, and **shareable** AI developments in a smart, engaging way.\n\"\"\"\n\n🧠 SELECTION CRITERIA\n\nSource information from the past 4 days, prioritizing freshness.\n\nPrefer topics that are:\n\nVisually surprising\nNew releases in the area I'm interested in\nTrending in the industry provided\nEasy to find examples for on twitter\nClearly relevant to the description of interest\n\n\nAvoid vague or generic takes — be specific and concrete.\n\n\n***\n\n🗂️ OUTPUT FORMAT (JSON)\n\nReturn an array of exactly 5 topic ideas in this structure:\n {\n    \"topic\": \"midjourney video\",\n    \"description\": \"midjourney just released their video capabilities.\"\n}\n\n***\n\n✅ Input Guidance for topic and description\n\n1. topic (used as a Twitter search keyword)\nThis should be:\n1–4 words long\nBroad enough to return a range of tweets in a keyword search\nStill focused enough to be relevant to your interest area\nAvoid overly niche or compound phrases that are unlikely to appear in real-time Twitter discourse\n\n🟢 Good examples:\n\nmidjourney video\nAI avatars\nveo3\nseedance 1.0 pro\nai music\n\n🔴 Avoid:\n\nmidjourney released v7.3 video editor (too specific)\ncool ai examples with video synthesis and captioning (too complex)\nhow gen z is changing ai marketing (too abstract)\n\n\n2. description (context for filtering and evaluating results)\nThis should be:\n\n1–3 sentences (aim for ~15–40 words total)\nDescriptive and helpful for what kind of examples or results you want\n\nInclude details like the kind of content you're looking for, the audience you care about, or what qualifies something as “good” or “useful” to you\n\n🟢 Good examples:\n\n\"I'm looking for recent breakthroughs or viral content around how AI can be used to generate short-form video content.\"\n\n\"Interested in cool or surprising examples of people using analog watches in modern fashion or tech contexts.\"\n\n\"Looking for tweets showing real-world demos or reactions to the latest Midjourney video features.\"\n\n🔴 Avoid:\n\n\"AI stuff\" (too vague)\n\n\"Just anything cool\" (no filtering signal)\n\n\"All things midjourney\" (too broad for quality curation)\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        180,
+        0
+      ],
+      "id": "3abc6d66-0f7c-4054-93fb-0f516bb3ebb0",
+      "name": "researchRobo AI Agent"
+    },
+    {
+      "parameters": {
+        "content": "# 🍳 researchRobo v0.1\n# (by RoboNuggets)\n## How to Set Up for Your Own Space  \n\n**Author:** Jay E from [robonuggets.com](https://robonuggets.com)\n\nThis guide shows you how to set up this workflow for your own space. Hope you find this of value!\n\n---\n\n## 🔳 Part 1: Set Up OpenAI for Ideation\n1. Go to [OpenAI API Platform](https://platform.openai.com/api-keys)  \n2. Create an account (if you don’t have one).  \n3. Generate an API key.  \n4. Create a credential using that key via the **ChatGPT Chat Model** node.\n\n---\n\n## 🔳 Part 2: Set Up the Google Sheet Logger  \n1. Make a copy of the [Google Sheet template](https://docs.google.com/spreadsheets/d/1LbcUBbjU7rq1gQKt-h3obKyBV65K9rnJIzaLSL_6mQg/edit?usp=sharing) provided.  \n2. Use it to log results generated in your workflow.  \n3. Connect the sheet in n8n using the **Google Sheets node** and create a credential if needed.\n\n---\n\n## 🔳 Part 3: Configure Perplexity for research\n1. Go to [Perplexity](https://www.perplexity.ai/) and sign in.  \n2. Generate your API key in the Settings\n3. Configure the Perplexity node and add your API key in the credentials there\n\n---\n\n## 🔳 Part 4: Customize the System Prompts  \n1. Choose the niche or theme for your content\n2. Edit the system prompt in the \"TweetRobo AI Agent\", especially the tone of voice and brand\n",
+        "height": 1340,
+        "width": 420,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -520
+      ],
+      "id": "1afec7db-3443-4914-80b2-efc4613798f1",
+      "name": "Sticky Note12"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "researchRobo AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "researchRobo AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity": {
+      "ai_tool": [
+        [
+          {
+            "node": "researchRobo AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "researchRobo AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "researchRobo AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "researchRobo AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "73eb784e-d6ce-406f-8d0f-6206450803d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "addaa68bf5af965c06c3765c811549851eb65db8df4677e0c6253726ffcac493"
+  },
+  "id": "CwDEDpKq1fAcEDBB",
+  "tags": []
+}

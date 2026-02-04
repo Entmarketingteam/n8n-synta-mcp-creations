@@ -10,6 +10,7 @@ This doc defines the **canonical data model** for creator earnings and activity 
 - **Amazon:** Associates Central report rows (revenues, bounties, sales) are parsed (XML/CSV) and mapped into this schema.
 - **Instagram:** Instagram API metrics (e.g. insights, business discovery) are mapped into this schema where applicable (earnings-like or activity).
 - **Dashboard:** Queries one normalized store; filters by `source_platform`, creator, and period.
+- **LTK:** Commissions and performance from LTK API (or runner) map into the same schema so LTK + Amazon (and later ShopMy) appear in one Earnings view.
 
 ---
 
@@ -18,7 +19,7 @@ This doc defines the **canonical data model** for creator earnings and activity 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `creator_id` | string | Yes | Your internal creator identifier (e.g. slug or UUID). |
-| `source_platform` | string | Yes | `amazon` \| `instagram` \| (future: `ltk`, `shopmy`, etc.). |
+| `source_platform` | string | Yes | `amazon` \| `instagram` \| `ltk` \| (future: `shopmy`, etc.). |
 | `period_start` | date (ISO 8601) | Yes | Start of the reporting period (e.g. `2025-01-01`). |
 | `period_end` | date (ISO 8601) | Yes | End of the reporting period (e.g. `2025-01-31`). |
 | `normalized_earnings` | number | No* | Single earnings value for the row (revenue, commission, bounty). *Required when the row represents earnings. |
@@ -75,7 +76,27 @@ For non-earnings metrics (reach, impressions), you can still use the same table 
 
 ---
 
-## 5. Dashboard usage
+## 5. LTK mapping
+
+**Source:** LTK API (or LTK Browserbase runner): `get_user_info`, `commissions_summary`, `performance_summary`. Normalize so LTK rows land in the same Earnings table as Amazon/Instagram.
+
+| Canonical field | Source (LTK) |
+|-----------------|--------------|
+| `creator_id` | Injected from your config (e.g. Airtable Creator or workflow static data). |
+| `source_platform` | Always `ltk`. |
+| `period_start` | From `commissions_summary` or `performance_summary` date range (e.g. `start_date`), or snapshot date minus 30 days. |
+| `period_end` | From `commissions_summary` or `performance_summary` (e.g. `end_date`), or snapshot date. |
+| `normalized_earnings` | From `commissions_summary` (e.g. total commission / paid amount for the period); parse number from the API response. |
+| `currency` | From API (e.g. `currency: "USD"`) or default `USD`. |
+| `raw_type` | e.g. `commission`, `ltk_performance`. |
+| `raw_payload` | Slice of `commissions_summary` and/or `performance_summary` for debugging. |
+| `recorded_at` | Time of API pull (e.g. `extracted_at`). |
+
+**Implementation:** In the LTK sync workflow, after “Store to Sheets” (LTK Snapshots), add a Code node that reads the current item (user_info, commissions, performance_summary), extracts total commission and date range, and outputs one or more items in canonical shape. Then append those items to the same **Earnings** sheet (Google Sheets or Airtable) that Amazon ingest uses.
+
+---
+
+## 7. Dashboard usage
 
 - **Filter by platform:** `WHERE source_platform = 'amazon'` or `'instagram'`.
 - **Filter by creator:** `WHERE creator_id = ?`.
@@ -85,7 +106,7 @@ For non-earnings metrics (reach, impressions), you can still use the same table 
 
 ---
 
-## 6. References
+## 8. References
 
 - [AMAZON-ASSOCIATES-REPORTS.md](AMAZON-ASSOCIATES-REPORTS.md) – Amazon report types and field mapping.
 - Ingestion: see ingestion spec or n8n workflow that accepts uploaded Amazon XML/CSV and writes normalized rows (e.g. to Airtable or a DB).
