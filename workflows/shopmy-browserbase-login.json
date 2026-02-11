@@ -60,18 +60,130 @@
       "parameters": { "batchSize": 1 }
     },
     {
+      "id": "has_cookies",
+      "name": "Has cookies?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [580, 110],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "cookies",
+              "leftValue": "={{ $json.ShopMyCookies ?? $json.shopmyCookies ?? $json.shopmy_cookies ?? '' }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "notes": "If Airtable has ShopMyCookies (stored from POST /auth/refresh), use them to skip login. Else take false branch to refresh."
+    },
+    {
+      "id": "use_stored_cookies",
+      "name": "Use stored cookies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 0],
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst raw = item.ShopMyCookies ?? item.shopmyCookies ?? item.shopmy_cookies ?? [];\nconst cookies = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return []; } })() : (Array.isArray(raw) ? raw : []);\nreturn [{ json: {\n  creatorId: item.creatorId ?? item.CreatorId ?? 'unknown',\n  creatorEmail: item.creatorEmail ?? item.CreatorEmail ?? '',\n  cookies\n} }];"
+      }
+    },
+    {
+      "id": "refresh_cookies",
+      "name": "POST /auth/refresh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "=YOUR_RUNNER_URL/auth/refresh",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ shopmyEmail: $json.shopmyEmail ?? $json.ShopMyEmail, shopmyPassword: $json.shopmyPassword ?? $json.ShopMyPassword }) }}",
+        "options": {}
+      },
+      "notes": "Runner logs in and returns { cookies }. Store them in Airtable so next run uses POST /run with cookies (no login popup)."
+    },
+    {
+      "id": "prepare_run_body",
+      "name": "Prepare run body after refresh",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 220],
+      "parameters": {
+        "jsCode": "const loopItem = $('Loop over creators').item.json;\nconst refresh = $input.first().json;\nconst cookies = refresh.cookies && Array.isArray(refresh.cookies) ? refresh.cookies : [];\nreturn [{ json: {\n  creatorId: loopItem.creatorId ?? loopItem.CreatorId ?? 'unknown',\n  creatorEmail: loopItem.creatorEmail ?? loopItem.CreatorEmail ?? '',\n  cookies,\n  _recordId: loopItem.id ?? null\n} }];"
+      }
+    },
+    {
+      "id": "has_record_id",
+      "name": "Has Airtable record id?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [940, 220],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            { "id": "rid", "leftValue": "={{ $json._recordId }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "update_airtable_cookies",
+      "name": "Update Airtable with cookies",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1160, 120],
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "mode": "id", "value": "" },
+        "table": { "__rl": true, "mode": "id", "value": "" },
+        "id": "={{ $json._recordId }}",
+        "fields": {
+          "ShopMyCookies": "={{ JSON.stringify($json.cookies || []) }}"
+        },
+        "options": {}
+      },
+      "notes": "Only when creator came from Airtable (has id). Add column ShopMyCookies (Long text) to your creators table."
+    },
+    {
+      "id": "set_cookies_for_run",
+      "name": "Set cookies for run",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1160, 320],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            { "id": "c1", "name": "creatorId", "value": "={{ $json.creatorId }}", "type": "string" },
+            { "id": "c2", "name": "creatorEmail", "value": "={{ $json.creatorEmail }}", "type": "string" },
+            { "id": "c3", "name": "cookies", "value": "={{ $json.cookies }}", "type": "array" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
       "id": "call_runner",
       "name": "Call Browserbase runner",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 110],
+      "position": [920, 110],
       "parameters": {
         "method": "POST",
         "url": "=YOUR_RUNNER_URL/run",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"creatorId\": \"{{ $json.creatorId || $json.CreatorId }}\",\n  \"creatorEmail\": \"{{ $json.creatorEmail || $json.CreatorEmail }}\",\n  \"shopmyEmail\": \"{{ $json.shopmyEmail || $json.ShopMyEmail }}\",\n  \"shopmyPassword\": \"{{ $json.shopmyPassword || $json.ShopMyPassword }}\"\n}"
-      }
+        "jsonBody": "={{ JSON.stringify({ creatorId: $json.creatorId, creatorEmail: $json.creatorEmail, cookies: $json.cookies || [] }) }}",
+        "options": {}
+      },
+      "notes": "When cookies are provided (from stored or refresh), runner skips login. Set YOUR_RUNNER_URL in workflow or env (e.g. Railway runner URL)."
     },
     {
       "id": "check_csv",
@@ -111,7 +223,18 @@
     "Schedule (optional)": { "main": [[{ "node": "Get creators to process", "type": "main", "index": 0 }]] },
     "Get creators to process": { "main": [[{ "node": "Loop over creators", "type": "main", "index": 0 }]] },
     "Set creators (fallback / test)": { "main": [[{ "node": "Loop over creators", "type": "main", "index": 0 }]] },
-    "Loop over creators": { "main": [[{ "node": "Call Browserbase runner", "type": "main", "index": 0 }]] },
+    "Loop over creators": { "main": [[{ "node": "Has cookies?", "type": "main", "index": 0 }]] },
+    "Has cookies?": {
+      "main": [
+        [{ "node": "Use stored cookies", "type": "main", "index": 0 }],
+        [{ "node": "POST /auth/refresh", "type": "main", "index": 0 }]
+      ]
+    },
+    "Use stored cookies": { "main": [[{ "node": "Call Browserbase runner", "type": "main", "index": 0 }]] },
+    "POST /auth/refresh": { "main": [[{ "node": "Prepare run body after refresh", "type": "main", "index": 0 }]] },
+    "Prepare run body after refresh": { "main": [[{ "node": "Set cookies for run", "type": "main", "index": 0 }], [{ "node": "Has Airtable record id?", "type": "main", "index": 0 }]] },
+    "Has Airtable record id?": { "main": [[{ "node": "Update Airtable with cookies", "type": "main", "index": 0 }], []] },
+    "Set cookies for run": { "main": [[{ "node": "Call Browserbase runner", "type": "main", "index": 0 }]] },
     "Call Browserbase runner": { "main": [[{ "node": "Has CSV?", "type": "main", "index": 0 }]] },
     "Has CSV?": {
       "main": [

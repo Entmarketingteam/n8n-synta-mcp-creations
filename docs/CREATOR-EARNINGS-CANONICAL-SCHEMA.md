@@ -96,6 +96,28 @@ For non-earnings metrics (reach, impressions), you can still use the same table 
 
 ---
 
+## 6. ShopMy mapping
+
+**Source:** ShopMy CSV exports (Links, Domains, Creator Orders, Commissions, Payment report) from the Browserbase runner or API. Map the same way as LTK so ShopMy rows land in the same Earnings table as Amazon and LTK.
+
+| Canonical field | Source (ShopMy) |
+|-----------------|-----------------|
+| `creator_id` | Injected from workflow (e.g. `creatorId` from Airtable or runner response). |
+| `source_platform` | Always `shopmy`. |
+| `period_start` | From row "Transaction Date", "Completion Date", "Payment Date", or "Created On" (use as single-day period or range start). |
+| `period_end` | Same date as period_start for single-day rows, or row "Payment Date" / "Completion Date" for range end. |
+| `normalized_earnings` | First non-empty numeric from: Commission, Commissions Earned, Order Total, Amount Earned, Amount (strip currency; parse number). |
+| `currency` | From report or default `USD`. |
+| `raw_type` | e.g. `commission`, `order`, `opportunity_commission`, `payment`. |
+| `raw_payload` | Original row (or key columns) for debugging. |
+| `recorded_at` | Time of ingestion (ISO 8601). |
+
+**CSV column names (ShopMy):** Commission, Commissions Earned, Order Total, Amount Earned, Transaction Date, Payment Date, Completion Date, Created On, Merchant, Domain, Status. See [SHOPMY-CSV-FORMAT-AND-API.md](SHOPMY-CSV-FORMAT-AND-API.md).
+
+**Implementation:** (1) **CSV path:** In the ShopMy CSV Processor workflow, after parsing CSV, the "Normalize to canonical (ShopMy)" Code node maps each row to the canonical schema, then appends to the same **Earnings** sheet. (2) **API path (Payout Summary):** The [ShopMy Payout Summary pipeline](SHOPMY-PAYOUT-SUMMARY-PIPELINE.md) outputs `normal_commissions`, `opportunity_commissions`, `referral_bonuses` with date/earned/status; add an optional Code node to map each commission row to this schema (`period_start`/`period_end` from transaction date, `normalized_earnings` from earned amount, `raw_type` = `commission` / `opportunity_commission` / `referral_bonus`) and append to the same Earnings store.
+
+---
+
 ## 7. Dashboard usage
 
 - **Filter by platform:** `WHERE source_platform = 'amazon'` or `'instagram'`.

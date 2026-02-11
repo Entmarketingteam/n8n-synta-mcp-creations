@@ -1,21 +1,32 @@
 # ShopMy API-First (no browser)
 
-This workflow uses **only HTTP API calls** to ShopMy—no Browserbase or browser automation.
+These workflows use **only HTTP API calls** to ShopMy—no Browserbase or browser automation.
 
-## Endpoints used
+## Two API-first patterns
+
+| Pattern | Workflow | Auth | user_id | Best for |
+|--------|----------|------|--------|----------|
+| **Cookie + find_by_email** | [ShopMy API (Creators)](../workflows/shopmy-api-creators.json) | Login → Cookie + x-csrf-token | From POST Users/find_by_email | On-demand or webhook; Payments + Payout summary + Pins → CSV processor |
+| **Session headers + pre-known user_id** | [ShopMy Payout Summary (Creators)](../workflows/shopmy-payout-summary-creators.json) | Login → x-csrf-token + x-session-id (from response/fallback) | Pre-configured per creator | Scheduled payout sync; payout_summary + Payments + CustomRates → GSheet/Airtable |
+
+See [SHOPMY-PAYOUT-SUMMARY-PIPELINE.md](SHOPMY-PAYOUT-SUMMARY-PIPELINE.md) for the payout-summary pipeline (recommended for scheduled creator data).
+
+## Endpoints used (both patterns)
 
 | Step | Method | URL | Purpose |
 |------|--------|-----|---------|
-| 1 | POST | `https://apiv3.shopmy.us/api/Auth/session` | Login; get session cookies |
-| 2 | POST | `https://apiv3.shopmy.us/api/Users/find_by_email` | Get `User_id` from email |
+| 1 | POST | `https://apiv3.shopmy.us/api/Auth/session` | Login; get session (cookies and/or headers) |
+| 2 | POST | `https://apiv3.shopmy.us/api/Users/find_by_email` | Get `User_id` from email (Cookie pattern only) |
 | 3 | GET | `https://apiv3.shopmy.us/api/Payments/by_user/{user_id}` | Payments data |
 | 4 | GET | `https://apiv3.shopmy.us/api/Payouts/payout_summary/{user_id}` | Payout summary |
-| 5 | GET | `https://apiv3.shopmy.us/api/Pins?User_id={user_id}&limit=500` | Pins/links data |
+| 5 | GET | `https://apiv3.shopmy.us/api/Pins?User_id={user_id}&limit=500` | Pins/links data (Cookie pattern) |
+| 6 | GET | `https://apiv3.shopmy.us/api/CustomRates/all_rates/{user_id}` | Brand rates (Payout Summary pattern) |
 
 Headers (from HAR):
 
-- **Auth/session:** `Content-Type: application/json`, `Origin: https://shopmy.us`, `Referer: https://shopmy.us/`, `x-apicache-bypass: true`, `x-session-id: <timestamp>`
-- **After login:** Use `Cookie` from response `Set-Cookie`, and `x-csrf-token` (from `shopmy_csrf_token` cookie) on all subsequent requests.
+- **Auth/session:** `Content-Type: application/json`, `Origin: https://shopmy.us`, `Referer: https://shopmy.us/`, `x-apicache-bypass: true`, `x-session-id: <timestamp>` (optional).
+- **After login (Cookie pattern):** Use `Cookie` from response `Set-Cookie`, and `x-csrf-token` (from `shopmy_csrf_token` cookie) on all subsequent requests.
+- **After login (Payout Summary pattern):** Use `x-csrf-token` (from response headers) and `x-session-id` (client-generated, e.g. timestamp) on all data requests; Cookie not required for payout_summary/Payments/CustomRates.
 
 ## Workflow: ShopMy API (Creators)
 

@@ -1,0 +1,652 @@
+{
+  "name": "ShopMy Creator Data Pipeline (Payout Summary)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "creators",
+              "name": "creators",
+              "type": "array",
+              "value": "={{ [\n  {\n    \"creator_name\": \"Nicki Entenmann\",\n    \"email\": \"marketingteam@nickient.com\",\n    \"password\": $env.SHOPMY_NICKI_PASSWORD || \"\",\n    \"user_id\": \"65244\"\n  }\n] }}"
+            }
+          ]
+        }
+      },
+      "id": "creators_config",
+      "name": "Creator Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split_creators",
+      "name": "Loop Creators",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://apiv3.shopmy.us/api/Auth/session",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Origin",
+              "value": "https://shopmy.us"
+            },
+            {
+              "name": "Referer",
+              "value": "https://shopmy.us/"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"username\": $json.email, \"password\": $json.password } }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "auth_login",
+      "name": "ShopMy Login",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "creator_name",
+              "name": "creator_name",
+              "type": "string",
+              "value": "={{ $('Loop Creators').item.json.creator_name }}"
+            },
+            {
+              "id": "user_id",
+              "name": "user_id",
+              "type": "string",
+              "value": "={{ $('Loop Creators').item.json.user_id }}"
+            },
+            {
+              "id": "session_id",
+              "name": "session_id",
+              "type": "string",
+              "value": "={{ Date.now().toString() }}"
+            },
+            {
+              "id": "csrf_token",
+              "name": "csrf_token",
+              "type": "string",
+              "value": "={{ $json.headers?.['x-csrf-token'] || $json.headers?.['X-CSRF-Token'] || require('crypto').randomUUID() }}"
+            },
+            {
+              "id": "auth_success",
+              "name": "auth_success",
+              "type": "boolean",
+              "value": "={{ $json.statusCode === 200 }}"
+            }
+          ]
+        }
+      },
+      "id": "extract_session",
+      "name": "Extract Session",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "auth-check",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.auth_success }}",
+              "rightValue": true
+            }
+          ]
+        }
+      },
+      "id": "check_auth",
+      "name": "Auth OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://apiv3.shopmy.us/api/Payouts/payout_summary/{{ $json.user_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-csrf-token",
+              "value": "={{ $json.csrf_token }}"
+            },
+            {
+              "name": "x-session-id",
+              "value": "={{ $json.session_id }}"
+            },
+            {
+              "name": "Origin",
+              "value": "https://shopmy.us"
+            },
+            {
+              "name": "Referer",
+              "value": "https://shopmy.us/"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "get_payout_summary",
+      "name": "Get Payout Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 200],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://apiv3.shopmy.us/api/Payments/by_user/{{ $('Extract Session').item.json.user_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-csrf-token",
+              "value": "={{ $('Extract Session').item.json.csrf_token }}"
+            },
+            {
+              "name": "x-session-id",
+              "value": "={{ $('Extract Session').item.json.session_id }}"
+            },
+            {
+              "name": "Origin",
+              "value": "https://shopmy.us"
+            },
+            {
+              "name": "Referer",
+              "value": "https://shopmy.us/"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "get_payments",
+      "name": "Get Payment History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 200],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://apiv3.shopmy.us/api/CustomRates/all_rates/{{ $('Extract Session').item.json.user_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-csrf-token",
+              "value": "={{ $('Extract Session').item.json.csrf_token }}"
+            },
+            {
+              "name": "x-session-id",
+              "value": "={{ $('Extract Session').item.json.session_id }}"
+            },
+            {
+              "name": "Origin",
+              "value": "https://shopmy.us"
+            },
+            {
+              "name": "Referer",
+              "value": "https://shopmy.us/"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "get_custom_rates",
+      "name": "Get Brand Rates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 200],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine all data from payout_summary endpoint\nconst sessionData = $('Extract Session').item.json;\nconst payoutSummary = $('Get Payout Summary').item.json.body?.data || {};\nconst paymentsData = $('Get Payment History').item.json.body?.payments || [];\nconst brandRates = $('Get Brand Rates').item.json.body?.rates || [];\n\n// Extract structured data from payout_summary (this is the goldmine!)\nconst normalCommissions = payoutSummary.normal_commissions || [];\nconst opportunityCommissions = payoutSummary.opportunity_commissions || [];\nconst shopperReferralBonuses = payoutSummary.shopper_referral_bonuses || [];\nconst allPayouts = payoutSummary.payouts || [];\n\n// Calculate totals\nconst totalNormalCommissions = normalCommissions.reduce((sum, c) => sum + (parseFloat(c.amountEarned) || 0), 0);\nconst totalOpportunityCommissions = opportunityCommissions.reduce((sum, c) => sum + (parseFloat(c.amountEarned) || 0), 0);\nconst totalReferralBonuses = shopperReferralBonuses.reduce((sum, c) => sum + (parseFloat(c.amountEarned) || 0), 0);\n\n// Get pending vs paid breakdown\nconst pendingCommissions = allPayouts.filter(p => p.status === 'pending' || !p.isPaid);\nconst paidCommissions = allPayouts.filter(p => p.isPaid);\n\nreturn [{\n  json: {\n    // Creator info\n    creator_name: sessionData.creator_name,\n    user_id: sessionData.user_id,\n    extracted_at: new Date().toISOString(),\n    \n    // Summary totals\n    summary: {\n      today_amount: payoutSummary.todayAmount || 0,\n      total_normal_commissions: totalNormalCommissions,\n      total_opportunity_commissions: totalOpportunityCommissions,\n      total_referral_bonuses: totalReferralBonuses,\n      total_all: totalNormalCommissions + totalOpportunityCommissions + totalReferralBonuses\n    },\n    \n    // Monthly breakdown\n    months: payoutSummary.months || [],\n    \n    // Commission details (recent 50 for each type)\n    normal_commissions: normalCommissions.slice(0, 50).map(c => ({\n      date: c.transaction_date,\n      merchant: c.merchant,\n      product: c.Product_title,\n      order_amount: c.order_amount,\n      commission: c.commission_amount,\n      earned: c.amountEarned,\n      status: c.statusDisplay,\n      is_paid: c.isPaid,\n      is_locked: c.isLocked\n    })),\n    \n    opportunity_commissions: opportunityCommissions.map(c => ({\n      date: c.transaction_date,\n      title: c.title,\n      order_amount: c.order_amount,\n      commission: c.commission_amount,\n      earned: c.amountEarned,\n      status: c.statusDisplay,\n      is_paid: c.isPaid\n    })),\n    \n    referral_bonuses: shopperReferralBonuses.map(c => ({\n      date: c.transaction_date,\n      earned: c.amountEarned,\n      status: c.statusDisplay,\n      is_paid: c.isPaid\n    })),\n    \n    // Payment history\n    payments: paymentsData.slice(0, 20).map(p => ({\n      id: p.id,\n      amount: p.amount,\n      user_amount: p.user_amount,\n      source: p.source,\n      sent_at: p.sentAt || p.createdAt\n    })),\n    \n    // Brand-specific rates\n    brand_rates: brandRates.map(r => ({\n      brand: r.brand?.name || 'Unknown',\n      rate: r.rate,\n      rate_returning: r.rate_returning\n    })),\n    \n    // Pending vs paid summary\n    pending_count: pendingCommissions.length,\n    paid_count: paidCommissions.length,\n    \n    // Raw referral totals from API\n    referral_totals: payoutSummary.referralTotals || []\n  }\n}];"
+      },
+      "id": "transform_data",
+      "name": "Transform & Combine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, 200]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error_msg",
+              "name": "error",
+              "type": "string",
+              "value": "Authentication failed"
+            },
+            {
+              "id": "creator",
+              "name": "creator_name",
+              "type": "string",
+              "value": "={{ $json.creator_name }}"
+            },
+            {
+              "id": "timestamp",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "auth_failed",
+      "name": "Auth Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1320, 400]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $env.SHOPMY_GSHEET_URL || '' }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "store_gsheet",
+      "name": "Store to GSheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2200, 200],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SHOPMY_AIRTABLE_BASE || '' }}"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.SHOPMY_AIRTABLE_TABLE || '' }}"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "store_airtable",
+      "name": "Store to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [2200, 350],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map payout summary commissions to canonical schema (CREATOR-EARNINGS-CANONICAL-SCHEMA.md §6).\nconst item = $input.first().json;\nconst creator_id = item.creator_name || item.user_id || 'unknown';\nconst recorded_at = item.extracted_at || new Date().toISOString();\nconst out = [];\nfunction toDate(v) {\n  if (!v) return null;\n  const s = String(v).trim().slice(0, 10);\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return s;\n  const m = String(v).match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  return m ? m[0] : null;\n}\nfunction pushRow(periodStart, periodEnd, normalized_earnings, raw_type, raw_payload) {\n  if (normalized_earnings == null || isNaN(Number(normalized_earnings))) return;\n  out.push({\n    json: {\n      creator_id,\n      source_platform: 'shopmy',\n      period_start: periodStart || recorded_at.slice(0, 10),\n      period_end: periodEnd || periodStart || recorded_at.slice(0, 10),\n      normalized_earnings: Number(normalized_earnings),\n      currency: 'USD',\n      raw_type,\n      raw_payload: raw_payload || {},\n      recorded_at\n    }\n  });\n}\n(item.normal_commissions || []).forEach(c => {\n  const d = toDate(c.date);\n  pushRow(d, d, c.earned ?? c.commission, 'commission', c);\n});\n(item.opportunity_commissions || []).forEach(c => {\n  const d = toDate(c.date);\n  pushRow(d, d, c.earned ?? c.commission, 'opportunity_commission', c);\n});\n(item.referral_bonuses || []).forEach(c => {\n  const d = toDate(c.date);\n  pushRow(d, d, c.earned, 'referral_bonus', c);\n});\nreturn out.length ? out : [];"
+      },
+      "id": "normalize_payout_canonical",
+      "name": "Normalize Payout to canonical",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, 380],
+      "notes": "Flattens normal_commissions, opportunity_commissions, referral_bonuses to canonical rows. Append output to same Earnings sheet as Amazon/ShopMy CSV."
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Earnings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "creator_id": "={{ $json.creator_id }}",
+            "source_platform": "={{ $json.source_platform }}",
+            "period_start": "={{ $json.period_start }}",
+            "period_end": "={{ $json.period_end }}",
+            "normalized_earnings": "={{ $json.normalized_earnings }}",
+            "currency": "={{ $json.currency }}",
+            "raw_type": "={{ $json.raw_type }}",
+            "recorded_at": "={{ $json.recorded_at }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "append_earnings_sheet",
+      "name": "Append to Creator Earnings Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2200, 500],
+      "notes": "Same Earnings sheet as Amazon ingest and ShopMy CSV processor. Set Document ID or CREATOR_EARNINGS_SHEET_ID / SHOPMY_GSHEET_URL in n8n.",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "id": "noop",
+      "name": "Continue Loop",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2400, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Creator Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creator Config": {
+      "main": [
+        [
+          {
+            "node": "Loop Creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Creators": {
+      "main": [
+        [
+          {
+            "node": "ShopMy Login",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "ShopMy Login": {
+      "main": [
+        [
+          {
+            "node": "Extract Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Session": {
+      "main": [
+        [
+          {
+            "node": "Auth OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auth OK?": {
+      "main": [
+        [
+          {
+            "node": "Get Payout Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Auth Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Payout Summary": {
+      "main": [
+        [
+          {
+            "node": "Get Payment History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Payment History": {
+      "main": [
+        [
+          {
+            "node": "Get Brand Rates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Brand Rates": {
+      "main": [
+        [
+          {
+            "node": "Transform & Combine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform & Combine": {
+      "main": [
+        [
+          {
+            "node": "Store to GSheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Store to Airtable",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Normalize Payout to canonical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Payout to canonical": {
+      "main": [
+        [
+          {
+            "node": "Append to Creator Earnings Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Creator Earnings Sheet": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auth Failed": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store to GSheet": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue Loop": {
+      "main": [
+        [
+          {
+            "node": "Loop Creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,3 +1,6 @@
 .DS_Store
 .env
+.env.*
 *.env.local
+# Doppler one-off upload files (never commit)
+.doppler-*.json

@@ -40,7 +40,7 @@ Base: `https://apiv3.shopmy.us/api`
 
 ### GET `/Payouts/payout_summary/<User_id>`
 
-- Summary data for payouts.
+- Summary data for payouts. Response includes `normal_commissions`, `opportunity_commissions`, `shopper_referral_bonuses`, `payouts`, `months`, `todayAmount`, `referralTotals`. Can be called with session headers (`x-csrf-token`, `x-session-id`) only (no Cookie). Used by [ShopMy Payout Summary Pipeline](SHOPMY-PAYOUT-SUMMARY-PIPELINE.md).
 
 ### POST `/Payouts/download_commissions`
 
@@ -68,7 +68,7 @@ Base: `https://apiv3.shopmy.us/api`
 
 ---
 
-**API-first (no browser):** See `docs/SHOPMY-API-FIRST.md` and workflow `workflows/shopmy-api-creators.json`. Flow: POST Auth/session → capture cookies → POST Users/find_by_email → GET Payments, Payouts, Pins with Cookie + x-csrf-token → combine and send to CSV processor webhook.
+**API-first (no browser):** See [SHOPMY-API-FIRST.md](SHOPMY-API-FIRST.md) and [SHOPMY-PAYOUT-SUMMARY-PIPELINE.md](SHOPMY-PAYOUT-SUMMARY-PIPELINE.md). Two options: (1) `workflows/shopmy-api-creators.json`: POST Auth/session → Cookie + x-csrf-token → POST Users/find_by_email → GET Payments, Payout summary, Pins → CSV processor webhook. (2) `workflows/shopmy-payout-summary-creators.json`: POST Auth/session → x-csrf-token + x-session-id → GET payout_summary, Payments, CustomRates (pre-known user_id) → GSheet/Airtable.
 
 **Browser runner** uses:
 

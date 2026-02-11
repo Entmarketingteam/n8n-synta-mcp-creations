@@ -1,0 +1,10 @@
+# Environment Variables
+Always use Doppler for secret management. Never hardcode API keys or secrets.
+- Do NOT create .env files with real secrets
+- Do NOT commit .env files to git
+- All environment variables are injected via `doppler run`
+- When starting any dev server or script, prefix with: `doppler run --`
+- Example: `doppler run -- npm run dev`
+- Example: `doppler run -- python app.py`
+- If a new API key or secret is needed, instruct the user to add it to Doppler, never put it in a file
+- The Doppler project is "example-project" and the config is "dev"

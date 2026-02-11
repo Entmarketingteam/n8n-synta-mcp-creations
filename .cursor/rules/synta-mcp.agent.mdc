@@ -100,7 +100,8 @@ Before deployment, validate the complete workflow:
 **If deploying to n8n:**
 - `n8n_create_workflow(workflow)` - Deploy
 - `n8n_validate_workflow({id})` - Post-deployment validation
-- `n8n_trigger_webhook_workflow()` - Test webhooks if applicable
+- **If validation fails:** Run `n8n_autofix_workflow({id, applyFixes: false})` to preview fixes, then `n8n_autofix_workflow({id, applyFixes: true})` to apply. Only then do manual corrections if needed.
+- Test: `n8n_test_workflow({workflowId})` for webhook/form/chat, or `n8n_trigger_execution({id})` with pin data for self-healing
 
 ## Section 2: Editing Workflows
 
@@ -298,10 +299,50 @@ n8n_validate_workflow({id: "wf-123"})  // No options = validates all
 - `strict`: Most thorough validation
 
 **Fix & Re-validate Loop:**
-- If validation fails, analyze errors
-- Fix issues using appropriate tools
+- If validation fails, first run `n8n_autofix_workflow({id, applyFixes: false})` to preview fixes
+- If fixes look correct, run `n8n_autofix_workflow({id, applyFixes: true})` to apply
+- **If autofix apply fails** (server error): apply fixes manually via `n8n_update_partial_workflow` using the preview output (e.g. expression format: add `=` prefix, typeVersion updates)
+- Then analyze any remaining errors and fix manually using appropriate tools
 - Re-validate until all checks pass
 - Use `n8n_import_validation({id})` for import compatibility if needed
+
+### Phase 5: Test with Self-Healing
+
+Use mock data so workflows can run without real webhooks or external APIs. AI detects errors and adjusts config.
+
+```
+# 1. Check if trigger needs payload (webhook/form/chat)
+n8n_manage_pindata({mode: "analyzePinDataRequirement", id: "workflow-id"})
+
+# 2. Add pin data for a webhook trigger (so it doesn't need a real POST)
+n8n_manage_pindata({mode: "addPinData", id: "workflow-id", nodeName: "Webhook", pinData: [...]})
+
+# 3. Trigger execution (self-healing: AI detects errors and fixes config)
+n8n_trigger_execution({id: "workflow-id"})
+```
+
+**For external testing** (webhook/form/chat when workflow is active):
+- `n8n_test_workflow({workflowId: "id", webhookData: {...}, formData: {...}})` - end-to-end with real HTTP
+
+### Phase 6: Debug Failed Executions
+
+When executions fail, use the full execution management API:
+
+```
+# List recent errors
+n8n_manage_executions({action: "list", workflowId: "id", status: "error"})
+
+# Get detailed error info (path to error, upstream data)
+n8n_manage_executions({action: "get", id: "execution-id", mode: "error"})
+
+# Retry a failed execution
+n8n_manage_executions({action: "retry", id: "execution-id"})
+
+# Trace across workflows (multi-workflow chains)
+n8n_manage_executions({action: "correlate", executionId: "starting-execution-id"})
+```
+
+**mode: "error"** includes execution path leading to error and sample upstream data for debugging.
 
 ## Critical Tools Reference
 
@@ -345,10 +386,16 @@ n8n_validate_workflow({id: "wf-123"})  // No options = validates all
 - `n8n_import_validation` - Import compatibility check
 - `validate_node_operation` - Validate individual node configs
 
-### Execution & Monitoring
-- `n8n_trigger_webhook_workflow` - Trigger webhook workflows
-- `n8n_list_executions` - List workflow executions
-- `n8n_get_execution` - Get execution details with filtering
+### Auto-fix
+- `n8n_autofix_workflow` - Auto-fix common issues (expression format, typeVersion, error output, webhook paths). Use `applyFixes: false` to preview first.
+
+### Testing & Mock Data
+- `n8n_manage_pindata` - Add/update/remove pin data for testing without real triggers (modes: addPinData, updatePinData, analyzePinDataRequirement, readPinData)
+- `n8n_trigger_execution` - Run workflow with self-healing (works with Schedule, Manual, or pinned trigger data)
+- `n8n_test_workflow` - End-to-end test for webhook/form/chat workflows (auto-detects trigger type, workflow must be active)
+
+### Execution & Debugging
+- `n8n_manage_executions` - Full API: `action: "list"` (filter by status: error), `action: "get"` (use `mode: "error"` for debugging), `action: "retry"`, `action: "correlate"`, `action: "delete"`
 
 ## Best Practices
 
@@ -407,6 +454,23 @@ For connection changes:
 - Building: Validate nodes before building, validate complete workflow before deployment
 - Editing: Validate at START and END with selective options based on what changed
 - Always fix validation errors before proceeding
+
+## Quick Reference (Best Practices Flow)
+
+| Task | Tool | Key Parameters |
+|------|------|----------------|
+| Find nodes | `search_nodes` | `query` |
+| Get node info | `get_node` / `get_node_essentials` | `nodeType`, `detail`, `mode` |
+| Find templates | `search_templates` | `searchMode`, `query`, `nodeTypes` |
+| Create workflow | `n8n_create_workflow` | `name`, `nodes`, `connections` |
+| Validate | `n8n_validate_workflow` | `id`, `options` |
+| Auto-fix | `n8n_autofix_workflow` | `id`, `applyFixes` |
+| Test (self-healing) | `n8n_trigger_execution` | `id` |
+| Test (external) | `n8n_test_workflow` | `workflowId`, `webhookData`, `formData` |
+| Debug | `n8n_manage_executions` | `action`, `id`, `mode` |
+| Mock data | `n8n_manage_pindata` | `mode`, `id`, `nodeName` |
+
+**Intended flow:** Discovery → Build → Validate → Auto-fix (if failed) → Test → Debug (if execution fails)
 
 ## Response Format
 

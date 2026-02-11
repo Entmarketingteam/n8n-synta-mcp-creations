@@ -44,6 +44,44 @@
       }
     },
     {
+      "id": "normalize_canonical_shopmy",
+      "name": "Normalize to canonical (ShopMy)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 0],
+      "parameters": {
+        "jsCode": "// Map each ShopMy row to canonical schema (CREATOR-EARNINGS-CANONICAL-SCHEMA.md §6).\nconst items = $input.all();\nconst earningsKeys = ['Commission','Commissions Earned','Order Total','Amount Earned','Amount'];\nconst dateKeys = ['Transaction Date','Completion Date','Payment Date','Created On','Created On'];\nconst out = [];\nfor (const item of items) {\n  const row = item.json;\n  if (row.error) continue;\n  const creator_id = row.CreatorId || row.creatorId || 'unknown';\n  let normalized_earnings = null;\n  let raw_type = 'commission';\n  for (const key of earningsKeys) {\n    const v = row[key];\n    if (v !== undefined && v !== null && v !== '') {\n      const num = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.-]/g, ''));\n      if (!isNaN(num)) { normalized_earnings = num; raw_type = key.toLowerCase().replace(/\\s+/g, '_'); break; }\n    }\n  }\n  let period_start = null;\n  let period_end = null;\n  for (const key of dateKeys) {\n    const v = row[key];\n    if (v && typeof v === 'string') {\n      const d = v.trim().slice(0, 10);\n      if (/^\\d{4}-\\d{2}-\\d{2}$/.test(d) || /^\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}$/.test(v)) {\n        if (!period_start) period_start = d;\n        period_end = d;\n      }\n    }\n  }\n  const recorded_at = new Date().toISOString();\n  if (!period_start) period_start = recorded_at.slice(0, 10);\n  if (!period_end) period_end = period_start;\n  out.push({\n    json: {\n      creator_id,\n      source_platform: 'shopmy',\n      period_start,\n      period_end,\n      normalized_earnings: normalized_earnings ?? 0,\n      currency: 'USD',\n      raw_type,\n      raw_payload: row,\n      recorded_at\n    }\n  });\n}\nreturn out.length ? out : [];"
+      },
+      "notes": "Maps ShopMy CSV rows to same schema as Amazon/LTK. Append output to Earnings sheet."
+    },
+    {
+      "id": "append_earnings_sheet",
+      "name": "Append to Creator Earnings Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [900, 0],
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Earnings" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "creator_id": "={{ $json.creator_id }}",
+            "source_platform": "={{ $json.source_platform }}",
+            "period_start": "={{ $json.period_start }}",
+            "period_end": "={{ $json.period_end }}",
+            "normalized_earnings": "={{ $json.normalized_earnings }}",
+            "currency": "={{ $json.currency }}",
+            "raw_type": "={{ $json.raw_type }}",
+            "recorded_at": "={{ $json.recorded_at }}"
+          }
+        },
+        "options": {}
+      },
+      "notes": "Same Earnings sheet as Amazon ingest. Set Document ID in n8n. Header: creator_id, source_platform, period_start, period_end, normalized_earnings, currency, raw_type, recorded_at."
+    },
+    {
       "id": "dedupe",
       "name": "Deduplicate Records",
       "type": "n8n-nodes-base.removeDuplicates",
@@ -106,7 +144,8 @@
     "Manual Trigger": { "main": [[{ "node": "Normalize creator input", "type": "main", "index": 0 }]] },
     "Webhook Trigger": { "main": [[{ "node": "Normalize creator input", "type": "main", "index": 0 }]] },
     "Normalize creator input": { "main": [[{ "node": "Parse CSV and tag creator", "type": "main", "index": 0 }]] },
-    "Parse CSV and tag creator": { "main": [[{ "node": "Deduplicate Records", "type": "main", "index": 0 }]] },
+    "Parse CSV and tag creator": { "main": [[{ "node": "Deduplicate Records", "type": "main", "index": 0 }], [{ "node": "Normalize to canonical (ShopMy)", "type": "main", "index": 0 }]] },
+    "Normalize to canonical (ShopMy)": { "main": [[{ "node": "Append to Creator Earnings Sheet", "type": "main", "index": 0 }]] },
     "Deduplicate Records": { "main": [[{ "node": "Split Out Records", "type": "main", "index": 0 }]] },
     "Split Out Records": { "main": [[{ "node": "Store to Airtable", "type": "main", "index": 0 }]] },
     "Store to Airtable": { "main": [[{ "node": "Aggregate Results", "type": "main", "index": 0 }]] },

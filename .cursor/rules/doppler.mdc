@@ -1,0 +1,48 @@
+---
+description: Doppler secret management — no .env with real secrets, no hardcoded keys; all env via doppler run.
+alwaysApply: true
+---
+
+# Doppler Secret Management (Global)
+
+I use Doppler for all secret/environment variable management. Never create .env files with real secrets. Never hardcode API keys. All environment variables are injected at runtime via `doppler run -- <command>`. My Doppler project is "example-project" and the config is "dev".
+
+## Adding New Secrets
+
+If I paste an API key or secret and say to add it to Doppler, run:
+
+```bash
+doppler secrets set SECRET_NAME --project example-project --config dev
+```
+
+in the terminal with the value I provided. Use UPPER_SNAKE_CASE for the name.
+
+If I just paste a key without a name, ask me what to name it or infer from context (e.g. if I say "here's my Replicate key" → REPLICATE_API_KEY).
+
+## Retroactive Key Migration
+
+When I open any existing project, BEFORE doing anything else:
+
+1. Scan for all secrets/API keys in: .env, .env.local, .env.production, .env.development, .env.*, config files, hardcoded strings in source code, docker-compose files, and any yaml/json config files
+2. List every secret found with its name and which file it came from — **DO NOT print the actual values in chat**
+3. For each secret found, check if it already exists in Doppler: `doppler secrets get SECRET_NAME --project example-project --config dev --plain`
+4. If a secret is NOT in Doppler yet, add it: `doppler secrets set SECRET_NAME=value --project example-project --config dev`
+5. After migrating, show me a summary of what was added vs what already existed
+6. Ask me if I want to delete the old .env files or keep them as backup
+7. Make sure .env and .env.* are in .gitignore
+
+**Only do this scan when I say "migrate secrets" or "scan for keys" or when I open a project for the first time and you notice .env files present.**
+
+## Rules
+
+- Never store secrets in .env files, code, or config files
+- Never log or echo secret values in chat — only use them in terminal commands
+- If a project needs a new secret, check Doppler first with: `doppler secrets get SECRET_NAME --project example-project --config dev`
+- If it doesn't exist, ask me for the value or tell me to add it
+- Always use `doppler run --` to start any dev server or script
+- When scanning for secrets, look for patterns like: sk-, pk-, api_, key=, token=, secret=, password=, API_KEY, _SECRET, _TOKEN, Bearer, basic auth strings, and connection strings
+
+## This repo (n8n-synta-mcp-creations)
+
+- This project uses **Doppler** (project: `ent-agency-automation`, config: `prd`) for this repo. Use that project/config when running commands in this workspace; use "example-project" / "dev" for other projects unless specified.
+- **n8n + Doppler:** Prefer the Doppler community node in n8n, or `doppler run -- node scripts/sync-doppler-to-n8n-variables.js` (see docs/N8N-DOPPLER-SETUP.md).

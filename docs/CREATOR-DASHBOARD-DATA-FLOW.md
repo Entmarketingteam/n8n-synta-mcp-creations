@@ -1,6 +1,6 @@
-# Creator Dashboard Data Flow — LTK + Amazon → Analytics & Dashboard
+# Creator Dashboard Data Flow — LTK + Amazon + ShopMy → Analytics & Dashboard
 
-How to **call and gather** LTK and Amazon creator data, normalize it, and land it in one place (Google Sheets first) for analytics, performance, brands, and earnings. Then use that as the source for your dashboard.
+How to **call and gather** LTK, Amazon, and ShopMy creator data, normalize it, and land it in one place (Google Sheets first) for analytics, performance, brands, and earnings. Then use that as the source for your dashboard.
 
 ---
 
@@ -10,6 +10,7 @@ How to **call and gather** LTK and Amazon creator data, normalize it, and land i
 |--------|-------------|--------------|
 | **LTK** | (A) **LTK Token Rotation** workflow: reads refresh token from Airtable → refreshes → calls LTK API (or runner) → returns `user_info`, `commissions_summary`, `performance_summary`. (B) **LTK Browserbase runner:** `POST /run-ltk` with `{ "refresh_token": "..." }` (or email+password once) → same JSON. | User profile, commission totals by period, performance (clicks, conversions, etc.). |
 | **Amazon** | (A) **Report ingest webhook:** `POST` to n8n webhook with `creator_id` + `csvData` (paste or send CSV from Associates report). (B) **Scraper** (optional): run Python scraper → upload CSV to ingest. | Rows normalized to canonical schema (earnings, period, tracking id, etc.). |
+| **ShopMy** | (A) **Payout Summary (API):** Schedule workflow logs in via API → `payout_summary` + payments + brand rates → optional normalize to canonical → **Earnings** sheet. (B) **Browserbase runner:** POST /auth/refresh (store cookies) → POST /run with cookies → CSV → **ShopMy CSV Processor** webhook → normalized to canonical → **Earnings** sheet. | Commissions, opportunity commissions, referral bonuses, payments; or full CSV export. |
 
 **LTK (recommended flow):**
 
@@ -37,7 +38,7 @@ Using **one Google Sheet** as the dashboard source is the fastest way to get ana
 | **LTK Snapshots** | Full LTK API response per run (for deeper analytics, brands, performance breakdown). | creator_id, extracted_at, user_info, commissions, performance_summary |
 | **Amazon Raw** (optional) | Raw Amazon rows before normalization, if you want to audit. | Same as one row from ingest, or skip and use only Earnings. |
 
-- **Earnings** = single source of truth for “how much, which platform, which period.” LTK and Amazon workflows both append here (canonical rows).
+- **Earnings** = single source of truth for “how much, which platform, which period.” LTK, Amazon, and ShopMy workflows all append here (canonical rows).
 - **LTK Snapshots** = what the existing “Store to Sheets” in the LTK sync already does (Creator, extracted_at, user_info, commissions, performance_summary). Keep it for full JSON and future breakdown (brands, links, etc.).
 - **Dashboard:** Build pivot tables and charts in Sheets on **Earnings** (e.g. earnings by source_platform, by creator_id, by month). Optionally use **LTK Snapshots** for LTK-specific metrics (e.g. commissions by brand if you parse the JSON).
 
@@ -48,7 +49,8 @@ Using **one Google Sheet** as the dashboard source is the fastest way to get ana
 ### Step 1 — Get data into the sheet
 
 1. **LTK:** Run **LTK Token Rotation (Airtable)** workflow on a schedule (e.g. daily). It already stores to **LTK Snapshots**. Optionally add a “Normalize LTK → canonical” step and append those rows to **Earnings** (see CREATOR-EARNINGS-CANONICAL-SCHEMA.md § LTK mapping).
-2. **Amazon:** When you have a new Associates report CSV, send it to the ingest webhook (or run scraper and POST CSV). The **Amazon Associates Report Ingest** workflow normalizes and appends to **Earnings** (once you add the “Append to Google Sheets” node and set Document + Sheet to your **Earnings** sheet).
+2. **Amazon:** When you have a new Associates report CSV, send it to the ingest webhook (or run scraper and POST CSV). The **Amazon Associates Report Ingest** workflow normalizes and appends to **Earnings** (set Document ID + sheet name **Earnings** in the “Append to Creator Earnings Sheet” node).
+3. **ShopMy:** (A) **Payout Summary:** Run **ShopMy Creator Data Pipeline (Payout Summary)** on a schedule; it normalizes payout commissions to canonical and appends to **Earnings** (set Document ID in “Append to Creator Earnings Sheet”). (B) **CSV path:** Run **ShopMy – Browserbase login** to get CSV → webhook **ShopMy CSV Processor** normalizes and appends to **Earnings** (same sheet).
 
 ### Step 2 — Define metrics
 
@@ -70,6 +72,9 @@ Using **one Google Sheet** as the dashboard source is the fastest way to get ana
 | **LTK Token Rotation (Airtable)** | Schedule / Manual | Airtable → Refresh LTK token → Update Airtable → Call LTK API → Store to Sheets (LTK Snapshots). |
 | **Amazon Associates Report Ingest** | Webhook / Manual | Accepts creator_id + csvData → Parse CSV → Normalize to canonical → Append to **Earnings** sheet → Respond. |
 | **Amazon Creators API – Get Token** | Manual | Airtable → Get OAuth2 token for Creators API (for catalog, not reports). |
+| **ShopMy Creator Data Pipeline (Payout Summary)** | Schedule (e.g. every 6 h) / Manual | Creator Config → Login (API session) → Payout summary + Payments + Brand rates → Transform & Combine → (optional) Normalize to canonical → Append to **Earnings** sheet; Store to GSheet/Airtable. |
+| **ShopMy – Browserbase login → CSV** | Schedule / Manual | Airtable creators → cookies or POST /auth/refresh → POST /run → CSV → **ShopMy CSV Processor** webhook → Normalize to canonical → Append to **Earnings** sheet. |
+| **ShopMy CSV Processor (Creators)** | Webhook `shopmy-csv-creators` | Accepts creatorId + csvData → Parse CSV → Normalize to canonical (ShopMy) → Append to **Earnings** sheet (same as Amazon). |
 
 ---
 

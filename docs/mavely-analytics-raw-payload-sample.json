@@ -1,0 +1,11 @@
+{
+  "source": "n8n execution 311 – GET analytics.json output (then Parse → raw_payload)",
+  "url": "https://creators.mave.ly/_next/data/TLP43DnmReOxdBHjF_9BW/analytics.json",
+  "raw_response": {
+    "pageProps": {
+      "currentDateProp": "2026-02-10"
+    },
+    "__N_SSG": true
+  },
+  "note": "This is the full response from the analytics.json endpoint. It contains no commission, summary, topPerformers, or earnings fields — only currentDateProp. So Normalized Earnings stays null. The real analytics may be loaded by the Mavely app via a different API (client-side) or require different cookies/query params."
+}
