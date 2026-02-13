@@ -49,6 +49,8 @@ Workflow JSON files are in the repo under **`workflows/`**. For RoboNuggets and 
 | Content Repurposing – Downloader Agent | `workflows/robonuggets/content-repurposing-downloader-agent.json` |
 | Content Repurposing – Uploader Agent | `workflows/robonuggets/content-repurposing-uploader-agent.json` |
 | Advanced Content Creator Agent | `workflows/advanced-content-creator-agent.json` |
+| **Slack URL → Markdown** (Firecrawl) | `workflows/slack-markdown-pack/01_slack_url_to_markdown_firecrawl.json` |
+| **Slack Substack → Markdown** (Firecrawl) | `workflows/slack-markdown-pack/02_slack_substack_to_markdown_firecrawl.json` |
 
 **Steps (repeat for each file):**
 
