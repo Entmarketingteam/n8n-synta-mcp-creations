@@ -10,6 +10,7 @@ ent-tools/
 │   ├── contracts/         # Normalized payload shapes – see CONTRACTS.md
 │   └── config/            # Env key names – see env-keys.md
 ├── markitdown-api/        # MarkItDown HTTP API (file → markdown)
+├── last30days-skill/      # Reddit + X research → prompt generator (Python)
 ├── workflows/             # n8n workflow JSON (versioned)
 ├── .env.example
 └── README.md
@@ -26,6 +27,7 @@ ent-tools/
 | Tool | Purpose |
 |------|---------|
 | [markitdown-api](markitdown-api/) | POST a file, get markdown. Used by Slack → MarkItDown → LLM workflow. |
+| [last30days-skill](last30days-skill/) | Research any topic across Reddit + X from the last 30 days, then generate copy-paste-ready prompts. Uses OpenAI Responses API (Reddit) and xAI API (X/Twitter). |
 
 ## Workflows
 

@@ -9,6 +9,12 @@ Central index of platforms used for creator data, auth, and automation. Link to 
 | **Amazon** (Associates / Creators) | Documented; no report API | OAuth2 (Creators API); session/CSV (reports) | [AMAZON-CREATORS-API.md](./AMAZON-CREATORS-API.md), [AMAZON-ASSOCIATES-REPORTS.md](./AMAZON-ASSOCIATES-REPORTS.md), [AMAZON-REPORT-INGESTION-SPEC.md](./AMAZON-REPORT-INGESTION-SPEC.md) | [amazon-creators-api-get-token.json](../workflows/amazon-creators-api-get-token.json), [amazon-associates-report-ingest.json](../workflows/amazon-associates-report-ingest.json); amazon-associates-scraper/ |
 | **Mavely** | Template ready | TBD (HAR analysis) | — | Ready for HAR capture and [HAR_ANALYSIS_GUIDE.md](./HAR_ANALYSIS_GUIDE.md) |
 
+### Research / utility tools
+
+| Tool | Status | Auth / keys | Docs | Location |
+|------|--------|-------------|------|----------|
+| **last30days-skill** | Working | `OPENAI_API_KEY`, `XAI_API_KEY` (optional – falls back to WebSearch) | [last30days-skill/README.md](../ent-tools/last30days-skill/README.md), [SKILL.md](../ent-tools/last30days-skill/SKILL.md), [SPEC.md](../ent-tools/last30days-skill/SPEC.md) | ent-tools/last30days-skill/ |
+
 ## Adding a new platform
 
 1. Capture login/API flow: see [HAR_ANALYSIS_GUIDE.md](./HAR_ANALYSIS_GUIDE.md).
