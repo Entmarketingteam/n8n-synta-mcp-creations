@@ -1,4 +1,0 @@
-# Optional: use with `doppler run -- gunicorn ...` locally.
-# Railway: use Doppler integration; no need to run doppler CLI in production.
-project: ent-agency-automation
-config: prd
