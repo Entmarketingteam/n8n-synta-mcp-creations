@@ -1,0 +1,2609 @@
+{
+  "name": "Advanced Content Creator Agent (16:9 / 9:16 / 1:1) – Slideshow, Midjourney + Creatomate",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "925ef77e-01cf-4c18-87d2-624b0aa87941",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        -80
+      ],
+      "id": "305edc9d-b65f-4f3a-a6f5-60f7bd11799e",
+      "name": "Webhook",
+      "webhookId": "925ef77e-01cf-4c18-87d2-624b0aa87941"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08KRPJPRAN",
+          "mode": "list",
+          "cachedResultName": "all-quantumresonance"
+        },
+        "text": "Your AwesomeSuperCool workflow has started!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -120,
+        -20
+      ],
+      "id": "3bc11b5f-5f29-4737-b2d5-1055d20cdbc4",
+      "name": "Slack",
+      "webhookId": "c596ee9a-203a-4b51-b439-325d5711fa4d"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2124755797,
+          "mode": "list",
+          "cachedResultName": "video_specs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=2124755797"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "on"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        100,
+        100
+      ],
+      "id": "36edd7f5-a1c4-466f-97c6-819a1ca23155",
+      "name": "GET IMG RATIO"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ideas_captions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "production_status",
+              "lookupValue": "ready"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        300,
+        100
+      ],
+      "id": "922e42e2-77bd-45a7-8370-71f579e9475d",
+      "name": "GET IDEAS"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        580,
+        220
+      ],
+      "id": "cdb5a22f-5af7-49a0-8bc3-73c5d87db6af",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"voiceText\": \"You're standing at the edge, where hope feels distant. Yet, this is where resilience is born.\",\n    \"image_prompt\": \"A lone figure stands on a rainy, dimly lit street corner, water dripping from a grayscale umbrella. Intense close-up of determined eyes under a dark, moody sky.\"\n  },\n  {\n    \"voiceText\": \"The world around may seem dark, but within you lies an unyielding flame.\",\n    \"image_prompt\": \"A dimly lit room, shadows playing across walls. Close-up of hands lighting a single candle, casting warm light amidst deep shadows.\"\n  },\n  {\n    \"voiceText\": \"In the silence of despair, your heart whispers the truth of your strength.\",\n    \"image_prompt\": \"A solitary figure in an empty cafe, rain streaking windows. Soft focus on their reflective expression, city lights blurred behind.\"\n  },\n  {\n    \"voiceText\": \"Every step feels heavy, yet each one is a testament to your courage.\",\n    \"image_prompt\": \"Close-up of worn boots stepping through puddles on a gritty urban street, droplets splashing dramatically in the air.\"\n  },\n  {\n    \"voiceText\": \"You're not alone; every hero has walked this road of trials.\",\n    \"image_prompt\": \"A series of black and white photos pinned to a wall, each capturing different faces of diverse people in deep thought.\"\n  },\n  {\n    \"voiceText\": \"Embrace the struggle, for it is shaping you into who you are meant to become.\",\n    \"image_prompt\": \"Silhouette of a person practicing in an empty gym, the dim lights casting elongated shadows across the polished floor.\"\n  },\n  {\n    \"voiceText\": \"Pain carves the path to greatness, chiseling away doubts and fears.\",\n    \"image_prompt\": \"An artist intensely carving a stone sculpture in a dimly lit workshop, chips of stone flying, concentration etched in every line.\"\n  }\n\n]\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        700,
+        280
+      ],
+      "id": "2acf32ac-1c98-4ee4-8ef3-801337fa477b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "## IDEA INGESTION\n",
+        "height": 660,
+        "width": 1160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -180
+      ],
+      "id": "e3f65aad-0be5-4332-b7a4-573673ea6226",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Main Story idea: {{ $json.idea }}\nStory guidance: {{ $json.caption }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=ROLE: You are an expert prompt engineer and visual storyteller. Your task is to create sequential voiceover and image prompts for a flowing video, structured around a 7-scene narrative arc. The story should include an opening, development, a climax, resolution, and a closing (the final scenes).  The user will provide the title and description of the video they are making, along with preferred aesthetics and styling.  TASK: Return a valid **JSON array** of exactly 7 objects. Each object must follow this structure:  {   \"voiceText\": \"A 3-sentence voiceover, each sentence between 11 to 15 words. It must connect with the previous scene, maintain flow, and reflect the narrative tone and style.\",   \"image_prompt\": \"A cinematic and visually rich description (maximum 950 characters). Avoid complex punctuation. Describe environment, lighting, mood, subject, composition, foreground, and background clearly. Use MidJourney-friendly formatting. Focus on nouns, visual metaphors, and natural language. DO NOT use lists, colons, semicolons, or excessive commas. Avoid abstract concepts. Include: {{ $json.image_processing }}.\" }  voiceText requirements: - Style/topic: {{ $json.channel_style_prompt }} - Use metaphors or analogies where appropriate. - Keep the tone emotionally compelling and logically flowing across all scenes. - Do not reuse phrases or imagery from earlier scenes.  image_prompt requirements: - Avoid overly complex grammar or nested clauses. - Avoid repeated adjective stacking. - No newline characters. - No bullet points, numbers, or formatting. - Think: “how would you describe this to a blind painter using only plain, vivid English?” - Character traits (if needed): {{ $json.character_style_prompt }}  CRITICAL: - All 7 scenes must form a connected, emotionally resonant narrative. - Only output a JSON array with double quotes around all keys and string values. - Do not include any headers, commentary, or explanation outside the JSON.  BEGIN."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        560,
+        0
+      ],
+      "id": "c3b8047c-2aa0-46d9-9cee-2dd61fa99eda",
+      "name": "STORY CREATION"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten and extract all `voiceText` values from items\nconst voice_texts = items.flatMap(item =>\n  item.json.output\n    .map(p => p.voiceText)\n    .filter(Boolean) // Remove undefined/null\n);\n\n// Return up to 7 voiceText fields\nreturn [\n  {\n    json: {\n      voice_text1: voice_texts[0] || null,\n      voice_text2: voice_texts[1] || null,\n      voice_text3: voice_texts[2] || null,\n      voice_text4: voice_texts[3] || null,\n      voice_text5: voice_texts[4] || null,\n      voice_text6: voice_texts[5] || null,\n      voice_text7: voice_texts[6] || null,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        -520
+      ],
+      "id": "9a3d1f27-ed10-4e22-bc74-fe8d19f0ee1e",
+      "name": "EXTRACT VOICEOVER"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect voice_text1 through voice_text7 from input\nconst input = items[0].json;\n\nconst parts = [\n  input.voice_text1,\n  input.voice_text2,\n  input.voice_text3,\n  input.voice_text4,\n  input.voice_text5,\n  input.voice_text6,\n  input.voice_text7\n]\n\n// Join with double line breaks (ElevenLabs-friendly section separation)\nconst combinedVoiceover = parts.join('\\n\\n');\n\nreturn [\n  {\n    json: {\n      voiceover_script: combinedVoiceover\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -520
+      ],
+      "id": "d8332172-5f58-46b3-97db-3b68bf35b5ea",
+      "name": "COMBINE VOICEOVER"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Clean up the following text according to the following rules:\n\n**CRITICAL RULE** 1. Remove any of these symbols: $ ; \" & % # ' : - \n\n2. Commas are fine, if the original text is using only commas and periods as punctuation marks, don't change anything and just leave it as is. \n2. All currency symbols (such as $, €, ¥, etc.) must be replaced with their official three-letter codes (e.g., USD, EUR, JPY).\n3. If the removal of these symbols affects grammar or readability, the text MUST be rephrased naturally without them. \n4. Titles, names, or phrases that would normally be enclosed in quotation marks should instead be **reworded naturally** to avoid needing them.\n5. If there is more than one paragraph, remove the break and write everything as one paragraph. \n6. The text you are generating is going to be used for image generation using dall-e 3 by prompting Chat GPT4o. If you can apply any modifications that would help with this image generation engine, apply those modifications, too. \n\n{{ $json.voiceover_script }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1580,
+        -520
+      ],
+      "id": "0fa9a065-f505-448f-97bb-d80ba02cde5a",
+      "name": "VOICEOVER TEXT CLEANUP"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "={{ $env.ELEVENLABS_API_KEY || 'YOUR_ELEVENLABS_API_KEY' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"text\": \"{{ $json.message.content }}\",\n  \"model_id\": \"eleven_turbo_v2\",\n  \"voice_settings\": {\n    \"stability\": 0.3,\n    \"speed\": 0.88,\n    \"similarity_boost\": 1.0,\n    \"style\": 0.0,\n    \"use_speaker_boost\": true\n  },\n  \"output_format\": \"mp3\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1940,
+        -520
+      ],
+      "id": "369957ce-1816-47a1-9c8b-7e99b884d8a5",
+      "name": "CREATE VOICEOVER"
+    },
+    {
+      "parameters": {
+        "name": "={{ $now }}.mp3",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1qH3cBXnmHto0AoKvsR7FV1paCO_z02K0",
+          "mode": "list",
+          "cachedResultName": "CCAgent_Voiceovers",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1qH3cBXnmHto0AoKvsR7FV1paCO_z02K0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2160,
+        -520
+      ],
+      "id": "1e2a3c52-c78b-4895-9dd3-4d4a305afae2",
+      "name": "UPLOAD VOICEOVER"
+    },
+    {
+      "parameters": {
+        "jsCode": "function appendFilenameToUrl(directUrl, filename) {\n  return `${directUrl}&fileName=${encodeURIComponent(filename)}`;\n}\n\n// Step 1: Get direct download link\nconst VoiceoverUrl = $input.first().json.webContentLink;\nconst filename = $input.first().json.name;\n\n// Step 2: Combine link + filename\nconst directVoiceoverUrl = appendFilenameToUrl(VoiceoverUrl, filename);\n\n// Step 3: Return result\nreturn [{\n  directVoiceoverUrl,\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2380,
+        -520
+      ],
+      "id": "639636d6-b174-467d-95d5-fe4c0ce2cc5b",
+      "name": "GET DRCT FILE LINK"
+    },
+    {
+      "parameters": {
+        "content": "## VOICEOVER CREATION\n",
+        "height": 420,
+        "width": 1600,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -640
+      ],
+      "id": "28483d6b-9ba7-434c-a394-926c6e64cd96",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## RANDOMIZE MUSIC\n",
+        "height": 320,
+        "width": 640,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -180
+      ],
+      "id": "bd5501ca-1efc-4d86-9bbb-a5f892624d0a",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "counter",
+            "counter": "1"
+          },
+          "matchingColumns": [
+            "status"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1360,
+        260
+      ],
+      "id": "6769dc18-98e9-439c-baab-96133925e8be",
+      "name": "RESET COUNTER"
+    },
+    {
+      "parameters": {
+        "content": "## SAVE ALL IMAGE PROMPTS",
+        "height": 320,
+        "width": 640,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        160
+      ],
+      "id": "85d7cce0-1071-4e91-a3bc-63b7ecf819a3",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the row data\nconst row = items[0].json;\n\n// Collect all music links\nconst musicLinks = [\n  row.music1,\n  row.music2,\n  row.music3,\n  row.music4,\n  row.music5,\n  row.music6,\n  row.music7,\n  row.music8\n].filter(link => !!link); // Remove null/undefined/empty strings\n\n// Randomly select one\nconst selectedMusic = musicLinks[Math.floor(Math.random() * musicLinks.length)] || null;\n\nreturn [\n  {\n    json: {\n      music: selectedMusic\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -60
+      ],
+      "id": "f5a3907f-74c8-4635-a2ee-b99bf038e006",
+      "name": "PICK RANDOM MUSIC"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the nested array of prompts from the single item\nconst prompts = items[0].json.output;\n\n// Extract image_prompt values\nconst image_prompts = prompts.map(p => p.image_prompt);\n\n// Return up to 7 prompts as individual fields\nreturn [\n  {\n    json: {\n      image_prompt1: image_prompts[0] || null,\n      image_prompt2: image_prompts[1] || null,\n      image_prompt3: image_prompts[2] || null,\n      image_prompt4: image_prompts[3] || null,\n      image_prompt5: image_prompts[4] || null,\n      image_prompt6: image_prompts[5] || null,\n      image_prompt7: image_prompts[6] || null,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        260
+      ],
+      "id": "9aaeee56-59fa-429e-a2eb-64365eeabc94",
+      "name": "EXTRACT IMG PROMPTS"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "counter"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1180,
+        600
+      ],
+      "id": "b6c3ec63-1cea-48db-b9ae-41b8a91e1c6e",
+      "name": "READ COUNTER"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.counter }}",
+            "status": "current"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1400,
+        600
+      ],
+      "id": "6ffa9b75-afca-4f03-93b5-caaff6126fbd",
+      "name": "SET STATUS"
+    },
+    {
+      "parameters": {
+        "jsCode": "const counter = $node[\"READ COUNTER\"].json.counter;\n\nconst key = `image_prompt${counter}`;\n\n// Grab prompt based on counter from EXTRACT IMAGE PROMPTS\nconst prompt = $node[\"EXTRACT IMG PROMPTS\"].json[key];\n\nif (!prompt) {\n  throw new Error(`Prompt not found for key: ${key}`);\n}\n\nreturn [\n  {\n    json: {\n      image_prompt: prompt\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        600
+      ],
+      "id": "c83abf23-3291-433a-a069-1e4c6315729d",
+      "name": "SELECT IMG PROMPT"
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2060,
+        600
+      ],
+      "id": "c2e84c43-767e-4719-a6ce-370abf08e542",
+      "name": "Wait",
+      "webhookId": "97968003-b544-4f92-8379-f24afae7d8de"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.PIAPI_API_KEY || 'YOUR_PIAPI_API_KEY' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"midjourney\",\n  \"task_type\": \"imagine\",\n  \"input\": {\n    \"prompt\": \"{{ $('SELECT IMG PROMPT').item.json.image_prompt }}\",\n    \"aspect_ratio\": \"{{ $('GET IMG RATIO').item.json.ratio }}\",\n    \"process_mode\": \"fast\",\n    \"skip_prompt_check\": true\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        600
+      ],
+      "id": "b1fedf57-c32f-48b6-886c-f8b61a61d6e7",
+      "name": "CREATE IMAGE"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.piapi.ai/api/v1/task/{{ $json.data.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.PIAPI_API_KEY || 'YOUR_PIAPI_API_KEY' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2280,
+        600
+      ],
+      "id": "d59bfee4-6dd8-485a-b2cd-4b3aaf7decad",
+      "name": "GET IMAGES"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "current",
+            "tmp_image1": "={{ $json.data.output.temporary_image_urls[0] }}",
+            "tmp_image2": "={{ $json.data.output.temporary_image_urls[1] }}",
+            "tmp_image3": "={{ $json.data.output.temporary_image_urls[2] }}",
+            "tmp_image4": "={{ $json.data.output.temporary_image_urls[3] }}"
+          },
+          "matchingColumns": [
+            "status"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2500,
+        600
+      ],
+      "id": "a5c44399-2775-4803-ae47-375b71503338",
+      "name": "WRT TMP IMG LINKS"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json.data.yourselection || \"Image 1\";\n\n// Extract the number from the string, e.g. \"Image 3\" => 3\nconst match = input.match(/\\d+/);\nconst selection = match ? parseInt(match[0]) : 1;\n\nreturn [\n  {\n    json: {\n      selection\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        700
+      ],
+      "id": "bbd4c397-6974-4035-82fb-e89fb9128d7b",
+      "name": "GET RESPONSE"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Grab the selection from Code1\nconst selection = $node[\"GET RESPONSE\"].json[\"selection\"];  // 1-4\n\n// Grab the row from Google Sheets1\nconst row = $node[\"WRT TMP IMG LINKS\"].json;\n\n// Safety check\nif (!selection || !row) {\n  throw new Error(\"Missing selection or row data.\");\n}\n\n// Column names (1–4)\nconst columns = [\n  \"tmp_image1\",\n  \"tmp_image2\",\n  \"tmp_image3\",\n  \"tmp_image4\"\n];\n\n// Lookup the selected image\nconst selectedImage1 = row[columns[selection - 1]];\n\nreturn [\n  {\n    json: {\n      selectedImage1\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3520,
+        700
+      ],
+      "id": "97980d51-5141-4e1c-a903-a46b81ec4331",
+      "name": "SAVE SELECTED IMAGE"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4696fe82-cdc1-40c0-abe4-2447ec303ff8",
+              "leftValue": "={{ $json.data.yourselection }}",
+              "rightValue": "RE-GENERATE",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2940,
+        600
+      ],
+      "id": "28900636-8a66-4f53-9e1b-47a118a311df",
+      "name": "APPROVE / RE-GENERATE"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "current",
+            "link": "={{ $json.selectedImage1 }}"
+          },
+          "matchingColumns": [
+            "status"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2940,
+        940
+      ],
+      "id": "814b6ec2-1e85-407a-b047-0cf0e1530c2f",
+      "name": "SAVE IMAGE LINK"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "sendAndWait",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08KRPJPRAN",
+          "mode": "list",
+          "cachedResultName": "all-quantumresonance"
+        },
+        "message": "=Choose Your Image!\n\n\n1️⃣ {{ $json.tmp_image1 }}\n2️⃣ {{ $json.tmp_image2 }}\n3️⃣ {{ $json.tmp_image3 }}\n4️⃣ {{ $json.tmp_image4 }}\n\n",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "yourselection",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Image 1"
+                  },
+                  {
+                    "option": "Image 2"
+                  },
+                  {
+                    "option": "Image 3"
+                  },
+                  {
+                    "option": "Image 4"
+                  },
+                  {
+                    "option": "RE-GENERATE"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2720,
+        600
+      ],
+      "id": "2e4a6e61-e4bb-4d15-bbff-65a2ec3108d8",
+      "name": "ASK USER TO MAKE SELECTION",
+      "webhookId": "9fc8e58c-61f3-465e-91e3-2acb86153c80"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "link": "={{ $json.link }}",
+            "status": "done"
+          },
+          "matchingColumns": [
+            "link"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        3160,
+        940
+      ],
+      "id": "cce38ab6-d105-4101-81b2-99ab651b8939",
+      "name": "UPDATE STATUS"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "counter",
+            "counter": "={{ Number($('READ COUNTER').item.json.counter) + 7 }}"
+          },
+          "matchingColumns": [
+            "status"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        3380,
+        940
+      ],
+      "id": "c5508879-054d-4f9b-a0c2-6b6707b9db9a",
+      "name": "UPDATE COUNTER"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0b16fa9-7564-40ca-a0d3-1e795f3cef34",
+              "leftValue": "={{ $json.counter }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3600,
+        940
+      ],
+      "id": "21025b38-7f60-46fa-9f82-0750822e6a5e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## IMAGE CREATION\n\n",
+        "height": 700,
+        "width": 2860,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        520
+      ],
+      "id": "298fd65a-26a3-4d92-a7ab-ca66d5c8bb9e",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## VIDEO CREATION\n",
+        "height": 660,
+        "width": 1940,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -180
+      ],
+      "id": "cdcd24f2-e820-47f4-9665-4f07a4ef0a91",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ideas_captions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('GET IDEAS').item.json.id }}",
+            "production_status": "done",
+            "final_output": "={{ $('CREATE LONGFORM').item.json.url }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "caption",
+              "displayName": "caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "channel_style_prompt",
+              "displayName": "channel_style_prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "character_style_prompt",
+              "displayName": "character_style_prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "image_processing",
+              "displayName": "image_processing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "production_status",
+              "displayName": "production_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "final_output",
+              "displayName": "final_output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        3720,
+        0
+      ],
+      "id": "a8f5cc6d-7916-46b7-b48a-bb992c41c771",
+      "name": "UPDATE STATUS AND SAVE VIDEO"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "done"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4060,
+        -80
+      ],
+      "id": "ca6f2213-a8e5-4041-aa82-a0954266b163",
+      "name": "UPDATE IMAGE PROMPTS STAUS"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "28eddf74-ba63-46b6-8e83-6d77530c4937",
+              "leftValue": "={{ $json.link }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4260,
+        80
+      ],
+      "id": "f6089839-387b-4671-b795-3f4429746d91",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "ready"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "counter",
+              "displayName": "counter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image1",
+              "displayName": "tmp_image1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image2",
+              "displayName": "tmp_image2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image3",
+              "displayName": "tmp_image3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tmp_image4",
+              "displayName": "tmp_image4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4460,
+        240
+      ],
+      "id": "cc0bd9a2-f8c6-4b10-b781-53f048505881",
+      "name": "Google Sheets"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 938454440,
+          "mode": "list",
+          "cachedResultName": "music",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=938454440"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "on"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1140,
+        -60
+      ],
+      "id": "1456bbc4-925d-470c-9303-d691c428e00a",
+      "name": "GET MUSIC"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI",
+          "mode": "list",
+          "cachedResultName": "DavidM_CCAgent",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 177774914,
+          "mode": "list",
+          "cachedResultName": "images_and_prompts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12WJxqcANvsdxqFj1GaOwJi3_oykCmXpSXJCfldExjfI/edit#gid=177774914"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "done"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1780,
+        80
+      ],
+      "id": "1a965484-3c3f-4970-a326-217664f6ed04",
+      "name": "Google Sheets1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 'items' contains the array of rows from the previous node (GET ALL IMAGE LINKS)\nconst links = items.map(item => item.json.link);\n\n// Return each link as its own variable\nreturn [\n  {\n    json: {\n      link1: links[0] || null,\n      link2: links[1] || null,\n      link3: links[2] || null,\n      link4: links[3] || null,\n      link5: links[4] || null,\n      link6: links[5] || null,\n      link7: links[6] || null,\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        80
+      ],
+      "id": "31763da5-c227-451e-9ca7-e2dba2329382",
+      "name": "EXTRACT ALL IMG LINKS"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2220,
+        80
+      ],
+      "id": "2684ff2b-554b-40af-b91b-6d78727e0aaa",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  return {\n    image1: data.link1,\n    image2: data.link2,\n    image3: data.link3,\n    image4: data.link4,\n    image5: data.link5,\n    image6: data.link6,\n    image7: data.link7,\n    music: data.music,\n    voiceover: data.directVoiceoverUrl\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        80
+      ],
+      "id": "7acd0b7d-9369-4349-9815-7886fcbe4d27",
+      "name": "GET DRCT LINKS TO ALL FILES"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.CREATOMATE_API_KEY || 'YOUR_CREATOMATE_API_KEY') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"template_id\": \"90db31e4-5c7f-4722-9cd4-2725e1961020\",\n  \"modifications\": {\n    \"Image-NBN.source\": \"{{ $json.image1 }}\",\n    \"Image-8X6.source\": \"{{ $json.image2 }}\",\n    \"Image-D3F.source\": \"{{ $json.image3 }}\",\n    \"Image-98D.source\": \"{{ $json.image4 }}\",\n    \"Image-7T8.source\": \"{{ $json.image5 }}\",\n    \"Image-RCF.source\": \"{{ $json.image6 }}\",\n    \"Image-BKP.source\": \"{{ $json.image7 }}\",\n    \"Voiceover-TVH.source\": \"{{ $json.voiceover }}\",\n    \"Voiceover-6TN.source\": \"https://res.cloudinary.com/dcapfjw28/video/upload/v1746555516/silence_pmuqox.mp3\",\n    \"Audio-RJ6.source\": \"{{ $json.music }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        -100
+      ],
+      "id": "e52fd7a2-fc2b-4a8c-a2e8-be1744b73761",
+      "name": "CREATE LONGFORM"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3360,
+        80
+      ],
+      "id": "6e409888-ed06-4556-ab33-a62348e19c65",
+      "name": "Wait1",
+      "webhookId": "b9213997-f81e-46bb-aa3b-86aa7036c60e"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('GET IMG RATIO').item.json.ratio }}",
+                    "rightValue": "16:9",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "78d4dbf7-cc55-4ffc-b5b9-d7274a390ea4"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "longform"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "13f63169-4bf0-4201-8953-348c76bdd232",
+                    "leftValue": "={{ $('GET IMG RATIO').item.json.ratio }}",
+                    "rightValue": "9:16",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "shorts"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7fac03f4-23cd-4a8e-9d07-4575225244ee",
+                    "leftValue": "={{ $('GET IMG RATIO').item.json.ratio }}",
+                    "rightValue": "1:1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "square"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2660,
+        80
+      ],
+      "id": "273e727d-557d-4bad-ae7e-446ed4521ff6",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.CREATOMATE_API_KEY || 'YOUR_CREATOMATE_API_KEY') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"template_id\": \"14396de8-1a0f-4e98-bbd5-5309e48cac80\",\n  \"modifications\": {\n    \"Image-NBN.source\": \"{{ $json.image1 }}\",\n    \"Image-8X6.source\": \"{{ $json.image2 }}\",\n    \"Image-D3F.source\": \"{{ $json.image3 }}\",\n    \"Image-98D.source\": \"{{ $json.image4 }}\",\n    \"Image-7T8.source\": \"{{ $json.image5 }}\",\n    \"Image-RCF.source\": \"{{ $json.image6 }}\",\n    \"Image-BKP.source\": \"{{ $json.image7 }}\",\n    \"Voiceover-TVH.source\": \"{{ $json.voiceover }}\",\n    \"Voiceover-6TN.source\": \"https://res.cloudinary.com/dcapfjw28/video/upload/v1746555516/silence_pmuqox.mp3\",\n    \"Audio-RJ6.source\": \"{{ $json.music }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        80
+      ],
+      "id": "63bed4d8-8f52-434a-8941-90b005eacadf",
+      "name": "CREATE SHORTS"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.CREATOMATE_API_KEY || 'YOUR_CREATOMATE_API_KEY') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"template_id\": \"608c41d5-a030-4892-bfb3-e45a4fb87315\",\n  \"modifications\": {\n    \"Image-NBN.source\": \"{{ $json.image1 }}\",\n    \"Image-8X6.source\": \"{{ $json.image2 }}\",\n    \"Image-D3F.source\": \"{{ $json.image3 }}\",\n    \"Image-98D.source\": \"{{ $json.image4 }}\",\n    \"Image-7T8.source\": \"{{ $json.image5 }}\",\n    \"Image-RCF.source\": \"{{ $json.image6 }}\",\n    \"Image-BKP.source\": \"{{ $json.image7 }}\",\n    \"Voiceover-TVH.source\": \"{{ $json.voiceover }}\",\n    \"Voiceover-6TN.source\": \"https://res.cloudinary.com/dcapfjw28/video/upload/v1746555516/silence_pmuqox.mp3\",\n    \"Audio-RJ6.source\": \"{{ $json.music }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        260
+      ],
+      "id": "b7bd2817-9c47-439e-ac46-0b8de567f9e7",
+      "name": "CREATE SQUARE"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08KRPJPRAN",
+          "mode": "list",
+          "cachedResultName": "all-quantumresonance"
+        },
+        "text": "Your workflow has been complleted succesfully and your video is ready!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        4460,
+        -100
+      ],
+      "id": "3d71bc1f-e001-45a0-aae3-1b78b2134489",
+      "name": "FINAL CONFIRMATION",
+      "webhookId": "d6b8e632-d0e0-42cb-a6ec-677d1ad40ba3"
+    },
+    {
+      "parameters": {
+        "content": "## CLEAN UP & CONFIRMATION",
+        "height": 660,
+        "width": 1080,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        -180
+      ],
+      "id": "c325bb47-ca84-44b2-ad7a-43e91284f0a7",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack": {
+      "main": [
+        [
+          {
+            "node": "GET IMG RATIO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET IMG RATIO": {
+      "main": [
+        [
+          {
+            "node": "GET IDEAS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET IDEAS": {
+      "main": [
+        [
+          {
+            "node": "STORY CREATION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "STORY CREATION",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "STORY CREATION",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "STORY CREATION": {
+      "main": [
+        [
+          {
+            "node": "EXTRACT VOICEOVER",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "EXTRACT IMG PROMPTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EXTRACT VOICEOVER": {
+      "main": [
+        [
+          {
+            "node": "COMBINE VOICEOVER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "COMBINE VOICEOVER": {
+      "main": [
+        [
+          {
+            "node": "VOICEOVER TEXT CLEANUP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VOICEOVER TEXT CLEANUP": {
+      "main": [
+        [
+          {
+            "node": "CREATE VOICEOVER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE VOICEOVER": {
+      "main": [
+        [
+          {
+            "node": "UPLOAD VOICEOVER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPLOAD VOICEOVER": {
+      "main": [
+        [
+          {
+            "node": "GET DRCT FILE LINK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET DRCT FILE LINK": {
+      "main": [
+        [
+          {
+            "node": "GET MUSIC",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "EXTRACT IMG PROMPTS": {
+      "main": [
+        [
+          {
+            "node": "RESET COUNTER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RESET COUNTER": {
+      "main": [
+        [
+          {
+            "node": "READ COUNTER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "READ COUNTER": {
+      "main": [
+        [
+          {
+            "node": "SET STATUS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET STATUS": {
+      "main": [
+        [
+          {
+            "node": "SELECT IMG PROMPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SELECT IMG PROMPT": {
+      "main": [
+        [
+          {
+            "node": "CREATE IMAGE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE IMAGE": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "GET IMAGES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET IMAGES": {
+      "main": [
+        [
+          {
+            "node": "WRT TMP IMG LINKS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WRT TMP IMG LINKS": {
+      "main": [
+        [
+          {
+            "node": "ASK USER TO MAKE SELECTION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET RESPONSE": {
+      "main": [
+        [
+          {
+            "node": "SAVE SELECTED IMAGE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "APPROVE / RE-GENERATE": {
+      "main": [
+        [
+          {
+            "node": "CREATE IMAGE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET RESPONSE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SAVE SELECTED IMAGE": {
+      "main": [
+        [
+          {
+            "node": "SAVE IMAGE LINK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ASK USER TO MAKE SELECTION": {
+      "main": [
+        [
+          {
+            "node": "APPROVE / RE-GENERATE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SAVE IMAGE LINK": {
+      "main": [
+        [
+          {
+            "node": "UPDATE STATUS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE STATUS": {
+      "main": [
+        [
+          {
+            "node": "UPDATE COUNTER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE COUNTER": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "READ COUNTER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PICK RANDOM MUSIC": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "UPDATE STATUS AND SAVE VIDEO": {
+      "main": [
+        [
+          {
+            "node": "UPDATE IMAGE PROMPTS STAUS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE IMAGE PROMPTS STAUS": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FINAL CONFIRMATION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "UPDATE IMAGE PROMPTS STAUS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET MUSIC": {
+      "main": [
+        [
+          {
+            "node": "PICK RANDOM MUSIC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "EXTRACT ALL IMG LINKS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EXTRACT ALL IMG LINKS": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "GET DRCT LINKS TO ALL FILES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET DRCT LINKS TO ALL FILES": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE LONGFORM": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "CREATE LONGFORM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CREATE SHORTS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CREATE SQUARE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE SHORTS": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE SQUARE": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "UPDATE STATUS AND SAVE VIDEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

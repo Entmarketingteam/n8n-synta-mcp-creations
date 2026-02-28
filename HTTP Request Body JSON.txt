@@ -1,0 +1,19 @@
+{
+  "subscriber_id": {{ $("Webhook").item.json.body.contact_id }},
+  "data": {
+    "version": "v2",
+    "content": {
+      "type": "instagram",
+      "messages": [
+        {
+          "type": "text",
+          "text": "{{ 
+            $json.output
+              .replace(/\*\*(.*?)\*\*/g, '*$1*') 
+              .replace(/\n/g, '\\n') 
+          }}"
+        }
+      ]
+    }
+  }
+}

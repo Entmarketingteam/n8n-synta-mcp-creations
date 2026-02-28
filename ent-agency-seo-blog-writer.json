@@ -1,0 +1,533 @@
+{
+  "name": "ENT Agency — Programmatic SEO Blog Writer",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 1 — Setup & Research\nFill in keyword + audience → builds research prompt → sends to Slack → waits for you to paste research results back.",
+        "height": 400,
+        "width": 1320,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-840, -120],
+      "id": "s1000000-0000-0000-0000-000000000001",
+      "name": "Sticky Note — Setup"
+    },
+    {
+      "parameters": {
+        "content": "## 2 — AI Content Generation\nSequentially writes: meta description + title → intro → main body → conclusion.\nEach section references the research + prior sections.",
+        "height": 400,
+        "width": 1060,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [520, -120],
+      "id": "s1000000-0000-0000-0000-000000000002",
+      "name": "Sticky Note — Content"
+    },
+    {
+      "parameters": {
+        "content": "## 3 — Publish\nAssembles article, converts markdown → HTML,\ncreates Webflow draft, logs to Airtable Blog Posts.",
+        "height": 400,
+        "width": 680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1620, -120],
+      "id": "s1000000-0000-0000-0000-000000000003",
+      "name": "Sticky Note — Publish"
+    },
+    {
+      "parameters": {
+        "formTitle": "ENT Agency — SEO Blog Writer",
+        "formDescription": "Generates a full SEO blog post and publishes as a Webflow draft.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Primary Keyword",
+              "placeholder": "how to get approved for amazon influencer program",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Audience",
+              "placeholder": "aspiring creators and influencers wanting to monetize online",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Content Pillar",
+              "placeholder": "Amazon Influencer Program",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Article Title Override",
+              "placeholder": "Leave blank to auto-generate from keyword",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [-800, 200],
+      "id": "n1000000-0000-0000-0000-000000000001",
+      "name": "form_trigger",
+      "webhookId": "ent-seo-writer-v1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "i001",
+              "name": "keyword",
+              "value": "={{ $json['Primary Keyword'] }}",
+              "type": "string"
+            },
+            {
+              "id": "i002",
+              "name": "audience",
+              "value": "={{ $json['Target Audience'] }}",
+              "type": "string"
+            },
+            {
+              "id": "i003",
+              "name": "pillar",
+              "value": "={{ $json['Content Pillar'] || 'Creator Economy' }}",
+              "type": "string"
+            },
+            {
+              "id": "i004",
+              "name": "title_override",
+              "value": "={{ $json['Article Title Override'] || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-540, 200],
+      "id": "n1000000-0000-0000-0000-000000000002",
+      "name": "set_inputs"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r001",
+              "name": "research_prompt",
+              "value": "=You are an expert SEO content researcher specializing in the creator economy, influencer marketing, and affiliate monetization.\n\nYour task is to research the topic \"{{ $json.keyword }}\" for the following audience: {{ $json.audience }}.\n\nProvide a comprehensive research report covering:\n\n1. **Core Information**: Key facts, definitions, and essential background\n2. **Step-by-Step Processes**: Detailed steps, how-to information, requirements\n3. **Eligibility & Requirements**: Criteria, prerequisites, platform policies\n4. **Benefits & Opportunities**: Income potential, advantages, real numbers where possible\n5. **Common Challenges & Mistakes**: What people get wrong, pitfalls to avoid\n6. **Expert Tips**: Best practices, pro tips, shortcuts\n7. **Comparisons**: How this compares to alternatives (if relevant)\n8. **Platform Details**: Specific commission rates, approval rates, features, timelines\n9. **Frequently Asked Questions**: 5-7 FAQs people actually search for\n10. **Recent Updates**: Any changes or updates relevant to this topic (2025-2026)\n\nResearch from:\n- Official platform documentation and help centers\n- Reddit (r/Creator, r/AmazonInfluencerProgram, r/personalfinance, r/Flipping)\n- Creator forums and YouTube communities\n- Recent blog posts and industry guides\n\nBe specific with numbers, percentages, and data. Focus on practical, actionable information.\n\nTopic: {{ $json.keyword }}\nAudience: {{ $json.audience }}\nContent Pillar: {{ $json.pillar }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-280, 200],
+      "id": "n1000000-0000-0000-0000-000000000003",
+      "name": "build_research_prompt"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#seo-content",
+          "mode": "name"
+        },
+        "messageType": "block",
+        "blocksUi": "=[\n  {\n    \"type\": \"header\",\n    \"text\": { \"type\": \"plain_text\", \"text\": \"✍️ New SEO Article Request\" }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      { \"type\": \"mrkdwn\", \"text\": \"*Keyword:*\\n{{ $('set_inputs').item.json.keyword }}\" },\n      { \"type\": \"mrkdwn\", \"text\": \"*Audience:*\\n{{ $('set_inputs').item.json.audience }}\" },\n      { \"type\": \"mrkdwn\", \"text\": \"*Pillar:*\\n{{ $('set_inputs').item.json.pillar }}\" }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"text\": { \"type\": \"mrkdwn\", \"text\": \"*Research Prompt — paste into Claude/Perplexity:*\" }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": { \"type\": \"mrkdwn\", \"text\": \"```{{ $('build_research_prompt').item.json.research_prompt.substring(0, 2900) }}```\" }\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"text\": { \"type\": \"mrkdwn\", \"text\": \"*When done:* go to n8n executions, find this waiting run, and submit the form with your research results.\" }\n  }\n]",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [-20, 200],
+      "id": "n1000000-0000-0000-0000-000000000004",
+      "name": "send_research_to_slack",
+      "credentials": {
+        "slackApi": {
+          "id": "SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Paste Research Results",
+        "formDescription": "Run the research prompt in Claude or Perplexity, then paste the full output below.",
+        "responseMode": "lastNode",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Research Results",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [240, 200],
+      "id": "n1000000-0000-0000-0000-000000000005",
+      "name": "wait_for_research",
+      "webhookId": "ent-seo-research-wait-v1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Keyword: {{ $('set_inputs').item.json.keyword }}\nAudience: {{ $('set_inputs').item.json.audience }}\nPillar: {{ $('set_inputs').item.json.pillar }}\nTitle Override: {{ $('set_inputs').item.json.title_override }}\n\n## Your Task\n\nGenerate an SEO-optimized article title and meta description for a blog post targeting the keyword above.\n\n**Article Title Rules:**\n- If a Title Override was provided, use it exactly\n- Otherwise: create a clear, compelling title that naturally includes the keyword\n- Front-load the keyword when possible\n- Add a year (2025 or 2026) if it helps freshness (e.g. \"...in 2025\")\n- Keep under 65 characters\n- No clickbait. Be direct and informative.\n\n**Meta Description Rules:**\n- Exactly 150-160 characters\n- Include the primary keyword naturally\n- State what the reader will learn or get\n- Use active voice\n- No filler phrases like \"In this article...\"\n- End with a light call-to-action or benefit statement\n\n## Word Blacklist\nNever use: revolutionary, game-changing, seamless, robust, leverage, utilize, cutting-edge, dive into, delve, unlock\n\n## Research Context:\n{{ $('wait_for_research').item.json.data['Research Results'] }}",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [540, 200],
+      "id": "n1000000-0000-0000-0000-000000000006",
+      "name": "write_meta"
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-6",
+        "options": {
+          "maxTokens": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [540, 440],
+      "id": "n1000000-0000-0000-0000-000000000007",
+      "name": "write_meta_model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"article_title\": {\n      \"type\": \"string\",\n      \"description\": \"The SEO-optimized article title, 65 characters max.\"\n    },\n    \"meta_description\": {\n      \"type\": \"string\",\n      \"description\": \"The meta description, exactly 150-160 characters.\"\n    }\n  },\n  \"required\": [\"article_title\", \"meta_description\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [740, 440],
+      "id": "n1000000-0000-0000-0000-000000000008",
+      "name": "write_meta_parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Article Title: {{ $('write_meta').item.json.output.article_title }}\nKeyword: {{ $('set_inputs').item.json.keyword }}\nAudience: {{ $('set_inputs').item.json.audience }}\n\n## Your Task\n\nWrite a compelling 2-3 paragraph introduction for this blog post.\n\n**Requirements:**\n- Open with the reader's pain point or the question they're trying to answer — do NOT open with \"In this article\" or the keyword itself\n- Paragraph 2: what they'll learn and why it matters to their specific situation\n- Paragraph 3 (optional): brief credibility signal — why ENT Agency covers this topic (we work with creators daily)\n- Keep total length to 120-200 words\n- Do not use first-person singular (\"I\"). Use \"we\" if needed.\n- Write for someone who is ready to act, not just browse\n- Avoid over-explaining — get to the point fast\n\n**Tone:** Knowledgeable but approachable. Think: experienced creator mentor, not corporate blog.\n\n**Voice modifiers:**\n- Medium-length sentences\n- Active voice throughout\n- Slightly direct and confident\n\n## Word Blacklist\nNever use: revolutionary, game-changing, seamless, robust, leverage, utilize, cutting-edge, dive into, delve, unlock, it's worth noting, in today's digital landscape\n\n## Research Context:\n{{ $('wait_for_research').item.json.data['Research Results'] }}",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [820, 200],
+      "id": "n1000000-0000-0000-0000-000000000009",
+      "name": "write_intro"
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-6",
+        "options": {
+          "maxTokens": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [820, 440],
+      "id": "n1000000-0000-0000-0000-000000000010",
+      "name": "write_intro_model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"intro\": {\n      \"type\": \"string\",\n      \"description\": \"The introduction paragraphs formatted as markdown. 120-200 words.\"\n    }\n  },\n  \"required\": [\"intro\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [1020, 440],
+      "id": "n1000000-0000-0000-0000-000000000011",
+      "name": "write_intro_parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Article Title: {{ $('write_meta').item.json.output.article_title }}\nKeyword: {{ $('set_inputs').item.json.keyword }}\nAudience: {{ $('set_inputs').item.json.audience }}\n\n## Introduction Already Written (do not repeat this):\n{{ $('write_intro').item.json.output.intro }}\n\n## Your Task\n\nWrite the main body content for this SEO guide. This is the bulk of the article.\n\n**Structure Requirements:**\n- Use H2 (##) for main sections, H3 (###) for subsections\n- 4-6 H2 sections total, each meaningful and distinct\n- 1,200–1,800 words for the full body\n- End with an FAQ section: 4-6 questions people actually search for around this keyword, with concise answers\n\n**Content Requirements:**\n- Ground every claim in the research — use specific numbers, timelines, percentages\n- Each H2 should answer a real question a reader would have\n- Use bullet lists for requirements, steps, and tips\n- Use numbered lists only for sequential steps\n- Bold key terms on first use\n- Include 1-2 internal link placeholders formatted as: [INTERNAL LINK: topic]\n  Example: For more on monetization, see [INTERNAL LINK: creator income streams]\n\n**Tone:** Same as the intro — knowledgeable, direct, practical. Not fluffy.\n\n**Formatting:**\n- Markdown format\n- Short paragraphs (3-4 sentences max)\n- No walls of text\n\n## Word Blacklist\nNever use: revolutionary, game-changing, seamless, robust, leverage, utilize, cutting-edge, dive into, delve, unlock, it's worth noting, in today's digital landscape, in conclusion\n\n## Research Context:\n{{ $('wait_for_research').item.json.data['Research Results'] }}",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [1100, 200],
+      "id": "n1000000-0000-0000-0000-000000000012",
+      "name": "write_body"
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-6",
+        "options": {
+          "maxTokens": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [1100, 440],
+      "id": "n1000000-0000-0000-0000-000000000013",
+      "name": "write_body_model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"body_content\": {\n      \"type\": \"string\",\n      \"description\": \"The main body content formatted as markdown. 1200-1800 words including FAQ section.\"\n    }\n  },\n  \"required\": [\"body_content\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [1300, 440],
+      "id": "n1000000-0000-0000-0000-000000000014",
+      "name": "write_body_parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Article Title: {{ $('write_meta').item.json.output.article_title }}\nKeyword: {{ $('set_inputs').item.json.keyword }}\nAudience: {{ $('set_inputs').item.json.audience }}\n\n## Article So Far (do not repeat any of this):\n\nIntro:\n{{ $('write_intro').item.json.output.intro }}\n\nBody (last 500 chars for context):\n...{{ $('write_body').item.json.output.body_content.slice(-500) }}\n\n## Your Task\n\nWrite the conclusion for this article.\n\n**Requirements:**\n- 2 short paragraphs, 60-90 words total\n- Paragraph 1: Summarize the 2-3 most important takeaways — specific, not vague\n- Paragraph 2: Soft CTA — encourage the reader to take action (start the application, explore LTK, etc.) and optionally reference ENT Agency for creators looking for brand deals\n- Do NOT use the phrase \"In conclusion\" or \"To summarize\"\n- Match the tone of the article — direct, practical, no fluff\n- End strong. The final sentence should be punchy and forward-looking.\n\n## Word Blacklist\nNever use: revolutionary, game-changing, seamless, robust, leverage, utilize, cutting-edge, dive into, delve, unlock, in conclusion, to summarize, it's worth noting",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [1380, 200],
+      "id": "n1000000-0000-0000-0000-000000000015",
+      "name": "write_conclusion"
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-6",
+        "options": {
+          "maxTokens": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [1380, 440],
+      "id": "n1000000-0000-0000-0000-000000000016",
+      "name": "write_conclusion_model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"conclusion\": {\n      \"type\": \"string\",\n      \"description\": \"The conclusion paragraphs formatted as markdown. 60-90 words.\"\n    }\n  },\n  \"required\": [\"conclusion\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [1580, 440],
+      "id": "n1000000-0000-0000-0000-000000000017",
+      "name": "write_conclusion_parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull all generated content\nconst meta = $('write_meta').item.json.output;\nconst intro = $('write_intro').item.json.output.intro;\nconst body = $('write_body').item.json.output.body_content;\nconst conclusion = $('write_conclusion').item.json.output.conclusion;\nconst inputs = $('set_inputs').item.json;\n\n// Article title + slug\nconst title = meta.article_title;\nconst slug = title\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s-]/g, '')\n  .replace(/\\s+/g, '-')\n  .replace(/-+/g, '-')\n  .replace(/^-|-$/g, '');\n\n// Full markdown\nconst fullMarkdown = `${intro}\\n\\n${body}\\n\\n${conclusion}`;\n\n// Small description for Webflow (first ~200 chars of intro, no markdown)\nconst smallDescription = intro\n  .replace(/[#*_`]/g, '')\n  .replace(/\\n+/g, ' ')\n  .trim()\n  .substring(0, 200);\n\n// Markdown → HTML converter\nfunction markdownToHtml(md) {\n  let html = md\n    // Headings\n    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')\n    .replace(/^### (.+)$/gm, '<h3>$1</h3>')\n    .replace(/^## (.+)$/gm, '<h2>$1</h2>')\n    .replace(/^# (.+)$/gm, '<h1>$1</h1>')\n    // Bold + italic\n    .replace(/\\*\\*\\*(.+?)\\*\\*\\*/g, '<strong><em>$1</em></strong>')\n    .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')\n    .replace(/\\*(.+?)\\*/g, '<em>$1</em>')\n    // Code inline\n    .replace(/`([^`]+)`/g, '<code>$1</code>')\n    // Unordered list items\n    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')\n    // Ordered list items\n    .replace(/^\\d+\\. (.+)$/gm, '<li>$1</li>');\n\n  // Wrap consecutive <li> items in <ul>\n  html = html.replace(/((?:<li>.*<\\/li>\\n?)+)/g, '<ul>$1</ul>');\n\n  // Split into blocks and wrap bare text in <p>\n  const blocks = html.split(/\\n{2,}/);\n  html = blocks\n    .map(block => {\n      block = block.trim();\n      if (!block) return '';\n      if (/^<(h[1-6]|ul|ol|li|blockquote|pre|table)/.test(block)) return block;\n      // Wrap in paragraph, preserve single line breaks within\n      return '<p>' + block.replace(/\\n/g, '<br>') + '</p>';\n    })\n    .filter(Boolean)\n    .join('\\n');\n\n  return html;\n}\n\nconst contentHtml = markdownToHtml(fullMarkdown);\n\nreturn [{\n  json: {\n    title,\n    slug,\n    meta_description: meta.meta_description,\n    small_description: smallDescription,\n    content_html: contentHtml,\n    full_markdown: fullMarkdown,\n    keyword: inputs.keyword,\n    pillar: inputs.pillar\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1660, 200],
+      "id": "n1000000-0000-0000-0000-000000000018",
+      "name": "assemble_article"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.webflow.com/v2/collections/681e41ad88cb1afaf45fb5f0/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"isDraft\": true,\n  \"fieldData\": {\n    \"name\": {{ JSON.stringify($json.title) }},\n    \"slug\": {{ JSON.stringify($json.slug) }},\n    \"meta-description-for-seo-purposes\": {{ JSON.stringify($json.meta_description) }},\n    \"small-description\": {{ JSON.stringify($json.small_description) }},\n    \"content\": {{ JSON.stringify($json.content_html) }},\n    \"visible-date\": {{ JSON.stringify(new Date().toISOString()) }}\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 200],
+      "id": "n1000000-0000-0000-0000-000000000019",
+      "name": "create_webflow_draft",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WEBFLOW_CRED_ID",
+          "name": "Webflow API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.airtable.com/v0/appqPu2EOxVAPTnxZ/tblccNOvDJiZFxfn8",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"Post Title\": {{ JSON.stringify($('assemble_article').item.json.title) }},\n    \"Slug\": {{ JSON.stringify($('assemble_article').item.json.slug) }},\n    \"Status\": \"Draft\",\n    \"Primary Keyword\": {{ JSON.stringify($('assemble_article').item.json.keyword) }},\n    \"Meta Description\": {{ JSON.stringify($('assemble_article').item.json.meta_description) }},\n    \"Post Body\": {{ JSON.stringify($('assemble_article').item.json.full_markdown) }},\n    \"Webflow Item ID\": {{ JSON.stringify($json.body.id) }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2180, 200],
+      "id": "n1000000-0000-0000-0000-000000000020",
+      "name": "create_airtable_post",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AIRTABLE_CRED_ID",
+          "name": "Airtable API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "form_trigger": {
+      "main": [
+        [{ "node": "set_inputs", "type": "main", "index": 0 }]
+      ]
+    },
+    "set_inputs": {
+      "main": [
+        [{ "node": "build_research_prompt", "type": "main", "index": 0 }]
+      ]
+    },
+    "build_research_prompt": {
+      "main": [
+        [{ "node": "send_research_to_slack", "type": "main", "index": 0 }]
+      ]
+    },
+    "send_research_to_slack": {
+      "main": [
+        [{ "node": "wait_for_research", "type": "main", "index": 0 }]
+      ]
+    },
+    "wait_for_research": {
+      "main": [
+        [{ "node": "write_meta", "type": "main", "index": 0 }]
+      ]
+    },
+    "write_meta": {
+      "main": [
+        [{ "node": "write_intro", "type": "main", "index": 0 }]
+      ]
+    },
+    "write_intro": {
+      "main": [
+        [{ "node": "write_body", "type": "main", "index": 0 }]
+      ]
+    },
+    "write_body": {
+      "main": [
+        [{ "node": "write_conclusion", "type": "main", "index": 0 }]
+      ]
+    },
+    "write_conclusion": {
+      "main": [
+        [{ "node": "assemble_article", "type": "main", "index": 0 }]
+      ]
+    },
+    "assemble_article": {
+      "main": [
+        [{ "node": "create_webflow_draft", "type": "main", "index": 0 }]
+      ]
+    },
+    "create_webflow_draft": {
+      "main": [
+        [{ "node": "create_airtable_post", "type": "main", "index": 0 }]
+      ]
+    },
+    "write_meta_model": {
+      "ai_languageModel": [
+        [{ "node": "write_meta", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "write_meta_parser": {
+      "ai_outputParser": [
+        [{ "node": "write_meta", "type": "ai_outputParser", "index": 0 }]
+      ]
+    },
+    "write_intro_model": {
+      "ai_languageModel": [
+        [{ "node": "write_intro", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "write_intro_parser": {
+      "ai_outputParser": [
+        [{ "node": "write_intro", "type": "ai_outputParser", "index": 0 }]
+      ]
+    },
+    "write_body_model": {
+      "ai_languageModel": [
+        [{ "node": "write_body", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "write_body_parser": {
+      "ai_outputParser": [
+        [{ "node": "write_body", "type": "ai_outputParser", "index": 0 }]
+      ]
+    },
+    "write_conclusion_model": {
+      "ai_languageModel": [
+        [{ "node": "write_conclusion", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "write_conclusion_parser": {
+      "ai_outputParser": [
+        [{ "node": "write_conclusion", "type": "ai_outputParser", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {}
+}

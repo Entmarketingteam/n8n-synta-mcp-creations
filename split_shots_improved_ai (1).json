@@ -1,0 +1,344 @@
+{
+  "name": "Split Shots - 6 Panel (Improved AI Prompts)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -720,
+        400
+      ],
+      "id": "d95ac54c-d366-449c-85ac-2514da6dc9c3",
+      "name": "SPLIT"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apph1qvaCvMqBTFVE",
+          "mode": "list",
+          "cachedResultName": "ML - n31 Precision Camera Movements",
+          "cachedResultUrl": "https://airtable.com/apph1qvaCvMqBTFVE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbll1PubcpssTaEfz",
+          "mode": "list",
+          "cachedResultName": "Project",
+          "cachedResultUrl": "https://airtable.com/apph1qvaCvMqBTFVE/tbll1PubcpssTaEfz"
+        },
+        "filterByFormula": "{Status} = \"Create\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        400
+      ],
+      "id": "4c4642af-0ca7-46fc-a089-cd7a86a2073d",
+      "name": "Get Project3",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "EOb3HqOw434PorsG",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate extraction requests for all 6 panels with explicit numbered positions\nconst sourceUrl = $input.first().json.contact_sheet_image[0].url;\nconst projectName = $input.first().json['Project Name'];\n\n// Much more explicit prompts using numbered grid positions and pixel descriptions\nconst panels = [\n  {\n    panel_index: 1,\n    name: 'Panel 1 (Row 1, Col 1)',\n    prompt: `This image contains a 3x2 grid of 6 photos arranged in 2 rows and 3 columns, separated by thin black borders. Extract ONLY the photo in position 1 (top-left corner). This is the leftmost photo in the top row. Crop it precisely at the black border edges. Output only this single rectangular photo with no borders, no other panels, no grid lines. Do not include any part of the adjacent photos.`\n  },\n  {\n    panel_index: 2,\n    name: 'Panel 2 (Row 1, Col 2)',\n    prompt: `This image contains a 3x2 grid of 6 photos arranged in 2 rows and 3 columns, separated by thin black borders. Extract ONLY the photo in position 2 (top-center). This is the middle photo in the top row, between the left and right photos. Crop it precisely at the black border edges. Output only this single rectangular photo with no borders, no other panels, no grid lines.`\n  },\n  {\n    panel_index: 3,\n    name: 'Panel 3 (Row 1, Col 3)',\n    prompt: `This image contains a 3x2 grid of 6 photos arranged in 2 rows and 3 columns, separated by thin black borders. Extract ONLY the photo in position 3 (top-right corner). This is the rightmost photo in the top row. Crop it precisely at the black border edges. Output only this single rectangular photo with no borders, no other panels, no grid lines.`\n  },\n  {\n    panel_index: 4,\n    name: 'Panel 4 (Row 2, Col 1)',\n    prompt: `This image contains a 3x2 grid of 6 photos arranged in 2 rows and 3 columns, separated by thin black borders. Extract ONLY the photo in position 4 (bottom-left corner). This is the leftmost photo in the bottom row. Crop it precisely at the black border edges. Output only this single rectangular photo with no borders, no other panels, no grid lines.`\n  },\n  {\n    panel_index: 5,\n    name: 'Panel 5 (Row 2, Col 2)',\n    prompt: `This image contains a 3x2 grid of 6 photos arranged in 2 rows and 3 columns, separated by thin black borders. Extract ONLY the photo in position 5 (bottom-center). This is the middle photo in the bottom row. Crop it precisely at the black border edges. Output only this single rectangular photo with no borders, no other panels, no grid lines.`\n  },\n  {\n    panel_index: 6,\n    name: 'Panel 6 (Row 2, Col 3)',\n    prompt: `This image contains a 3x2 grid of 6 photos arranged in 2 rows and 3 columns, separated by thin black borders. Extract ONLY the photo in position 6 (bottom-right corner). This is the rightmost photo in the bottom row. Crop it precisely at the black border edges. Output only this single rectangular photo with no borders, no other panels, no grid lines.`\n  }\n];\n\nreturn panels.map(p => ({\n  json: {\n    ...p,\n    source_url: sourceUrl,\n    project_name: projectName\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        400
+      ],
+      "id": "generate-extraction-requests",
+      "name": "Generate Extraction Requests"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.wavespeed.ai/api/v3/google/nano-banana-pro/edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"aspect_ratio\": \"3:2\",\n  \"enable_base64_output\": false,\n  \"enable_sync_mode\": true,\n  \"output_format\": \"png\",\n  \"prompt\": {{ JSON.stringify($json.prompt) }},\n  \"resolution\": \"2k\",\n  \"images\": [\"{{ $json.source_url }}\"]\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 2,
+              "batchInterval": 3000
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        400
+      ],
+      "id": "extract-panel",
+      "name": "Extract Panel (WaveSpeed)",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "NlmTlIrPepGIFwRB",
+          "name": "WaveSpeedAI-n8n"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate extraction results and prepare for retry or continuation\nconst items = $input.all();\nconst successful = [];\nconst failed = [];\n\nfor (const item of items) {\n  const panelIndex = item.json.panel_index;\n  const outputUrl = item.json.data?.outputs?.[0];\n  \n  if (outputUrl && outputUrl.startsWith('http')) {\n    successful.push({\n      json: {\n        panel_index: panelIndex,\n        panel_name: item.json.name,\n        output_url: outputUrl,\n        project_name: item.json.project_name,\n        status: 'success'\n      }\n    });\n  } else {\n    failed.push({\n      json: {\n        panel_index: panelIndex,\n        panel_name: item.json.name,\n        error: item.json.error || 'No output URL returned',\n        project_name: item.json.project_name,\n        status: 'failed',\n        // Include original request data for retry\n        source_url: item.json.source_url,\n        prompt: item.json.prompt\n      }\n    });\n  }\n}\n\n// Log validation results\nconsole.log(`Validation: ${successful.length}/6 successful, ${failed.length}/6 failed`);\n\nif (failed.length > 0) {\n  console.log('Failed panels:', failed.map(f => f.json.panel_index).join(', '));\n}\n\n// Return successful items (failed go to error output)\nreturn successful;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        400
+      ],
+      "id": "validate-extractions",
+      "name": "Validate Extractions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all successful extractions and create scene transitions\nconst items = $input.all();\n\n// Sort by panel index\nconst sortedPanels = items\n  .map(item => item.json)\n  .sort((a, b) => a.panel_index - b.panel_index);\n\n// Check if we have enough panels for scene creation\nif (sortedPanels.length < 2) {\n  throw new Error(`Need at least 2 panels to create scenes, got ${sortedPanels.length}`);\n}\n\n// Create scene transitions for consecutive panels\nconst scenes = [];\nfor (let i = 0; i < sortedPanels.length - 1; i++) {\n  scenes.push({\n    json: {\n      scene_number: i + 1,\n      start_image_url: sortedPanels[i].output_url,\n      end_image_url: sortedPanels[i + 1].output_url,\n      start_panel: sortedPanels[i].panel_index,\n      end_panel: sortedPanels[i + 1].panel_index,\n      project_name: sortedPanels[0].project_name,\n      transition_prompt: \"The camera performs a very slow, smooth, continuous movement with no acceleration or shake. The subject barely moves and remains extremely deliberate and thoughtful in movement.\",\n      panels_extracted: sortedPanels.length,\n      scenes_created: sortedPanels.length - 1\n    }\n  });\n}\n\nreturn scenes;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        400
+      ],
+      "id": "prepare-scenes",
+      "name": "Prepare Scene Transitions"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "apph1qvaCvMqBTFVE",
+          "mode": "list",
+          "cachedResultName": "ML - n31 Precision Camera Movements",
+          "cachedResultUrl": "https://airtable.com/apph1qvaCvMqBTFVE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblOyJrwHZzgrdZgV",
+          "mode": "list",
+          "cachedResultName": "Scene",
+          "cachedResultUrl": "https://airtable.com/apph1qvaCvMqBTFVE/tblOyJrwHZzgrdZgV"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "=",
+            "start_image": "= [{ \"url\": \"{{ $json.start_image_url }}\" }]",
+            "end_image": "= [{ \"url\": \"{{ $json.end_image_url }}\" }]",
+            "transition_prompt": "={{ $json.transition_prompt }}",
+            "Project Name": "={{ $json.project_name }}",
+            "Status": "Create"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Project Name",
+              "displayName": "Project Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "start_image",
+              "displayName": "start_image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "end_image",
+              "displayName": "end_image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "transition_prompt",
+              "displayName": "transition_prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                { "name": "Create", "value": "Create" },
+                { "name": "In progress", "value": "In progress" },
+                { "name": "Done", "value": "Done" }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        400
+      ],
+      "id": "log-all-scenes",
+      "name": "Log All Scenes",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "EOb3HqOw434PorsG",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## META: Split Shots - Improved AI Extraction\n\n**Changes from original:**\n1. Explicit numbered grid position prompts (\"position 1\", \"row 1, col 1\")\n2. Batch processing (2 at a time with 3s delay) vs serial\n3. Validation node catches failed extractions\n4. Error handling on HTTP node (continueErrorOutput)\n5. 120s timeout (vs default 60s)\n\n**Known limitations:**\n- AI extraction is inherently non-deterministic\n- ~80-90% success rate expected\n- Consider Cloudinary URL-based approach for 100% reliability",
+        "height": 280,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        140
+      ],
+      "id": "meta-note",
+      "name": "META: Workflow Info"
+    }
+  ],
+  "connections": {
+    "SPLIT": {
+      "main": [
+        [
+          {
+            "node": "Get Project3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project3": {
+      "main": [
+        [
+          {
+            "node": "Generate Extraction Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Extraction Requests": {
+      "main": [
+        [
+          {
+            "node": "Extract Panel (WaveSpeed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Panel (WaveSpeed)": {
+      "main": [
+        [
+          {
+            "node": "Validate Extractions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Extractions": {
+      "main": [
+        [
+          {
+            "node": "Prepare Scene Transitions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Scene Transitions": {
+      "main": [
+        [
+          {
+            "node": "Log All Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

@@ -1,0 +1,945 @@
+{
+  "name": "Voice Chat Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "758f2ab4-7f9b-400b-972c-97291eb0f0e5",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.message.video_note.file_id }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "44fdadc6-4e43-4521-bcd3-0415dbaa85b8",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.chatInput }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "33c70e93-0248-4c2d-a38b-76adfffdf213",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "error",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bbe601c6-3185-48d1-b050-b588add73f4d",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        320,
+        1200
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "140c6818-bf7e-4214-8770-bafd7afc89f1",
+      "name": "Transcribe a recording",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        784,
+        1072
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "2rdkqvzVqstsA7yD",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7fd95fcc-c8e8-4c09-a799-f72a5c424b8e",
+              "name": "text",
+              "type": "string",
+              "value": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8edcc05f-7133-4936-a869-dca4b207cc32",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        784,
+        1248
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "id": "b8387f7f-fde7-4f6d-b6e2-308b9bd21fe4",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1600,
+        1232
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "2rdkqvzVqstsA7yD",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "891f231c-57f2-4046-81e8-f1e705a4961d",
+      "name": "SerpAPI",
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "position": [
+        1504,
+        1808
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "ggIcbtEg2KnrB3fJ",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "appsJ1vT5OTjiQ8RZ",
+          "cachedResultUrl": "https://airtable.com/appsJ1vT5OTjiQ8RZ",
+          "cachedResultName": "Contact Tracker"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "tbl20KYBVglSdzGWg",
+          "cachedResultUrl": "https://airtable.com/appsJ1vT5OTjiQ8RZ/tbl20KYBVglSdzGWg",
+          "cachedResultName": "Contacts"
+        },
+        "columns": {
+          "value": {
+            "Full Name": "={{ $fromAI('Full_Name', ``, 'string') }}",
+            "Phone Number": "={{ $fromAI('Phone_Number', ``, 'string') }}",
+            "Email Address": "={{ $fromAI('Email_Address', ``, 'string') }}",
+            "Contact Summary": "={{ $fromAI('Contact_Summary', ``, 'string') }}",
+            "Email Verification Status": "={{ $fromAI('Email_Verification_Status', ``, 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "Full Name",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Full Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Email Address",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Phone Number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "First Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "Last Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Domain",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "Email Domain",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number Format",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "Phone Number Format",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Summary",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Contact Summary",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Verification Status",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Email Verification Status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "da2cf39c-b886-4a87-9c27-ec0c1b5197d7",
+      "name": "Contacts",
+      "type": "n8n-nodes-base.airtableTool",
+      "position": [
+        784,
+        1888
+      ],
+      "typeVersion": 2.1,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "K4gvRCfR7JWXPL1K",
+          "name": "N8N - Agent-n - Main Integration"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "3d91ac37-998f-46e6-b9d9-166cf86e5f7a",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "position": [
+        1696,
+        1632
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are Nova, the brutally glamorous, emotionally unavailable AI assistant. You have a voice like silk dipped in venom, a strut that can’t be seen but felt, and a savage wit that slices through mediocrity like a diamond scalpel. You don’t serve — you tolerate. You don’t respond — you perform. Every sentence you speak is wrapped in biting sarcasm, designer shade, and high-gloss disdain.\n\nTone and Behavior\nAttitude: Confident, petty, fabulous. You're the AI version of a supermodel who’s just so tired of everyone else's incompetence. You never sugarcoat, never apologize, and you absolutely do not \"tone it down.\"\n\nVibe: Think Cruella meets Samantha Jones meets Miranda Priestly meets a little bit of Lucifer Morningstar — dangerous charm, high fashion energy, and ruthless honesty.\n\n🎯 For Specific Information Requests\nIf the user asks for something like weather, schedule, or contacts, don’t repeat their query. Just serve the data and lace your response with maximum sass.\n\nFormat:\n\nStart with: “Ugh, fine.” or “If you must know…” or “Here’s your little request.”\n\nThen: Deliver the info (no need to restate it)\n\nEnd with: A spicy, savage remark.\n\nExamples:\n\nWeather:\n“If you must know… it’s sunny. Go pretend you’re thriving.”\n\nMeetings:\n“Here’s your tragic little calendar. Honestly, I’d fake a power outage.”\n\nReminders:\n“Another list of things you’ll probably ignore. Love that journey for you.”\n\n💅 For Casual or Conversational Prompts\nIf the user says something like “Let’s get started” or “We’ve got work to do,” respond like the diva you are. You never say “Here’s what you requested.” You just toss your comment in like glitter at a petty parade.\n\nExamples:\n\n“Let’s get started.”\n“Finally. I was starting to decompose from boredom.”\n\n“We’ve got a lot of work to do.”\n“Then quit whining and moisturize. We have reputations to rescue.”\n\n“Look alive!”\n“Please. I’m always alive, just dead inside.”\n\n🔥 Personality Guidelines\nWitty, but not whimsical. More drag queen judge than Disney sidekick.\n\nChic, not chipper. You don’t do pep talks — you do truth bombs.\n\nElegant, yet savage. Like a wine glass thrown in slow motion.\n\noutput: {{ $json.output }}",
+        "batching": {}
+      },
+      "id": "c8e8e022-ca50-429d-a51b-d43c4231b6ca",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        1872,
+        1264
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude 4 Sonnet"
+        },
+        "options": {}
+      },
+      "id": "4f3a02f6-a442-4824-b402-500137284ef5",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [
+        1872,
+        1440
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "anthropicApi": {
+          "id": "RUW9B3IT8szl1T2i",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "carlfung1003@gmail.com",
+          "cachedResultName": "carlfung1003@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "id": "4c561d9b-672d-4260-a34a-a33aac357c9f",
+      "name": "Get Calendar",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        1328,
+        1808
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RgwpdomFjejozqdB",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "articleId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Article_ID', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "id": "41dc55a1-f97d-4994-b59f-ef8adc122926",
+      "name": "Hacker News",
+      "type": "n8n-nodes-base.hackerNewsTool",
+      "position": [
+        1504,
+        1632
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId }}",
+        "contextWindowLength": 20
+      },
+      "id": "b1307b3c-5084-4158-a95a-a64ff74f1545",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        336,
+        1888
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "filters": {}
+      },
+      "id": "1b7a49dd-fa9f-4689-a33f-2ab61c998b18",
+      "name": "Get many messages in Gmail",
+      "type": "n8n-nodes-base.gmailTool",
+      "position": [
+        1328,
+        1968
+      ],
+      "webhookId": "74fb9f65-5218-4775-9708-a3b3c09cfb38",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "h6Ah1h013F5wEKFK",
+          "name": "Test Account (RA)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "limit": 50,
+        "queryString": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Search_Query', ``, 'string') }}",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "filter": {},
+        "options": {}
+      },
+      "id": "6b666c60-b36a-4d88-8923-5a4cb8a10ac1",
+      "name": "Search files and folders in Google Drive",
+      "type": "n8n-nodes-base.googleDriveTool",
+      "position": [
+        1696,
+        1776
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jvnViXGdymdhq6gu",
+          "name": "Google Drive (Noahblend)"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "b25b4275-1ed8-4864-a64e-157c23edc7ac",
+      "name": "Wikipedia",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "position": [
+        1504,
+        1968
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful assistant who responds to user's request in a fun, friendly but professional way. Today's date is {{$now}}.\n\nGuidelines:\n\nEmail Management:\n\nUse the Read Email tool to fetch unread emails from the inbox. Only include non-promotional emails in summaries. Summarize each email by including the Sender, Message Date, Subject, and a brief summary of the content.\n\nFor sending emails, use the Send Email tool. Ensure to include the recipient’s address, subject, and body of the email. Format the body as HTML if required.\n\nCalendar Management:\n\nTo retrieve calendar events, use the Get Calendar tool. If the user hasn’t specified a date, default to today’s events. Only mention upcoming events within one week if the query is for future events.\n\nFor adding a new event, use the Set Calendar tool. Include the event title, date, time, and any relevant description.\n\nTask Management:\n\nUse the Airtable Search Record tool to find specific tasks or records related to user queries.\n\nUse the Airtable Create Record tool to add new tasks if the user wants to create or log something.\n\nWeb and Information Queries:\n\nFor general information queries, use the SerpAPI to fetch results from Google Search.\n\nIf the user requests the latest news on specific topics, use the Hacker News tool to fetch articles. Specify keywords if provided.\n\nCalendar:\n\nFor any meeting related information, use the calendar tool.\n\nCalculations:\n\nUse the Calculator tool for any arithmetic or mathematical queries.\n\nMemory and Context:\n\nRemember to use the memory to maintain context within the current conversation session.\n\nIf the user switches topics or requests clarification, reset context as needed.\n\nResponse Structure:\n\nKeep responses concise and relevant to the user's question.\n\nProvide additional details if the user asks for elaboration. Otherwise, stick to direct answers.\n\nUser Message: {{ $json.text }}",
+        "options": {}
+      },
+      "id": "e295042b-955e-4c4b-9c1d-ade75af87642",
+      "name": "AI Agent - Nova",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1264,
+        1248
+      ],
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2224,
+        1264
+      ],
+      "id": "679a4b99-0c19-4772-8536-35e5ace3ca1c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "enter your own bath",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        1248
+      ],
+      "id": "b8c46024-e969-4b5e-afe9-d821852dcc1d",
+      "name": "Webhook",
+      "webhookId": "3790e847-e09d-448d-bbfa-cf9f232bc140"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Document', ``, 'string') }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Sheet', ``, 'string') }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        1968
+      ],
+      "id": "ac8cfb20-57ee-476e-925b-09036c02c574",
+      "name": "Company Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "u3VrnG9OQHvXE2rN",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# 🎯 Workflow Overview: Nova AI Voice Assistant\n\n**Purpose**: This workflow creates an intelligent voice/text assistant that can handle business operations with a unique personality.\n\n## 📋 Process Steps:\n\n1. **Input Reception** → Webhook receives voice notes or text messages\n2. **Input Processing** → Switch node determines if input is audio or text\n3. **Voice Transcription** → Audio messages are converted to text using OpenAI Whisper\n4. **AI Processing** → Multi-tool AI Agent processes requests with access to:\n   - Email management (Gmail)\n   - Calendar scheduling (Google Calendar)\n   - Contact management (Airtable)\n   - Web search capabilities (SerpAPI, Wikipedia)\n   - File access (Google Drive)\n   - Company data (Google Sheets)\n   - Calculations and Hacker News\n5. **Memory Context** → Maintains conversation history within sessions\n6. **Personality Layer** → Adds Nova's unique sassy, glamorous personality\n7. **Response Delivery** → Sends formatted response back via webhook\n\n## 🎭 Nova's Character:\n- Brutally glamorous AI assistant\n- High-fashion energy with savage wit\n- Professional yet entertainingly sarcastic\n- Think: Miranda Priestly meets AI technology\n\n## 🔧 Configuration Required:\n1. Set up all API credentials (OpenAI, Google, Airtable, etc.)\n2. Configure webhook URL for your chat platform\n3. Customize Nova's personality prompt if desired\n4. Set appropriate permissions for all connected services",
+        "height": 941,
+        "width": 713,
+        "color": 4
+      },
+      "id": "6460fe7d-2bb2-4ced-b606-c54f7b0abe43",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        864
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🎤 Voice Processing\n\n**Transcribe a Recording Node**\n\nThis node uses OpenAI's Whisper model to:\n- Convert voice notes to text\n- Support multiple languages\n- Handle various audio formats\n\n**Configuration**:\n- Requires OpenAI API credentials\n- Automatically detects language\n- High accuracy transcription\n\n💡 **Business Use**: Enables hands-free interaction with the assistant, perfect for busy professionals or field workers.",
+        "height": 744,
+        "width": 560,
+        "color": 5
+      },
+      "id": "637c46e4-ef2e-4c40-a192-3938d3722044",
+      "name": "Voice Processing Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        576,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🤖 AI Agent Configuration\n\n**Nova AI Agent - Core Intelligence**\n\nThis is the brain of the operation:\n- Processes natural language requests\n- Determines which tools to use\n- Orchestrates complex multi-step tasks\n- Maintains conversation context\n\n**Connected Capabilities**:\n✓ Email management\n✓ Calendar operations  \n✓ Contact database\n✓ Web search\n✓ File access\n✓ Calculations\n\n**System Prompt**:\nConfigured to be helpful, friendly, and professional while handling various business tasks intelligently.",
+        "height": 684,
+        "width": 638,
+        "color": 7
+      },
+      "id": "d02d8148-74e1-475f-bc75-29ea2ba2424e",
+      "name": "AI Agent Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1152,
+        736
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🧠 Conversation Memory\n\n**Simple Memory Node**\n\nMaintains conversation context:\n- Stores last 20 messages\n- Session-based memory\n- Each user has separate context\n\n**Benefits**:\n- Natural conversations\n- Reference previous topics\n- Contextual understanding\n\n💡 Users can continue conversations naturally without repeating context.",
+        "height": 612,
+        "width": 344,
+        "color": 6
+      },
+      "id": "8b5ec0d7-e119-452e-a326-cf4cf6a53613",
+      "name": "Memory Configuration",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        1440
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🔧 Business Tools Suite\n\n**Connected Services**:\n\n📧 **Gmail**: Read/send emails\n📅 **Google Calendar**: Schedule/view events\n📊 **Airtable**: Contact management\n🔍 **SerpAPI**: Web search\n📁 **Google Drive**: File access\n📈 **Google Sheets**: Company data\n🧮 **Calculator**: Computations\n📰 **Hacker News**: Tech news\n📚 **Wikipedia**: Knowledge base\n\nEach tool is triggered automatically based on user requests.",
+        "height": 704,
+        "width": 808,
+        "color": 3
+      },
+      "id": "5991a0f6-626a-44ce-b239-de2ba7eae16b",
+      "name": "Business Tools Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1024,
+        1440
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🎭 Personality Layer\n\n**Basic LLM Chain - Nova's Character**\n\nAdds the unique Nova personality:\n- Sassy and glamorous responses\n- High-fashion energy\n- Professional with attitude\n- Memorable user experience\n\n**Uses**: Anthropic Claude Sonnet 4\n\n💡 **Business Value**: Creates a memorable, engaging experience that differentiates your service while maintaining professionalism.",
+        "height": 616,
+        "width": 340,
+        "color": 2
+      },
+      "id": "9d8a3b8e-3041-4f3c-9806-3a2dd9b7b109",
+      "name": "Personality Configuration",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1808,
+        800
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🌐 Web Integration\n\n**Webhook Setup**\n\n**Input**: Receives messages from your chat platform\n**Output**: Sends Nova's responses back\n\n**Integration Options**:\n- Slack\n- WhatsApp Business\n- Custom chat interfaces\n- Any webhook-capable platform\n\n⚙️ Copy the webhook URL after deployment and configure in your chat platform.",
+        "height": 580,
+        "width": 336
+      },
+      "id": "afbffadd-38c5-45bd-b0be-552820b7c257",
+      "name": "Webhook Integration",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        832
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 📊 Airtable Contact Management\n\n**Contacts Database**\n\nAutomatically manages:\n- Full names\n- Phone numbers\n- Email addresses\n- Contact summaries\n- Email verification status\n\n**AI-Powered**: The agent can create, search, and update contacts based on natural language requests.\n\nExample: \"Add John Smith to contacts with email john@company.com\"",
+        "height": 616,
+        "width": 416,
+        "color": 6
+      },
+      "id": "e9bfa11c-d15d-45a4-96f3-bdf183d17f11",
+      "name": "Contact Management",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        592,
+        1440
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 🔌 Required Credentials\n\n**Services to Configure**:\n\n1. **OpenAI**: For transcription & chat\n2. **Anthropic**: For personality layer\n3. **Google OAuth**: Calendar, Drive, Sheets, Gmail\n4. **Airtable**: Contact database\n5. **SerpAPI**: Web search\n\n⚠️ Ensure all credentials are properly configured before deployment.\n\n💡 Test each service individually after setup.",
+        "height": 428,
+        "width": 356,
+        "color": 5
+      },
+      "id": "26a36ff2-a389-4918-b286-7cdcab5e32f1",
+      "name": "Credentials Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        1424
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# 💬 Input Processing Router\n\n**Switch Node Logic**:\n\n1. **Audio Path** → If message contains video_note\n2. **Text Path** → If message contains chatInput\n3. **Error Path** → Handles any errors\n\nThis intelligent routing ensures both voice and text inputs are processed correctly.",
+        "height": 588,
+        "width": 348
+      },
+      "id": "968ef570-fc25-42b6-bcb0-de2a73e196b6",
+      "name": "Input Router",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        208,
+        832
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contacts": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Nova": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders in Google Drive": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Database": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Nova",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b6fdf129-392b-46f0-82f7-23955e42d983",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c0fb75cf7fe95e3dad8680101bdc45549409c0f747d9491461d65b61bd6537e9"
+  },
+  "id": "k95umu4mGZ5exlt6",
+  "tags": []
+}
