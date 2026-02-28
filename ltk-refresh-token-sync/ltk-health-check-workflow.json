@@ -1,0 +1,148 @@
+{
+  "name": "LTK Daily Health Check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "daily-9am",
+      "name": "Daily at 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.airtable.com/v0/appQnKyfyRyhHX44h/tbl5TEfzBwGPeT1rX",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filterByFormula",
+              "value": "NOT({Status} = 'disabled')"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-all-creators",
+      "name": "Get All Creators",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Airtable PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst records = response.records || [];\nconst now = Date.now();\nconst DAY = 86400000;\n\nconst healthy = [];\nconst warning = [];\nconst critical = [];\n\nfor (const rec of records) {\n  const f = rec.fields;\n  const name = f.Creator || 'Unknown';\n  \n  const capturedAt = f.Refresh_Token_Captured_At \n    ? new Date(f.Refresh_Token_Captured_At).getTime() \n    : null;\n  const lastRefreshed = f.Last_Refreshed \n    ? new Date(f.Last_Refreshed).getTime() \n    : null;\n  \n  const daysSinceCapture = capturedAt ? Math.round((now - capturedAt) / DAY) : null;\n  const daysSinceRefresh = lastRefreshed ? Math.round(((now - lastRefreshed) / DAY) * 10) / 10 : null;\n  const failures = f.Consecutive_Failures || 0;\n  const status = f.Status || 'unknown';\n  \n  const entry = {\n    name,\n    daysSinceCapture: daysSinceCapture !== null ? daysSinceCapture : 'unknown',\n    daysSinceRefresh: daysSinceRefresh !== null ? daysSinceRefresh : 'unknown',\n    failures,\n    status,\n    error: f.Error_Message || ''\n  };\n  \n  // Critical: token very old, has failures, or in error state\n  if (\n    (daysSinceCapture !== null && daysSinceCapture > 80) ||\n    failures > 0 ||\n    status === 'error' ||\n    status === 'expired'\n  ) {\n    critical.push(entry);\n  }\n  // Warning: token aging or hasn't refreshed recently\n  else if (\n    (daysSinceCapture !== null && daysSinceCapture > 60) ||\n    (daysSinceRefresh !== null && daysSinceRefresh > 1)\n  ) {\n    warning.push(entry);\n  }\n  // Healthy\n  else {\n    healthy.push(entry);\n  }\n}\n\nconst hasIssues = warning.length > 0 || critical.length > 0;\nconst total = records.length;\n\n// Build email body\nlet emailBody = `LTK Token Health Report\\n`;\nemailBody += `========================\\n\\n`;\nemailBody += `Summary: ${total} creators tracked\\n`;\nemailBody += `  Healthy:  ${healthy.length}\\n`;\nemailBody += `  Warning:  ${warning.length}\\n`;\nemailBody += `  Critical: ${critical.length}\\n\\n`;\n\nif (critical.length > 0) {\n  emailBody += `CRITICAL (action needed):\\n`;\n  for (const c of critical) {\n    emailBody += `  - ${c.name}: ${c.failures} failures, token ${c.daysSinceCapture} days old, status=${c.status}`;\n    if (c.error) emailBody += `, error: ${c.error.substring(0, 100)}`;\n    emailBody += `\\n`;\n  }\n  emailBody += `\\n`;\n}\n\nif (warning.length > 0) {\n  emailBody += `WARNING (monitor):\\n`;\n  for (const w of warning) {\n    emailBody += `  - ${w.name}: token ${w.daysSinceCapture} days old, last refreshed ${w.daysSinceRefresh} days ago\\n`;\n  }\n  emailBody += `\\n`;\n}\n\nif (healthy.length > 0) {\n  emailBody += `HEALTHY:\\n`;\n  for (const h of healthy) {\n    emailBody += `  - ${h.name}: OK\\n`;\n  }\n  emailBody += `\\n`;\n}\n\nemailBody += `---\\n`;\nemailBody += `For critical creators, re-capture their refresh token from browser.\\n`;\nemailBody += `Open https://creator.shopltk.com, log in, DevTools > Application > Local Storage > @@auth0spajs@@ > refresh_token\\n`;\n\nreturn [{\n  json: {\n    hasIssues,\n    total,\n    healthyCount: healthy.length,\n    warningCount: warning.length,\n    criticalCount: critical.length,\n    emailSubject: `LTK Token Health: ${critical.length} critical, ${warning.length} warning, ${healthy.length} healthy`,\n    emailBody\n  }\n}];"
+      },
+      "id": "evaluate-health",
+      "name": "Evaluate Token Health",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-issues",
+              "leftValue": "={{ $json.hasIssues }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-issues",
+      "name": "Any Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "sendTo": "nicki.entenmann@gmail.com",
+        "subject": "={{ $json.emailSubject }}",
+        "message": "={{ $json.emailBody }}",
+        "options": {}
+      },
+      "id": "send-digest",
+      "name": "Send Health Digest",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [880, -100],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "all-healthy",
+      "name": "All Healthy (No Email)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [880, 100]
+    }
+  ],
+  "connections": {
+    "Daily at 9 AM": {
+      "main": [
+        [{ "node": "Get All Creators", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get All Creators": {
+      "main": [
+        [{ "node": "Evaluate Token Health", "type": "main", "index": 0 }]
+      ]
+    },
+    "Evaluate Token Health": {
+      "main": [
+        [{ "node": "Any Issues?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Any Issues?": {
+      "main": [
+        [{ "node": "Send Health Digest", "type": "main", "index": 0 }],
+        [{ "node": "All Healthy (No Email)", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "pinData": {}
+}

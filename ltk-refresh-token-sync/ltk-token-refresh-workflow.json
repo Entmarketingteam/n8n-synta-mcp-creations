@@ -1,0 +1,461 @@
+{
+  "name": "LTK Token Refresh (Multi-Creator)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 4 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.airtable.com/v0/appQnKyfyRyhHX44h/tbl5TEfzBwGPeT1rX",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filterByFormula",
+              "value": "NOT({Status} = 'disabled')"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-creators",
+      "name": "Get All Creators",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Airtable PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract records array from Airtable response\nconst response = $input.first().json;\nconst records = response.records || [];\n\nif (records.length === 0) {\n  return [{ json: { _empty: true, message: 'No active creators found' } }];\n}\n\nreturn records.map(rec => ({ json: rec }));"
+      },
+      "id": "extract-records",
+      "name": "Extract Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        },
+        "batchSize": 1
+      },
+      "id": "split-batches",
+      "name": "One At A Time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-empty",
+              "leftValue": "={{ $json._empty }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-empty",
+      "name": "Has Records?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://creator-auth.shopltk.com/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "refresh_token"
+            },
+            {
+              "name": "client_id",
+              "value": "iKyQz7GfBMBPqUqCbbKSNBUlM2VpNWUT"
+            },
+            {
+              "name": "refresh_token",
+              "value": "={{ $json.fields.Refresh_Token }}"
+            },
+            {
+              "name": "redirect_uri",
+              "value": "https://creator.shopltk.com/login/callback"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "redirect": {
+            "redirect": {
+              "followRedirects": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "refresh-token",
+      "name": "Refresh LTK Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -100],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if refresh was successful\nconst httpResponse = $input.first().json;\nconst statusCode = httpResponse.statusCode || httpResponse.status || 0;\nconst body = httpResponse.body || httpResponse;\n\n// Get the original creator record from the batch\nconst creatorRecord = $('One At A Time').first().json;\n\nif (statusCode === 200 || body.access_token) {\n  // SUCCESS - parse tokens and JWT exp\n  const responseBody = body.access_token ? body : (body.body || body);\n  \n  // Decode JWT to get expiration\n  let expiresAt = null;\n  try {\n    const jwtPayload = JSON.parse(\n      Buffer.from(responseBody.access_token.split('.')[1], 'base64').toString()\n    );\n    expiresAt = new Date(jwtPayload.exp * 1000).toISOString();\n  } catch (e) {\n    // If JWT parsing fails, set expiry to 10 hours from now (LTK default)\n    expiresAt = new Date(Date.now() + 10 * 60 * 60 * 1000).toISOString();\n  }\n\n  return [{\n    json: {\n      success: true,\n      recordId: creatorRecord.id,\n      creatorName: creatorRecord.fields.Creator,\n      updatePayload: {\n        records: [{\n          id: creatorRecord.id,\n          fields: {\n            Access_Token: responseBody.access_token,\n            ID_Token: responseBody.id_token || '',\n            Refresh_Token: responseBody.refresh_token || creatorRecord.fields.Refresh_Token,\n            Last_Refreshed: new Date().toISOString(),\n            Token_Expires_At: expiresAt,\n            Status: 'active',\n            Error_Message: '',\n            Consecutive_Failures: 0,\n            Alert_Sent: false\n          }\n        }]\n      }\n    }\n  }];\n} else {\n  // FAILURE - build error update\n  const prevFailures = creatorRecord.fields.Consecutive_Failures || 0;\n  const newFailures = prevFailures + 1;\n  const alertAlreadySent = creatorRecord.fields.Alert_Sent || false;\n  \n  let errorMsg = '';\n  try {\n    errorMsg = typeof body === 'string' ? body : JSON.stringify(body);\n  } catch (e) {\n    errorMsg = 'Unknown error - could not parse response';\n  }\n  if (errorMsg.length > 1000) errorMsg = errorMsg.substring(0, 1000);\n\n  return [{\n    json: {\n      success: false,\n      recordId: creatorRecord.id,\n      creatorName: creatorRecord.fields.Creator,\n      creatorEmail: creatorRecord.fields.Email || '',\n      shouldAlert: newFailures >= 3 && !alertAlreadySent,\n      consecutiveFailures: newFailures,\n      errorMessage: errorMsg,\n      updatePayload: {\n        records: [{\n          id: creatorRecord.id,\n          fields: {\n            Error_Message: errorMsg,\n            Consecutive_Failures: newFailures,\n            Status: newFailures >= 3 ? 'error' : creatorRecord.fields.Status\n          }\n        }]\n      }\n    }\n  }];\n}"
+      },
+      "id": "process-response",
+      "name": "Process Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, -100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-success",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-success",
+      "name": "Refresh OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, -100]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/appQnKyfyRyhHX44h/tbl5TEfzBwGPeT1rX",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.updatePayload) }}",
+        "options": {}
+      },
+      "id": "save-success",
+      "name": "Save Tokens to Airtable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, -200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Airtable PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/appQnKyfyRyhHX44h/tbl5TEfzBwGPeT1rX",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.updatePayload) }}",
+        "options": {}
+      },
+      "id": "save-error",
+      "name": "Save Error to Airtable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Airtable PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-alert",
+              "leftValue": "={{ $('Process Response').first().json.shouldAlert }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "should-alert",
+      "name": "Should Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1980, 0]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Process Response').first().json.creatorEmail || 'nicki.entenmann@gmail.com' }}",
+        "subject": "=LTK Token Refresh FAILED: {{ $('Process Response').first().json.creatorName }}",
+        "message": "=LTK token refresh has failed {{ $('Process Response').first().json.consecutiveFailures }} consecutive times for {{ $('Process Response').first().json.creatorName }}.\n\nError: {{ $('Process Response').first().json.errorMessage }}\n\n--- ACTION NEEDED ---\n\n1. Open https://creator.shopltk.com in Chrome\n2. Log in as this creator\n3. Open DevTools (Cmd+Option+I) > Application > Local Storage\n4. Find the key starting with @@auth0spajs@@\n5. Copy the refresh_token value (starts with v1.)\n6. Update the Refresh_Token field in Airtable for this creator\n7. Set Refresh_Token_Captured_At to today\n8. The workflow will pick it up on the next 4-hour cycle\n\nThis is an automated alert from the LTK Token Refresh workflow.",
+        "options": {}
+      },
+      "id": "send-alert-email",
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2200, -50],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/appQnKyfyRyhHX44h/tbl5TEfzBwGPeT1rX",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ records: [{ id: $('Process Response').first().json.recordId, fields: { Alert_Sent: true } }] }) }}",
+        "options": {}
+      },
+      "id": "mark-alert-sent",
+      "name": "Mark Alert Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, -50],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Airtable PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "rate-limit-wait",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2200, -300]
+    },
+    {
+      "parameters": {},
+      "id": "no-op-skip",
+      "name": "Skip (No Alert)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2200, 100]
+    },
+    {
+      "parameters": {},
+      "id": "no-records",
+      "name": "No Creators Found",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, 100]
+    }
+  ],
+  "connections": {
+    "Every 4 Hours": {
+      "main": [
+        [{ "node": "Get All Creators", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get All Creators": {
+      "main": [
+        [{ "node": "Extract Records", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Records": {
+      "main": [
+        [{ "node": "One At A Time", "type": "main", "index": 0 }]
+      ]
+    },
+    "One At A Time": {
+      "main": [
+        [{ "node": "Has Records?", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Has Records?": {
+      "main": [
+        [{ "node": "No Creators Found", "type": "main", "index": 0 }],
+        [{ "node": "Refresh LTK Token", "type": "main", "index": 0 }]
+      ]
+    },
+    "Refresh LTK Token": {
+      "main": [
+        [{ "node": "Process Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Process Response": {
+      "main": [
+        [{ "node": "Refresh OK?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Refresh OK?": {
+      "main": [
+        [{ "node": "Save Tokens to Airtable", "type": "main", "index": 0 }],
+        [{ "node": "Save Error to Airtable", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save Tokens to Airtable": {
+      "main": [
+        [{ "node": "Wait 2s", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save Error to Airtable": {
+      "main": [
+        [{ "node": "Should Alert?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Should Alert?": {
+      "main": [
+        [{ "node": "Send Alert Email", "type": "main", "index": 0 }],
+        [{ "node": "Skip (No Alert)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Alert Email": {
+      "main": [
+        [{ "node": "Mark Alert Sent", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mark Alert Sent": {
+      "main": [
+        [{ "node": "Wait 2s", "type": "main", "index": 0 }]
+      ]
+    },
+    "Skip (No Alert)": {
+      "main": [
+        [{ "node": "Wait 2s", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [{ "node": "One At A Time", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "pinData": {}
+}
