@@ -2,5 +2,11 @@
 .env
 .env.*
 *.env.local
+!.env.example
 # Doppler one-off upload files (never commit)
 .doppler-*.json
+# Data sources cache
+data_sources/cache/
+# Service account credentials
+data_sources/config/*.json
+data_sources/config/.env
