@@ -48,12 +48,46 @@ All results are saved to `research/`:
 - `backlinks-*.json` — Referring domains
 - `dogwood-vet-seo-report-*.md` — Full research report
 
+## F5Bot Reddit Monitoring
+
+Automated Reddit brand monitoring via [F5Bot](https://f5bot.com):
+
+- `context/f5bot-reddit-monitoring.md` — Full setup guide, 20+ keywords across 5 tiers, response playbook, CSV upload template
+- `f5bot-alert-processor.py` — Alert categorizer that parses F5Bot emails into actionable buckets
+
+### Quick Demo (see it in action now — no API key needed)
+```bash
+python3 f5bot-alert-processor.py --demo
+```
+
+This runs 4 sample Reddit alerts and shows how each gets categorized:
+- **Brand mentions** (someone talks about Dogwood) → HIGH priority
+- **Competitor mentions** (LouVet complaint thread) → MEDIUM priority
+- **Local vet conversations** ("best vet in Louisville?") → HIGH priority
+- **Content ideas** (pet health questions) → Blog topic signal
+
+### How It Fits Together
+```
+F5Bot monitors Reddit 24/7
+    ↓
+Email alert when keyword matches
+    ↓
+f5bot-alert-processor.py categorizes & prioritizes
+    ↓
+Feeds into SEO Machine pipeline:
+  - Content gaps → new blog posts
+  - Brand mentions → reputation management
+  - Competitor intel → positioning strategy
+  - Local convos → engagement opportunities
+```
+
 ## Context Files
 
 Pre-configured for Dogwood Vet Clinic (Louisville, KY):
 - `context/brand-voice.md` — Voice pillars and tone guidelines
 - `context/seo-guidelines.md` — Keyword targets and content rules
 - `context/target-keywords.md` — Prioritized keyword tiers
+- `context/f5bot-reddit-monitoring.md` — Reddit monitoring keywords, playbook & CSV template
 
 ## Existing Audit
 
