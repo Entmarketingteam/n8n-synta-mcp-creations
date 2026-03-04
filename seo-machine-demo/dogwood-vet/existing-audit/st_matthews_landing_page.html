@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Looking for a trusted veterinarian near St. Matthews, KY? Dogwood Vet Clinic in Norton Commons provides expert wellness exams, pet dental care, and advanced dog surgery for St. Matthews families. Just a short drive for the best care for your furry family members. Book your appointment today!">
+    <meta name="keywords" content="veterinarian near St. Matthews KY, best animal hospital St. Matthews Louisville, dog surgeon St. Matthews KY, emergency vet near St. Matthews, pet dental care 40207">
+    <meta property="og:title" content="Compassionate Veterinarian & Pet Surgery Serving St. Matthews, KY | Dogwood Vet Clinic">
+    <meta property="og:description" content="Expert veterinary care for St. Matthews pets. Dogwood Vet Clinic offers surgery, dental care, wellness exams, and urgent care. Just 15 minutes from St. Matthews.">
+    <meta property="og:image" content="https://www.dogwoodvetclinic.com/images/hero-st-matthews.jpg">
+    <meta property="og:url" content="https://www.dogwoodvetclinic.com/louisville-ky/veterinarian-st-matthews/">
+    <title>Compassionate Veterinarian & Pet Surgery Serving St. Matthews, KY | Dogwood Vet Clinic</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+
+        /* Accessibility: Focus Visible */
+        *:focus-visible {
+            outline: 3px solid #0066cc;
+            outline-offset: 2px;
+        }
+
+        /* Header Navigation */
+        header {
+            background-color: #1a4d7a;
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #a8d5ff;
+        }
+
+        .phone-link {
+            background-color: #ff6b35;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .phone-link:hover {
+            background-color: #e55a2b;
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(26, 77, 122, 0.7), rgba(26, 77, 122, 0.7)), url('https://via.placeholder.com/1200x600?text=Happy+Dog+with+Vet') center/cover;
+            color: white;
+            text-align: center;
+            padding: 6rem 1rem;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero .subheading {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #ff6b35;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: #1a4d7a;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Section Styling */
+        section {
+            padding: 3rem 1rem;
+            background-color: white;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+
+        section:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #1a4d7a;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #ff6b35;
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: #1a4d7a;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        /* Introduction Section */
+        #introduction {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+        }
+
+        /* Services Section */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-card h3 {
+            color: #ff6b35;
+            margin-top: 0;
+        }
+
+        /* Short Drive Section */
+        #short-drive {
+            background: linear-gradient(135deg, #1a4d7a 0%, #2a6fa0 100%);
+            color: white;
+        }
+
+        #short-drive h2 {
+            color: white;
+            border-bottom-color: #ff6b35;
+        }
+
+        #short-drive p {
+            color: #e8e8e8;
+        }
+
+        /* Testimonials Section */
+        .testimonials-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .testimonial {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b35;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .testimonial blockquote {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-author {
+            font-weight: bold;
+            color: #1a4d7a;
+        }
+
+        /* Contact Information Table */
+        .contact-table {
+            width: 100%;
+            margin: 2rem 0;
+            border-collapse: collapse;
+        }
+
+        .contact-table td {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+
+        .contact-table td:first-child {
+            font-weight: bold;
+            color: #1a4d7a;
+            width: 40%;
+        }
+
+        /* CTA Section */
+        #final-cta {
+            background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
+            color: white;
+            text-align: center;
+        }
+
+        #final-cta h2 {
+            color: white;
+            border-bottom-color: white;
+        }
+
+        #final-cta p {
+            color: #f0f0f0;
+            font-size: 1.1rem;
+        }
+
+        .cta-button-large {
+            background-color: white;
+            color: #ff6b35;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            font-weight: bold;
+        }
+
+        .cta-button-large:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #1a4d7a;
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            color: #ccc;
+            margin-bottom: 0.5rem;
+        }
+
+        footer a {
+            color: #a8d5ff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                gap: 0;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background-color: #1a4d7a;
+                padding: 1rem;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero .subheading {
+                font-size: 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .testimonials-container {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-table td {
+                display: block;
+                width: 100%;
+                padding: 0.5rem 0;
+            }
+
+            .contact-table td:first-child {
+                font-weight: bold;
+                margin-bottom: 0.5rem;
+            }
+
+            section {
+                padding: 2rem 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero {
+                padding: 3rem 1rem;
+                min-height: 350px;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .hero .subheading {
+                font-size: 0.9rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            h3 {
+                font-size: 1.1rem;
+            }
+
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Skip to Main Content Link (Accessibility) */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #000;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Semantic HTML5 Elements */
+        article {
+            margin-bottom: 2rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            header, footer, .cta-buttons {
+                display: none;
+            }
+
+            body {
+                background-color: white;
+            }
+
+            section {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip to Main Content Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Header Navigation -->
+    <header>
+        <nav>
+            <a href="https://www.dogwoodvetclinic.com/" class="logo">Dogwood Vet Clinic</a>
+            <button class="menu-toggle" aria-label="Toggle navigation menu" onclick="toggleMenu()">☰</button>
+            <ul class="nav-links" id="nav-menu">
+                <li><a href="https://www.dogwoodvetclinic.com/">Home</a></li>
+                <li><a href="https://www.dogwoodvetclinic.com/services/">Services</a></li>
+                <li><a href="https://www.dogwoodvetclinic.com/about/">About</a></li>
+                <li><a href="https://www.dogwoodvetclinic.com/contact/">Contact</a></li>
+                <li><a href="tel:+15027100170" class="phone-link">(502) 710-0170</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" aria-label="Hero section with call-to-action">
+        <h1>Compassionate Veterinarian & Pet Surgery Serving St. Matthews, KY</h1>
+        <p class="subheading">Expert care for your furry family members, just a short 15-minute drive from the heart of St. Matthews.</p>
+        <div class="cta-buttons">
+            <a href="https://www.dogwoodvetclinic.com/appointment/" class="btn btn-primary">Request an Appointment</a>
+            <a href="tel:+15027100170" class="btn btn-secondary">Call (502) 710-0170</a>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main id="main-content" class="container">
+        <!-- Introduction Section -->
+        <section id="introduction">
+            <h2>Why Choose Dogwood for Your St. Matthews Pet?</h2>
+            <p>We know that finding the <strong>best animal hospital St. Matthews Louisville</strong> has to offer is a top priority for you and your family. While we are located just a short drive away in the beautiful Norton Commons neighborhood, our clinic is built on the belief that exceptional veterinary care should be accessible to all of East Louisville. Many of our most loyal clients come to us from the <strong>St. Matthews</strong> area, including families near <strong>Shelbyville Road</strong> and <strong>Chenoweth Lane</strong>, because they value our commitment to advanced medicine and personalized, compassionate service.</p>
+            <p>We are dedicated to providing the kind of care that makes the short trip worthwhile, ensuring your pet receives the expertise they deserve without the corporate feel of larger chains. When you search for a <strong>veterinarian near St. Matthews KY</strong>, remember that Dogwood Vet Clinic offers a unique blend of cutting-edge technology and heartfelt patient care.</p>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services">
+            <h2>Advanced Veterinary Services for St. Matthews Pets</h2>
+            <p>Dogwood Vet Clinic offers a full spectrum of services designed to keep your pet healthy from puppyhood through their senior years. We focus on providing high-level care that directly addresses the needs of pets living in the <strong>40207</strong> zip code and the greater Louisville area.</p>
+
+            <div class="services-grid">
+                <article class="service-card">
+                    <h3>Expert Orthopedic Surgery and Advanced Procedures</h3>
+                    <p>If your pet requires specialized care, our facility is equipped with state-of-the-art surgical suites. We are proud to offer the services of a highly skilled <strong>dog surgeon St. Matthews KY</strong> pet owners can trust for complex orthopedic and soft-tissue procedures. We understand that surgery is stressful, which is why we prioritize clear communication and personalized post-operative care, ensuring a smooth recovery for your companion.</p>
+                </article>
+
+                <article class="service-card">
+                    <h3>Comprehensive Pet Dental Care</h3>
+                    <p>Dental health is crucial for your pet's overall well-being. We provide thorough and safe <strong>pet dental care 40207</strong> residents rely on, including digital dental radiography and professional cleaning under general anesthesia. We focus on preventative measures to keep your pet's smile healthy and avoid serious health issues down the road.</p>
+                </article>
+
+                <article class="service-card">
+                    <h3>Urgent Care and Emergency Support</h3>
+                    <p>Pet emergencies are frightening, and knowing where to turn is essential. We offer evening urgent care appointments on Mondays and Tuesdays, providing a reliable option for an <strong>emergency vet near St. Matthews</strong> when your regular veterinarian is closed. For all other times, our team is ready to guide you to the best care available.</p>
+                </article>
+
+                <article class="service-card">
+                    <h3>Wellness and Preventive Medicine</h3>
+                    <p>Our wellness programs are tailored to the lifestyle of Louisville pets. Whether your dog is a regular at <strong>Seneca Park</strong> or your cat enjoys the quiet life indoors, we provide customized vaccination schedules, parasite prevention, and routine exams to ensure they remain healthy and happy.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Short Drive Advantage Section -->
+        <section id="short-drive">
+            <h2>Just a Short Drive from St. Matthews: Exceptional Care is Worth the Trip</h2>
+            <p>We understand that when searching for a <strong>veterinarian near St. Matthews, KY</strong>, convenience is a top priority. While Dogwood Vet Clinic is proudly located in the beautiful Norton Commons neighborhood, we are only a short, straightforward drive away—a drive that many St. Matthews families happily make for the exceptional level of care their pets receive. We believe that when it comes to your pet's health, a few extra minutes on the road is a small investment for peace of mind and the highest quality veterinary medicine.</p>
+            <p>Getting to our clinic is simple and fast. From the heart of St. Matthews, you can easily access the <strong>Watterson Expressway (I-264 E)</strong>, which provides a direct route to our location via <strong>US-42</strong>. This route typically takes around <strong>15 to 20 minutes</strong>, depending on traffic, making us a highly accessible option for routine check-ups, specialized procedures, and even urgent care needs. Our clients often tell us that the personalized attention, advanced technology, and expertise in areas like <strong>dog surgery</strong> make the quick trip entirely worthwhile. Skip the local traffic on Shelbyville Road and come see why pet owners across East Louisville trust Dogwood Vet Clinic with their most cherished family members.</p>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section id="testimonials">
+            <h2>What Your St. Matthews Neighbors Are Saying</h2>
+            <p>We are honored to be the trusted choice for so many families in the St. Matthews area. Here is what some of your neighbors have shared about their experience at Dogwood Vet Clinic:</p>
+
+            <div class="testimonials-container">
+                <article class="testimonial">
+                    <blockquote>"We live right near <strong>Seneca Park</strong>, and while there are closer vets, we make the drive to Dogwood for Dr. Franklin's surgical expertise. It's worth every mile for the peace of mind we get. The staff is always so kind and welcoming."</blockquote>
+                    <p class="testimonial-author">— Sarah T., St. Matthews</p>
+                </article>
+
+                <article class="testimonial">
+                    <blockquote>"After moving to the <strong>40207</strong> area, we struggled to find a vet that felt right. Dogwood's team is exceptional. They took the time to explain our dog's dental procedure in detail. We highly recommend them to all our St. Matthews friends."</blockquote>
+                    <p class="testimonial-author">— Mark R., Near Chenoweth Lane</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Final CTA Section -->
+        <section id="final-cta">
+            <h2>Ready to Give Your Pet the Best Care in Louisville?</h2>
+            <p>Don't let a short drive stand between your pet and the exceptional veterinary care they deserve. Dogwood Vet Clinic is ready to become your trusted partner in pet health.</p>
+
+            <table class="contact-table">
+                <tr>
+                    <td><strong>Phone:</strong></td>
+                    <td><a href="tel:+15027100170">(502) 710-0170</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Address:</strong></td>
+                    <td>10400 Meeting St., Prospect, KY 40059</td>
+                </tr>
+                <tr>
+                    <td><strong>Service Area:</strong></td>
+                    <td>Proudly serving St. Matthews, Prospect, and all of Louisville, KY.</td>
+                </tr>
+            </table>
+
+            <a href="https://www.dogwoodvetclinic.com/appointment/" class="btn cta-button-large">Request Your St. Matthews Pet's Appointment Today</a>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Dogwood Veterinary Clinic. All rights reserved.</p>
+        <p><a href="https://www.dogwoodvetclinic.com/privacy/">Privacy Policy</a> | <a href="https://www.dogwoodvetclinic.com/contact/">Contact Us</a></p>
+        <p>10400 Meeting St., Prospect, KY 40059 | <a href="tel:+15027100170">(502) 710-0170</a></p>
+    </footer>
+
+    <!-- JavaScript for Mobile Menu Toggle -->
+    <script>
+        function toggleMenu() {
+            const navMenu = document.getElementById('nav-menu');
+            navMenu.classList.toggle('active');
+        }
+
+        // Close menu when a link is clicked
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('nav-menu').classList.remove('active');
+            });
+        });
+
+        // Schema Markup for Local Business
+        const schemaMarkup = {
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": "Dogwood Veterinary Clinic",
+            "image": "https://www.dogwoodvetclinic.com/images/logo.png",
+            "description": "Compassionate veterinary care serving St. Matthews and Louisville, KY.",
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "10400 Meeting St.",
+                "addressLocality": "Prospect",
+                "addressRegion": "KY",
+                "postalCode": "40059",
+                "addressCountry": "US"
+            },
+            "telephone": "(502) 710-0170",
+            "email": "info@dogwoodvetclinic.com",
+            "url": "https://www.dogwoodvetclinic.com/louisville-ky/veterinarian-st-matthews/",
+            "areaServed": [
+                "St. Matthews, KY",
+                "Prospect, KY",
+                "Louisville, KY"
+            ],
+            "priceRange": "$$",
+            "sameAs": [
+                "https://www.facebook.com/Dogwoodvetclinic/",
+                "https://www.instagram.com/dogwoodvetclinic/"
+            ]
+        };
+
+        // Inject Schema Markup into the page
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = JSON.stringify(schemaMarkup);
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
