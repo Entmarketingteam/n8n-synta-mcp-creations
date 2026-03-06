@@ -46,18 +46,54 @@ Upgraded version of the Meta Ad Audit → Gemini Analysis → Gamma Deck workflo
 |------|----------|----------|-----------|
 | `analyze_meta_ads` | `gemini-3.1-pro-preview` | `gemini-2.5-pro` | 2.5 Pro has native JSON mode via `responseMimeType` and better multimodal analysis. Switch to `gemini-2.5-flash` for cost savings if output quality is acceptable. |
 
+## End-to-End Automation (v2.1 additions)
+
+These changes close the loop so the workflow runs fully unattended — form submit to inbox delivery.
+
+### 1. Error Handling & Graceful Degradation
+- **`scrape_brand_website`** — `onError: continueErrorOutput` routes failures to `fallback_brand_data`, which builds minimal brand context from form inputs. The workflow continues with ad-only analysis instead of dying.
+- **`download_media_file`** — `onError: continueRegularOutput` skips failed downloads (expired CDN links, 403s) instead of halting.
+- **`upload_images`** — same treatment; failed uploads are filtered out in `build_gemini_prompt`.
+- **`aggregate_media`** — try/catch per-item so one corrupt binary doesn't kill the batch.
+- **`build_gamma_prompt`** — throws with a clear error message if Gemini's JSON is unparseable, rather than silently passing garbage to Gamma.
+
+### 2. Gamma Poll Guard (max retries)
+- **`init_poll_counter`** — initializes a `pollCount = 0` before entering the wait loop.
+- **`poll_guard`** — increments counter on every poll, classifies outcome as `completed | failed | timeout | pending`.
+- **Max 20 polls** (~10 minutes). If Gamma hasn't finished, the workflow routes to `set_error_result` → error email instead of spinning forever.
+- Failed/errored Gamma generations also exit cleanly.
+
+### 3. Email Delivery
+- **`send_success_email`** — sends an HTML email with the Gamma URL + optional PPTX download link to the address from the form.
+- **`send_error_email`** — sends a failure notification with the specific error so the user knows what happened.
+- Both use SMTP credentials (configure in n8n after import).
+
+### 4. Form Email Field
+- Added **"Your Email (for delivery)"** required field to the form trigger. This is what powers the delivery step.
+
+### 5. Brand Scrape Fallback
+- If Firecrawl can't reach the brand website (403, timeout, bot block), the workflow builds placeholder brand data from the form's "Brand / Company Name" field and continues with neutral defaults (black/white colors, sans-serif fonts). The audit still runs — it just focuses more on the ad creatives.
+
+### What's Still Manual (future v3)
+- **Google Drive upload** — Gamma returns a PPTX export URL but we don't yet download and store it in Drive. Add a `download PPTX → Google Drive upload` branch after `set_result` if you want archival.
+- **Slack notification** — add a Slack node parallel to `send_success_email` if your team uses Slack.
+- **CRM logging** — the `auditData` JSON from `build_gamma_prompt` contains the full structured audit. Route it to Airtable/Notion/your CRM to build a history of audits per prospect.
+- **tmpfiles.org expiry** — uploaded ad images expire after ~1 hour. For production, replace with S3/Cloudflare R2/Google Cloud Storage upload. The Gamma deck embeds images at generation time so the deck itself is fine, but the raw audit URLs will break.
+
 ## Credentials Required
 
-Same as v1:
 - Firecrawl API
 - Apify OAuth2
 - Google Gemini (HTTP Header Auth)
 - Gamma API (HTTP Header Auth)
+- **SMTP** (for email delivery) — update credential IDs in `send_success_email` and `send_error_email`
 
 ## How to Test
 
 1. Import `agency-ad-audit-deck-v2.json` into n8n
-2. Attach credentials to each node
-3. Submit the form with any brand URL + Meta Ads Library URL
+2. Attach credentials to each node (especially SMTP — search for `REPLACE_WITH_SMTP_CREDENTIAL_ID`)
+3. Submit the form with any brand URL + Meta Ads Library URL + your email
 4. Check the Gemini response — it should be valid JSON with all sections populated
 5. Check the Gamma output — should be a 16-slide deck with embedded ad images
+6. Check your inbox — you should receive the deck link within 5-10 minutes
+7. **Error test:** submit with an invalid brand URL — should still complete with fallback brand data
