@@ -23,6 +23,11 @@ app.use('/api/templates', require('./src/routes/templates'));
 // Serve uploaded photos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'real-estate-calculator' });
+});
+
 // Serve React build in production
 const clientBuild = path.join(__dirname, 'client', 'dist');
 app.use(express.static(clientBuild));
@@ -30,11 +35,6 @@ app.get('*', (req, res) => {
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(clientBuild, 'index.html'));
   }
-});
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'real-estate-calculator' });
 });
 
 const server = app.listen(PORT, () => {
