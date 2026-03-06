@@ -1,0 +1,92 @@
+{
+  "light_rehab": {
+    "name": "Light Rehab (Cosmetic)",
+    "description": "Paint, flooring, fixtures, minor updates. Property is structurally sound.",
+    "estimatedCostPerSqft": { "low": 10, "mid": 20, "high": 30 },
+    "items": [
+      { "category": "paint", "description": "Interior paint - all rooms", "costPerSqft": 2.5 },
+      { "category": "paint", "description": "Exterior paint/touch-up", "estimatedCost": 2500 },
+      { "category": "flooring", "description": "LVP flooring - main areas", "costPerSqft": 4 },
+      { "category": "kitchen", "description": "Cabinet refinish/paint", "estimatedCost": 2000 },
+      { "category": "kitchen", "description": "New countertops (laminate/butcher block)", "estimatedCost": 2500 },
+      { "category": "kitchen", "description": "New hardware & fixtures", "estimatedCost": 300 },
+      { "category": "kitchen", "description": "Backsplash (peel & stick or tile)", "estimatedCost": 500 },
+      { "category": "bathroom", "description": "New vanity & mirror", "estimatedCost": 500 },
+      { "category": "bathroom", "description": "New toilet", "estimatedCost": 250 },
+      { "category": "bathroom", "description": "New fixtures (faucet, shower head)", "estimatedCost": 200 },
+      { "category": "windows_doors", "description": "Interior door hardware", "estimatedCost": 300 },
+      { "category": "electrical", "description": "New light fixtures", "estimatedCost": 800 },
+      { "category": "landscaping", "description": "Basic curb appeal (mulch, plants, cleanup)", "estimatedCost": 1000 },
+      { "category": "other", "description": "Cleaning & dumpster", "estimatedCost": 1000 },
+      { "category": "permits", "description": "Basic permits if needed", "estimatedCost": 500 }
+    ]
+  },
+  "medium_rehab": {
+    "name": "Medium Rehab",
+    "description": "Kitchen/bath updates, new flooring throughout, some mechanical updates.",
+    "estimatedCostPerSqft": { "low": 25, "mid": 45, "high": 65 },
+    "items": [
+      { "category": "paint", "description": "Full interior paint", "costPerSqft": 2.5 },
+      { "category": "paint", "description": "Exterior paint", "estimatedCost": 4000 },
+      { "category": "flooring", "description": "LVP/hardwood throughout", "costPerSqft": 5.5 },
+      { "category": "kitchen", "description": "New cabinets (stock)", "estimatedCost": 5000 },
+      { "category": "kitchen", "description": "Granite/quartz countertops", "estimatedCost": 4000 },
+      { "category": "kitchen", "description": "New appliance package (stainless)", "estimatedCost": 3000 },
+      { "category": "kitchen", "description": "Tile backsplash", "estimatedCost": 1200 },
+      { "category": "kitchen", "description": "New sink & faucet", "estimatedCost": 400 },
+      { "category": "bathroom", "description": "Full bath remodel (per bath)", "estimatedCost": 5000 },
+      { "category": "bathroom", "description": "New tub/shower surround", "estimatedCost": 2000 },
+      { "category": "electrical", "description": "Panel upgrade to 200A", "estimatedCost": 3000 },
+      { "category": "electrical", "description": "New light fixtures + outlets/switches", "estimatedCost": 1500 },
+      { "category": "plumbing", "description": "Fixture updates & minor repairs", "estimatedCost": 2000 },
+      { "category": "windows_doors", "description": "New interior doors (6-panel)", "estimatedCost": 2000 },
+      { "category": "windows_doors", "description": "New front door", "estimatedCost": 1500 },
+      { "category": "hvac", "description": "HVAC service/repair", "estimatedCost": 1500 },
+      { "category": "landscaping", "description": "Landscaping & curb appeal", "estimatedCost": 2500 },
+      { "category": "other", "description": "Dumpster, cleaning, staging", "estimatedCost": 2500 },
+      { "category": "permits", "description": "Permits & inspections", "estimatedCost": 1500 }
+    ]
+  },
+  "gut_rehab": {
+    "name": "Gut Rehab (Full Renovation)",
+    "description": "Down to studs. New everything - kitchen, baths, mechanicals, roof possible.",
+    "estimatedCostPerSqft": { "low": 60, "mid": 90, "high": 150 },
+    "items": [
+      { "category": "other", "description": "Demo & haul-away", "estimatedCost": 5000 },
+      { "category": "other", "description": "Structural repairs", "estimatedCost": 5000 },
+      { "category": "paint", "description": "Full interior/exterior paint", "costPerSqft": 3 },
+      { "category": "flooring", "description": "Hardwood/LVP throughout", "costPerSqft": 6 },
+      { "category": "kitchen", "description": "Full custom kitchen", "estimatedCost": 15000 },
+      { "category": "bathroom", "description": "Full master bath remodel", "estimatedCost": 10000 },
+      { "category": "bathroom", "description": "Full guest bath remodel", "estimatedCost": 7000 },
+      { "category": "roof", "description": "New roof (tear-off + install)", "estimatedCost": 12000 },
+      { "category": "hvac", "description": "New HVAC system", "estimatedCost": 8000 },
+      { "category": "electrical", "description": "Full rewire + panel upgrade", "estimatedCost": 10000 },
+      { "category": "plumbing", "description": "Full repipe (PEX)", "estimatedCost": 8000 },
+      { "category": "plumbing", "description": "New water heater", "estimatedCost": 1500 },
+      { "category": "windows_doors", "description": "All new windows", "estimatedCost": 8000 },
+      { "category": "windows_doors", "description": "All new doors (interior + exterior)", "estimatedCost": 4000 },
+      { "category": "other", "description": "Insulation", "estimatedCost": 3000 },
+      { "category": "other", "description": "Drywall (full house)", "costPerSqft": 3 },
+      { "category": "landscaping", "description": "Full landscaping & hardscaping", "estimatedCost": 5000 },
+      { "category": "other", "description": "Driveway repair/replacement", "estimatedCost": 3000 },
+      { "category": "permits", "description": "Full permit package", "estimatedCost": 3000 },
+      { "category": "other", "description": "Dumpsters, cleanup, staging", "estimatedCost": 4000 }
+    ]
+  },
+  "categories": {
+    "kitchen": { "label": "Kitchen", "icon": "utensils", "sortOrder": 1 },
+    "bathroom": { "label": "Bathroom", "icon": "bath", "sortOrder": 2 },
+    "flooring": { "label": "Flooring", "icon": "layer-group", "sortOrder": 3 },
+    "paint": { "label": "Paint", "icon": "paint-roller", "sortOrder": 4 },
+    "roof": { "label": "Roof", "icon": "home", "sortOrder": 5 },
+    "hvac": { "label": "HVAC", "icon": "fan", "sortOrder": 6 },
+    "plumbing": { "label": "Plumbing", "icon": "faucet", "sortOrder": 7 },
+    "electrical": { "label": "Electrical", "icon": "bolt", "sortOrder": 8 },
+    "windows_doors": { "label": "Windows & Doors", "icon": "door-open", "sortOrder": 9 },
+    "landscaping": { "label": "Landscaping & Exterior", "icon": "tree", "sortOrder": 10 },
+    "permits": { "label": "Permits & Inspections", "icon": "file-alt", "sortOrder": 11 },
+    "contingency": { "label": "Contingency", "icon": "shield-alt", "sortOrder": 12 },
+    "other": { "label": "Other", "icon": "ellipsis-h", "sortOrder": 13 }
+  }
+}

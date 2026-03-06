@@ -1,0 +1,63 @@
+{
+  "name": "Real Estate - Comp Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "comp-analysis",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Comp Analysis",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://zillow-com1.p.rapidapi.com/propertyExtendedSearch?location={{ encodeURIComponent($json.body.address + ', ' + $json.body.zip) }}&status_type=RecentlySold&sort=days",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-RapidAPI-Key", "value": "={{ $env.RAPIDAPI_KEY }}" },
+            { "name": "X-RapidAPI-Host", "value": "zillow-com1.p.rapidapi.com" }
+          ]
+        }
+      },
+      "id": "fetch-comps",
+      "name": "Fetch Recent Sales",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const comps = $input.first().json.props || [];\nconst targetSqft = $('Webhook - Comp Analysis').first().json.body.squareFootage || 1500;\nconst targetBeds = $('Webhook - Comp Analysis').first().json.body.bedrooms || 3;\n\n// Filter comps within reasonable range\nconst filtered = comps.filter(c => {\n  if (!c.livingArea || !c.price) return false;\n  const sqftDiff = Math.abs(c.livingArea - targetSqft) / targetSqft;\n  return sqftDiff < 0.25; // Within 25% of target sqft\n}).slice(0, 10);\n\nconst prices = filtered.map(c => c.price);\nconst avgPrice = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;\nconst medianPrice = prices.length ? prices.sort((a, b) => a - b)[Math.floor(prices.length / 2)] : 0;\nconst pricePerSqft = filtered.map(c => c.price / c.livingArea);\nconst avgPricePerSqft = pricePerSqft.length ? pricePerSqft.reduce((a, b) => a + b, 0) / pricePerSqft.length : 0;\n\nreturn [{\n  json: {\n    compCount: filtered.length,\n    suggestedArv: Math.round(medianPrice),\n    averagePrice: Math.round(avgPrice),\n    medianPrice: Math.round(medianPrice),\n    averagePricePerSqft: Math.round(avgPricePerSqft),\n    suggestedArvFromSqft: Math.round(avgPricePerSqft * targetSqft),\n    dataQuality: filtered.length >= 3 ? 'good' : filtered.length >= 1 ? 'limited' : 'insufficient',\n    comps: filtered.map(c => ({\n      address: c.address,\n      price: c.price,\n      sqft: c.livingArea,\n      beds: c.bedrooms,\n      baths: c.bathrooms,\n      pricePerSqft: Math.round(c.price / c.livingArea),\n    }))\n  }\n}];"
+      },
+      "id": "analyze-comps",
+      "name": "Analyze Comps",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Comp Analysis": { "main": [[{ "node": "Fetch Recent Sales", "type": "main", "index": 0 }]] },
+    "Fetch Recent Sales": { "main": [[{ "node": "Analyze Comps", "type": "main", "index": 0 }]] },
+    "Analyze Comps": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "real-estate" }]
+}

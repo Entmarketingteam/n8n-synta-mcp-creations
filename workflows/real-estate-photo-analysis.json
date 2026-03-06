@@ -1,0 +1,75 @@
+{
+  "name": "Real Estate - Photo Damage Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "photo-analysis",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Photo Analysis",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RE_CALCULATOR_URL || 'http://localhost:3334' }}/uploads/{{ $json.body.filename }}"
+      },
+      "id": "fetch-photo",
+      "name": "Fetch Photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "notes": "Downloads the photo file to pass to AI analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This node would integrate with Claude Vision API or OpenAI GPT-4V\n// to analyze the property photo for damage\n\nconst photoId = $('Webhook - Photo Analysis').first().json.body.photoId;\nconst roomId = $('Webhook - Photo Analysis').first().json.body.roomId;\n\n// Placeholder analysis - replace with actual AI Vision API call\nconst analysis = {\n  photoId: photoId,\n  roomId: roomId,\n  analyzedAt: new Date().toISOString(),\n  findings: [],\n  overallCondition: 'needs_inspection',\n  suggestedChecks: [\n    'Inspect for water damage indicators (stains, warping, discoloration)',\n    'Check structural integrity (cracks, sagging, unevenness)',\n    'Look for signs of deferred maintenance',\n    'Note condition of visible electrical, plumbing, and HVAC components',\n    'Check for pest damage (wood boring insects, rodents)'\n  ],\n  estimatedRepairRange: {\n    low: 0,\n    high: 0,\n    note: 'AI analysis requires API key configuration'\n  }\n};\n\n// When Claude/GPT-4V is configured, the prompt would be:\n// \"Analyze this property photo for real estate investment purposes.\n//  Identify: water damage, mold, foundation cracks, roof issues, \n//  outdated electrical/plumbing, pest damage, structural concerns.\n//  For each issue found, rate severity (low/medium/high/critical)\n//  and estimate repair cost range.\n//  Room: {roomId}\"\n\nreturn [{ json: analysis }];"
+      },
+      "id": "analyze-photo",
+      "name": "AI Photo Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.RE_CALCULATOR_URL || 'http://localhost:3334' }}/api/photos/{{ $('Webhook - Photo Analysis').first().json.body.dealId }}/photos/{{ $json.photoId }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "ai_analysis", "value": "={{ JSON.stringify($json) }}" }
+          ]
+        }
+      },
+      "id": "save-analysis",
+      "name": "Save Analysis to DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($('AI Photo Analysis').first().json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Photo Analysis": { "main": [[{ "node": "Fetch Photo", "type": "main", "index": 0 }]] },
+    "Fetch Photo": { "main": [[{ "node": "AI Photo Analysis", "type": "main", "index": 0 }]] },
+    "AI Photo Analysis": { "main": [[{ "node": "Save Analysis to DB", "type": "main", "index": 0 }]] },
+    "Save Analysis to DB": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "real-estate" }]
+}

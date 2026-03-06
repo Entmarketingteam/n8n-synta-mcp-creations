@@ -1,0 +1,93 @@
+{
+  "name": "Real Estate - Lead Tracker & Follow-Up",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 24 }]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RE_CALCULATOR_URL || 'http://localhost:3334' }}/api/leads?status=new"
+      },
+      "id": "fetch-new-leads",
+      "name": "Fetch New Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RE_CALCULATOR_URL || 'http://localhost:3334' }}/api/leads?status=analyzing"
+      },
+      "id": "fetch-analyzing",
+      "name": "Fetch Leads in Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const newLeads = $('Fetch New Leads').first().json || [];\nconst analyzing = $('Fetch Leads in Analysis').first().json || [];\n\nconst summary = {\n  newLeadCount: Array.isArray(newLeads) ? newLeads.length : 0,\n  analyzingCount: Array.isArray(analyzing) ? analyzing.length : 0,\n  message: `Daily Lead Summary:\\n- ${Array.isArray(newLeads) ? newLeads.length : 0} new leads awaiting review\\n- ${Array.isArray(analyzing) ? analyzing.length : 0} deals in analysis\\n\\nAction needed: Review new leads and update pipeline.`\n};\n\nreturn [{ json: summary }];"
+      },
+      "id": "build-summary",
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "check-leads",
+              "leftValue": "={{ $json.newLeadCount + $json.analyzingCount }}",
+              "rightValue": "0",
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "has-leads",
+      "name": "Has Active Leads?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "notification", "name": "notification", "value": "={{ $json.message }}", "type": "string" }
+          ]
+        }
+      },
+      "id": "send-notification",
+      "name": "Prepare Notification",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 200],
+      "notes": "Connect to Telegram, Slack, or Email node to send daily lead summary"
+    }
+  ],
+  "connections": {
+    "Daily Check": { "main": [[{ "node": "Fetch New Leads", "type": "main", "index": 0 }, { "node": "Fetch Leads in Analysis", "type": "main", "index": 0 }]] },
+    "Fetch New Leads": { "main": [[{ "node": "Build Summary", "type": "main", "index": 0 }]] },
+    "Fetch Leads in Analysis": { "main": [[{ "node": "Build Summary", "type": "main", "index": 0 }]] },
+    "Build Summary": { "main": [[{ "node": "Has Active Leads?", "type": "main", "index": 0 }]] },
+    "Has Active Leads?": { "main": [[{ "node": "Prepare Notification", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "real-estate" }]
+}

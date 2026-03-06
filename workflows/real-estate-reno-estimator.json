@@ -1,0 +1,44 @@
+{
+  "name": "Real Estate - Renovation Cost Estimator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reno-estimator",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Reno Estimator",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json.body;\nconst sqft = input.squareFootage || 1500;\nconst yearBuilt = input.yearBuilt || 1980;\nconst condition = input.condition || 'fair'; // good, fair, poor\nconst metro = input.metro || 'national_average';\n\n// Base cost per sqft by condition\nconst baseCosts = {\n  good: { low: 10, mid: 20, high: 30 },\n  fair: { low: 25, mid: 45, high: 65 },\n  poor: { low: 60, mid: 90, high: 150 }\n};\n\nconst costs = baseCosts[condition] || baseCosts.fair;\n\n// Age-based adjustments\nlet ageMultiplier = 1.0;\nif (yearBuilt < 1950) ageMultiplier = 1.4;\nelse if (yearBuilt < 1970) ageMultiplier = 1.25;\nelse if (yearBuilt < 1990) ageMultiplier = 1.1;\n\n// Critical items by age\nconst criticalItems = [];\nconst currentYear = new Date().getFullYear();\nconst age = currentYear - yearBuilt;\n\nif (yearBuilt < 1950) {\n  criticalItems.push({ item: 'Foundation inspection', priority: 'critical', estCost: '$5,000-$25,000' });\n  criticalItems.push({ item: 'Knob & tube wiring check', priority: 'critical', estCost: '$8,000-$15,000' });\n  criticalItems.push({ item: 'Lead paint remediation', priority: 'critical', estCost: '$1,000-$5,000/room' });\n}\nif (yearBuilt < 1980) {\n  criticalItems.push({ item: 'Asbestos testing', priority: 'major', estCost: '$1,500-$3,000/area' });\n  criticalItems.push({ item: 'Electrical panel upgrade', priority: 'major', estCost: '$2,500-$5,000' });\n}\nif (yearBuilt >= 1978 && yearBuilt <= 1995) {\n  criticalItems.push({ item: 'Polybutylene pipe check', priority: 'major', estCost: '$5,000-$10,000' });\n}\nif (age > 20) {\n  criticalItems.push({ item: 'Roof replacement likely', priority: 'major', estCost: '$8,000-$15,000' });\n}\nif (age > 15) {\n  criticalItems.push({ item: 'HVAC replacement likely', priority: 'moderate', estCost: '$5,000-$10,000' });\n  criticalItems.push({ item: 'Water heater replacement', priority: 'moderate', estCost: '$1,000-$2,000' });\n}\n\nconst estimate = {\n  squareFootage: sqft,\n  yearBuilt: yearBuilt,\n  condition: condition,\n  ageMultiplier: ageMultiplier,\n  budgetRange: {\n    low: Math.round(costs.low * sqft * ageMultiplier),\n    mid: Math.round(costs.mid * sqft * ageMultiplier),\n    high: Math.round(costs.high * sqft * ageMultiplier)\n  },\n  criticalItems: criticalItems,\n  recommendation: `Based on ${sqft} sqft, built ${yearBuilt} (${age} years old), in ${condition} condition: budget $${Math.round(costs.mid * sqft * ageMultiplier).toLocaleString()} for a ${condition === 'poor' ? 'gut' : condition === 'fair' ? 'medium' : 'light'} rehab. Add 10-15% contingency.`\n};\n\nreturn [{ json: estimate }];"
+      },
+      "id": "estimate-costs",
+      "name": "Estimate Renovation Costs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Reno Estimator": { "main": [[{ "node": "Estimate Renovation Costs", "type": "main", "index": 0 }]] },
+    "Estimate Renovation Costs": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "real-estate" }]
+}

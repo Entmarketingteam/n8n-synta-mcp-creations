@@ -1,0 +1,178 @@
+{
+  "rooms": [
+    {
+      "id": "exterior_front",
+      "label": "Exterior - Front",
+      "items": [
+        "Roof condition (missing shingles, sagging, multiple layers)",
+        "Gutters and downspouts (attached, clean, draining away from foundation)",
+        "Siding/brick condition (cracks, rot, gaps)",
+        "Foundation visible cracks (stair-step pattern = settlement issue)",
+        "Front door condition",
+        "Porch/deck structural integrity",
+        "Driveway condition (cracks, settling)",
+        "Landscaping overgrowth (sign of neglect)",
+        "Mailbox, address numbers, curb appeal"
+      ]
+    },
+    {
+      "id": "exterior_back",
+      "label": "Exterior - Back",
+      "items": [
+        "Deck/patio condition and safety",
+        "Grading (does ground slope away from foundation?)",
+        "Fence condition and property line alignment",
+        "Outbuildings/shed condition",
+        "Septic or sewer access points",
+        "Drainage issues (standing water, erosion)",
+        "Trees too close to house or power lines"
+      ]
+    },
+    {
+      "id": "kitchen",
+      "label": "Kitchen",
+      "items": [
+        "Cabinet condition (doors, hinges, soft-close)",
+        "Countertop material and condition",
+        "Appliance ages and condition (check model numbers)",
+        "Sink and faucet (leaks underneath?)",
+        "Backsplash condition",
+        "Flooring (water damage near sink/dishwasher?)",
+        "Electrical outlets (GFCI near water?)",
+        "Ventilation/range hood",
+        "Pantry/storage adequacy",
+        "Water pressure test"
+      ]
+    },
+    {
+      "id": "bathroom_main",
+      "label": "Main Bathroom",
+      "items": [
+        "Toilet (flush test, base seal, wobble)",
+        "Tub/shower condition (caulk, grout, tile cracks)",
+        "Signs of water damage (soft floor near tub/toilet)",
+        "Vanity and mirror condition",
+        "Faucet and plumbing (leaks, water pressure)",
+        "Ventilation fan (working? Mold risk if not)",
+        "GFCI outlets",
+        "Tile condition (loose, cracked, discolored)"
+      ]
+    },
+    {
+      "id": "bathroom_secondary",
+      "label": "Secondary Bathroom(s)",
+      "items": [
+        "Same checks as main bathroom",
+        "Look for DIY plumbing (PVC transitions, improper venting)",
+        "Water stains on ceiling below (if upstairs bath)"
+      ]
+    },
+    {
+      "id": "living_room",
+      "label": "Living Room",
+      "items": [
+        "Flooring condition",
+        "Walls (cracks, patches, water stains)",
+        "Windows (open/close, locks, seals, condensation)",
+        "Electrical outlets (enough? Working?)",
+        "Fireplace (if present - damper, flue, mantle)"
+      ]
+    },
+    {
+      "id": "bedrooms",
+      "label": "Bedrooms",
+      "items": [
+        "Closet size and condition",
+        "Flooring condition",
+        "Windows (egress size for fire safety)",
+        "Ceiling condition (water stains from above)",
+        "Outlets and lighting",
+        "Door condition (hinges, latch, frame)"
+      ]
+    },
+    {
+      "id": "basement",
+      "label": "Basement/Crawlspace",
+      "items": [
+        "Water intrusion signs (stains, efflorescence, musty smell)",
+        "Foundation cracks (horizontal = serious, vertical = common settling)",
+        "Sump pump (present? Working? Battery backup?)",
+        "Electrical panel location and condition",
+        "Water heater age and condition (check data plate)",
+        "HVAC system age and condition",
+        "Ductwork condition",
+        "Plumbing pipes (material? Leaks? Corrosion?)",
+        "Insulation in rim joists",
+        "Radon mitigation system present?",
+        "Signs of pests (droppings, gnaw marks)"
+      ]
+    },
+    {
+      "id": "attic",
+      "label": "Attic",
+      "items": [
+        "Roof decking condition (from inside)",
+        "Insulation type and depth",
+        "Signs of water intrusion or daylight",
+        "Ventilation (ridge vent, soffit vents)",
+        "Signs of animal intrusion",
+        "Electrical wiring type (knob and tube?)",
+        "Structural integrity (rafters, trusses)"
+      ]
+    },
+    {
+      "id": "garage",
+      "label": "Garage",
+      "items": [
+        "Garage door opener age/condition",
+        "Floor condition (cracks, settling, stains)",
+        "Electrical (dedicated circuit, outlets)",
+        "Structural integrity",
+        "Auto-reverse safety test on door"
+      ]
+    },
+    {
+      "id": "electrical",
+      "label": "Electrical System",
+      "items": [
+        "Panel brand (Federal Pacific or Zinsco = replace immediately)",
+        "Panel amperage (100A minimum, 200A preferred)",
+        "Breaker condition (any double-tapped?)",
+        "Outlet types (2-prong = no ground, needs updating)",
+        "GFCI protection in wet areas",
+        "AFCI protection in bedrooms (code requirement)",
+        "Knob and tube wiring present?",
+        "Aluminum wiring present (1965-1973 homes)?"
+      ]
+    },
+    {
+      "id": "plumbing",
+      "label": "Plumbing System",
+      "items": [
+        "Supply pipe material (copper, PEX, galvanized, polybutylene)",
+        "Drain pipe material (PVC, cast iron, clay)",
+        "Water pressure at multiple fixtures",
+        "Water heater age (data plate) and condition",
+        "Evidence of leaks (water stains, mold, warped flooring)",
+        "Sewer scope recommended for pre-1970 homes"
+      ]
+    }
+  ],
+  "redFlags": [
+    { "issue": "Horizontal foundation cracks", "severity": "critical", "estimatedCost": "$10,000 - $25,000" },
+    { "issue": "Active water intrusion in basement", "severity": "critical", "estimatedCost": "$5,000 - $15,000" },
+    { "issue": "Federal Pacific or Zinsco electrical panel", "severity": "critical", "estimatedCost": "$2,500 - $5,000" },
+    { "issue": "Knob and tube wiring", "severity": "critical", "estimatedCost": "$8,000 - $15,000" },
+    { "issue": "Polybutylene pipes", "severity": "major", "estimatedCost": "$5,000 - $10,000" },
+    { "issue": "Active termite damage", "severity": "critical", "estimatedCost": "$3,000 - $15,000" },
+    { "issue": "Mold in multiple areas", "severity": "major", "estimatedCost": "$2,000 - $10,000" },
+    { "issue": "Roof at end of life (20+ years)", "severity": "major", "estimatedCost": "$8,000 - $15,000" },
+    { "issue": "Failing septic system", "severity": "critical", "estimatedCost": "$15,000 - $30,000" },
+    { "issue": "Sagging/bouncy floors", "severity": "major", "estimatedCost": "$3,000 - $10,000" },
+    { "issue": "Lead paint (pre-1978)", "severity": "major", "estimatedCost": "$1,000 - $5,000 per room" },
+    { "issue": "Asbestos materials present", "severity": "major", "estimatedCost": "$1,500 - $3,000 per area" },
+    { "issue": "Galvanized supply pipes", "severity": "moderate", "estimatedCost": "$5,000 - $10,000" },
+    { "issue": "Cast iron drain pipes (corroded)", "severity": "major", "estimatedCost": "$5,000 - $15,000" },
+    { "issue": "No HVAC or failing system", "severity": "major", "estimatedCost": "$5,000 - $10,000" }
+  ]
+}

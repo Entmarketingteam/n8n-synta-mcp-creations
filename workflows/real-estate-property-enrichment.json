@@ -1,0 +1,101 @@
+{
+  "name": "Real Estate - Property Data Enrichment",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "property-enrichment",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Property Enrichment",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://zillow-com1.p.rapidapi.com/propertyExtendedSearch?location={{ encodeURIComponent($json.body.address + ', ' + ($json.body.city || '') + ' ' + ($json.body.state || '') + ' ' + ($json.body.zip || '')) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-RapidAPI-Key", "value": "={{ $env.RAPIDAPI_KEY }}" },
+            { "name": "X-RapidAPI-Host", "value": "zillow-com1.p.rapidapi.com" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "zillow-search",
+      "name": "Zillow Property Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://zillow-com1.p.rapidapi.com/property?zpid={{ $json.props[0].zpid }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-RapidAPI-Key", "value": "={{ $env.RAPIDAPI_KEY }}" },
+            { "name": "X-RapidAPI-Host", "value": "zillow-com1.p.rapidapi.com" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "zillow-detail",
+      "name": "Zillow Property Detail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "address", "value": "={{ $json.address?.streetAddress }}" },
+            { "name": "city", "value": "={{ $json.address?.city }}" },
+            { "name": "state", "value": "={{ $json.address?.state }}" },
+            { "name": "zip", "value": "={{ $json.address?.zipcode }}" }
+          ],
+          "number": [
+            { "name": "squareFootage", "value": "={{ $json.livingArea }}" },
+            { "name": "bedrooms", "value": "={{ $json.bedrooms }}" },
+            { "name": "bathrooms", "value": "={{ $json.bathrooms }}" },
+            { "name": "yearBuilt", "value": "={{ $json.yearBuilt }}" },
+            { "name": "zestimate", "value": "={{ $json.zestimate }}" },
+            { "name": "rentZestimate", "value": "={{ $json.rentZestimate }}" },
+            { "name": "taxAssessedValue", "value": "={{ $json.taxAssessedValue }}" },
+            { "name": "lotSize", "value": "={{ $json.lotSize }}" }
+          ]
+        }
+      },
+      "id": "format-data",
+      "name": "Format Enrichment Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Property Enrichment": { "main": [[{ "node": "Zillow Property Search", "type": "main", "index": 0 }]] },
+    "Zillow Property Search": { "main": [[{ "node": "Zillow Property Detail", "type": "main", "index": 0 }]] },
+    "Zillow Property Detail": { "main": [[{ "node": "Format Enrichment Data", "type": "main", "index": 0 }]] },
+    "Format Enrichment Data": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "real-estate" }]
+}

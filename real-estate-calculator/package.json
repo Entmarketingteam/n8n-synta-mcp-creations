@@ -1,0 +1,24 @@
+{
+  "name": "real-estate-calculator",
+  "version": "1.0.0",
+  "description": "Comprehensive real estate investment calculator for flips, rentals, and BRRR strategy",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "node --test tests/*.test.js",
+    "db:init": "node db/init.js",
+    "doppler:start": "doppler run -- node index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}
