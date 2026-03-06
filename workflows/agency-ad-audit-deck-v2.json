@@ -87,6 +87,25 @@
     },
     {
       "parameters": {
+        "resource": "secret",
+        "operation": "list",
+        "project": "ent-agency-automation",
+        "config": "prd"
+      },
+      "type": "n8n-nodes-doppler-secrets.doppler",
+      "typeVersion": 1,
+      "position": [320, -256],
+      "id": "doppler-secrets-node",
+      "name": "doppler_secrets",
+      "credentials": {
+        "dopplerApi": {
+          "name": "Doppler (ent-agency-automation)"
+        }
+      },
+      "notes": "Fetches GAMMA_API_KEY, GOOGLE_API_KEY, FIRECRAWL_API_KEY from Doppler. Downstream: $('doppler_secrets').first().json.SECRET_NAME"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.firecrawl.dev/v2/scrape",
         "authentication": "predefinedCredentialType",
@@ -294,7 +313,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"textMode\": \"generate\",\n  \"exportAs\": \"pptx\",\n  \"inputText\": {{ JSON.stringify($json.prompt)}}\n}",
+        "jsonBody": "={\n  \"textMode\": \"generate\",\n  \"inputText\": {{ JSON.stringify($json.prompt)}}\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -440,12 +459,6 @@
               "type": "string"
             },
             {
-              "id": "set-pptx-url",
-              "name": "pptxUrl",
-              "value": "={{ $json.pptxUrl || $json.exportUrl || '' }}",
-              "type": "string"
-            },
-            {
               "id": "set-brand-name",
               "name": "brandName",
               "value": "={{ $('form_trigger').first().json['Brand / Company Name'] }}",
@@ -504,7 +517,7 @@
         "sendTo": "={{ $json.recipientEmail }}",
         "subject": "=Your Creative Audit Deck for {{ $json.brandName }} is Ready",
         "emailType": "html",
-        "html": "=<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;\">\n  <h1 style=\"font-size: 24px; color: #1a1a1a;\">Your Creative Audit Deck is Ready</h1>\n  <p style=\"font-size: 16px; color: #4a4a4a; line-height: 1.6;\">Hi there,</p>\n  <p style=\"font-size: 16px; color: #4a4a4a; line-height: 1.6;\">Your Meta Ad Creative Audit & Growth Strategy deck for <strong>{{ $json.brandName }}</strong> has been generated.</p>\n  <div style=\"margin: 32px 0;\">\n    <a href=\"{{ $json.gammaUrl }}\" style=\"display: inline-block; padding: 14px 28px; background-color: #000; color: #fff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;\">View Presentation</a>\n  </div>\n  {{ $json.pptxUrl ? '<p style=\"font-size: 14px; color: #666;\"><a href=\"' + $json.pptxUrl + '\" style=\"color: #0066cc;\">Download PPTX</a></p>' : '' }}\n  <p style=\"font-size: 14px; color: #999; margin-top: 40px;\">This deck was auto-generated from a live audit of your Meta ad creatives. Review and customize before sharing with clients.</p>\n</div>",
+        "html": "=<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;\">\n  <h1 style=\"font-size: 24px; color: #1a1a1a;\">Your Creative Audit Deck is Ready</h1>\n  <p style=\"font-size: 16px; color: #4a4a4a; line-height: 1.6;\">Hi there,</p>\n  <p style=\"font-size: 16px; color: #4a4a4a; line-height: 1.6;\">Your Meta Ad Creative Audit & Growth Strategy deck for <strong>{{ $json.brandName }}</strong> has been generated and is ready to view.</p>\n  <div style=\"margin: 32px 0;\">\n    <a href=\"{{ $json.gammaUrl }}\" style=\"display: inline-block; padding: 14px 28px; background-color: #000; color: #fff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;\">Open Presentation</a>\n  </div>\n  <p style=\"font-size: 14px; color: #666; line-height: 1.5;\">This is a live Gamma presentation — you can share the link directly, present from the browser, or export to PDF/PPTX from within Gamma.</p>\n  <p style=\"font-size: 14px; color: #999; margin-top: 40px;\">This deck was auto-generated from a live audit of your Meta ad creatives. Review and customize before sharing with clients.</p>\n</div>",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
@@ -557,6 +570,17 @@
   "pinData": {},
   "connections": {
     "form_trigger": {
+      "main": [
+        [
+          {
+            "node": "doppler_secrets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "doppler_secrets": {
       "main": [
         [
           {

@@ -46,6 +46,28 @@ Upgraded version of the Meta Ad Audit → Gemini Analysis → Gamma Deck workflo
 |------|----------|----------|-----------|
 | `analyze_meta_ads` | `gemini-3.1-pro-preview` | `gemini-2.5-pro` | 2.5 Pro has native JSON mode via `responseMimeType` and better multimodal analysis. Switch to `gemini-2.5-flash` for cost savings if output quality is acceptable. |
 
+## Output Format: Gamma Native URL (v2.2)
+
+Switched from PPTX export to **Gamma native presentation URL**. Benefits:
+- **Shareable link** — send the Gamma URL directly; no file attachment needed
+- **Interactive** — recipients can view in-browser with Gamma's built-in presenter mode
+- **Editable** — team can tweak slides in Gamma before client delivery
+- **Export on demand** — PDF/PPTX export is available inside Gamma when needed
+
+The `generate_gamma_presentation` node no longer sends `"exportAs": "pptx"`. Gamma returns its native `gammaUrl` which is what gets emailed.
+
+## Doppler Integration (v2.2)
+
+Added `doppler_secrets` node at the top of the flow (form_trigger → doppler_secrets → scrape_brand_website). This fetches all API keys from Doppler project `ent-agency-automation` / config `prd` at runtime.
+
+**Setup:**
+1. Install the `n8n-nodes-doppler-secrets` community node if not already installed
+2. Attach the `Doppler (ent-agency-automation)` credential to the `doppler_secrets` node
+3. Ensure `GAMMA_API_KEY` is set in your Doppler `ent-agency-automation/prd` config
+4. `GAMMA_API_KEY` has been added to `scripts/sync-doppler-to-n8n-variables.js`
+
+**Downstream access pattern:** `$('doppler_secrets').first().json.GAMMA_API_KEY`
+
 ## End-to-End Automation (v2.1 additions)
 
 These changes close the loop so the workflow runs fully unattended — form submit to inbox delivery.
@@ -64,7 +86,7 @@ These changes close the loop so the workflow runs fully unattended — form subm
 - Failed/errored Gamma generations also exit cleanly.
 
 ### 3. Email Delivery
-- **`send_success_email`** — sends an HTML email with the Gamma URL + optional PPTX download link to the address from the form.
+- **`send_success_email`** — sends an HTML email with the Gamma presentation URL to the address from the form.
 - **`send_error_email`** — sends a failure notification with the specific error so the user knows what happened.
 - Both use SMTP credentials (configure in n8n after import).
 
@@ -75,13 +97,14 @@ These changes close the loop so the workflow runs fully unattended — form subm
 - If Firecrawl can't reach the brand website (403, timeout, bot block), the workflow builds placeholder brand data from the form's "Brand / Company Name" field and continues with neutral defaults (black/white colors, sans-serif fonts). The audit still runs — it just focuses more on the ad creatives.
 
 ### What's Still Manual (future v3)
-- **Google Drive upload** — Gamma returns a PPTX export URL but we don't yet download and store it in Drive. Add a `download PPTX → Google Drive upload` branch after `set_result` if you want archival.
 - **Slack notification** — add a Slack node parallel to `send_success_email` if your team uses Slack.
 - **CRM logging** — the `auditData` JSON from `build_gamma_prompt` contains the full structured audit. Route it to Airtable/Notion/your CRM to build a history of audits per prospect.
 - **tmpfiles.org expiry** — uploaded ad images expire after ~1 hour. For production, replace with S3/Cloudflare R2/Google Cloud Storage upload. The Gamma deck embeds images at generation time so the deck itself is fine, but the raw audit URLs will break.
+- **Canva integration** — could add a parallel branch to push creative briefs to Canva via their Connect API for social-ready assets (requires `CANVA_API_KEY` in Doppler).
 
 ## Credentials Required
 
+- **Doppler** — `Doppler (ent-agency-automation)` credential on the `doppler_secrets` node
 - Firecrawl API
 - Apify OAuth2
 - Google Gemini (HTTP Header Auth)

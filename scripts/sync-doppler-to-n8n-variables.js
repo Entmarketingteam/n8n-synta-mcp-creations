@@ -68,6 +68,7 @@ const VARIABLE_NAMES = [
   'ELEVENLABS_API_KEY',
   'CREATOMATE_API_KEY',
   'PIAPI_API_KEY',
+  'GAMMA_API_KEY',
 ];
 
 function parseUrl(url) {
