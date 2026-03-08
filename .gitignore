@@ -4,3 +4,15 @@
 *.env.local
 # Doppler one-off upload files (never commit)
 .doppler-*.json
+
+# SQLite databases (generated at runtime, not committed)
+*.db
+*.db-wal
+*.db-shm
+
+# Node modules
+node_modules/
+
+# Runtime logs (generated at runtime)
+logs/*.jsonl
+logs/archive/
