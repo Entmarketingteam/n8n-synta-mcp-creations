@@ -211,3 +211,106 @@ Before producing a single HEALTHIISH creative, complete these steps.
 - Competitor Ad Library Sweep: Meta Ad Library audit for all 9 competitor brands listed above
 - Social Analysis: TikTok search for "creatine for women," "beauty creatine," "creatine before and after women" — find the organic language
 - Internal Brief: Feed all research into AI and generate persona signals before briefing creators
+
+---
+
+# Psychology Layer — Sarah Levinger Framework
+
+## The 5 Dimensions Per Persona
+
+### Persona 1 — The Skeptical Convert
+- Identity: "I'm informed. I don't fall for hype. I decide based on evidence."
+- Emotion: Embarrassment (self-directed) — she was confidently wrong. The hook lets her be right about switching without admitting she was wrong.
+- Generation: Gen X / older Millennial — skeptical of institutions, trusts peer evidence over brand claims
+- Loudness: QUIET. She researches in private. Buys without announcing.
+- De Beers Phase: Phase 1 (Identity first) — she needs to see women she respects using it before she'll consider it
+
+### Persona 2 — The Beauty-From-Within Buyer
+- Identity: "I take care of myself. I invest in my health. I know what's in my products."
+- Emotion: Pride (proactive self-investment) + Fear (losing her edge as she ages)
+- Generation: Millennial — wellness is a status signal, supplements are an identity marker
+- Loudness: LOUD. She shares hauls and routines. She becomes organic marketing if the product works.
+- De Beers Phase: Phase 2 (Emotion) — she has the identity. Hit the pride of finding the thing nobody else knows about yet.
+
+### Persona 3 — The Perimenopausal Rebuilder
+- Identity: "I'm fighting for myself. I'm not giving in to aging. I'm still in the game."
+- Emotion: Fear (something is being taken) + Determination (she's not accepting it passively)
+- Generation: Gen X — raised to be tough, handle it yourself, don't complain. She wants to be armed, not pitied.
+- Loudness: MEDIUM. Will leave a long review if it works. Won't post on Instagram.
+- De Beers Phase: Phase 1 (Identity) — cold traffic must reposition creatine as a tool for women fighting back, not a gym supplement
+
+### Persona 4 — The Aesthetic Athlete
+- Identity: "I'm disciplined. I move my body. I look like I take care of myself."
+- Emotion: Anxiety (creatine will undo her aesthetic) → Relief (when someone proves it won't)
+- Generation: Millennial / Gen Z cusp — "clean girl" aesthetic, supplements are part of curated identity
+- Loudness: VERY LOUD. She posts her routine. She is the UGC creator if she converts.
+- De Beers Phase: Phase 2 (Emotion) — hit relief. "Finally, the thing that does what you've been working for."
+
+### Persona 5 — The Nicki Follower
+- Identity: "I follow people I trust. I'm part of a community. I make smart choices."
+- Emotion: Trust + Belonging — buying into Nicki's world, not just a product
+- Generation: Gen Z / Young Millennial — parasocial trust is higher than brand trust, authenticity is the ultimate credential
+- Loudness: LOUD — but only for Nicki-adjacent content. Comments, shares, reposts when Nicki is the source.
+- De Beers Phase: Already past Phase 1. Nicki built the identity. Go straight to Phase 2: belonging and pride.
+
+---
+
+# The Loud Customer Trap
+
+## Who Will Dominate Comments and DMs
+Persona 5 (Nicki Follower) and Persona 4 (Aesthetic Athlete) — young, vocal, social
+
+## Who Will Drive Highest LTV
+Persona 3 (Perimenopausal Rebuilder) — most urgent need, most disposable income, most loyal once converted
+
+## The Risk
+All creative skews toward the younger, louder audience while the over-40 woman with the highest need and buying power never sees messaging that speaks to her.
+
+## The Fix
+Run separate cold traffic campaigns for Persona 3. She needs her own identity-first creative track. She will not convert from Nicki-follower content.
+
+---
+
+# Survey Strategy to Validate Personas
+
+Run two versions before scaling spend.
+
+## Survey A — Warm (Nicki's email list)
+## Survey B — Cold (paid ad traffic, no Nicki branding)
+
+Questions that will diverge (these reveal bias):
+- What do you believe about yourself when it comes to health and supplements?
+- What would buying a creatine supplement say about you?
+- What's the #1 emotion you'd want to feel after taking a supplement every day?
+- Do you feel like creatine is made for someone like you?
+
+If warm answers are "I'm a wellness-forward person who follows smart creators" and cold answers are "I'm skeptical but looking for something real" — you have two completely different creative strategies to build.
+
+---
+
+# De Beers Launch Sequencing
+
+## Phase 1 — Identity Building (Pre-launch through Month 1)
+Goal: Make creatine feel like it belongs in a woman's medicine cabinet, not a gym bag.
+
+- Nicki's personal story — why she built this
+- Women in Nicki's community discovering creatine
+- Education content repositioning the category
+- No performance imagery — beauty, morning ritual, wellness
+
+## Phase 2 — Emotion (Month 1 onward, scale)
+Goal: Hit the specific emotion per persona.
+
+- Skeptical Convert: embarrassment → relief at finally being right
+- Beauty Buyer: pride → being the one who found the thing first
+- Perimenopausal: fear → determination ("I'm fighting back")
+- Aesthetic Athlete: anxiety → relief ("it won't bulk you")
+- Nicki Follower: belonging → "I'm part of what she built"
+
+---
+
+# Source Frameworks
+
+- Dara Denney 5-Step Research SOP (reputation analysis, review mining, persona segmentation, past performance, competitor research) + Motion app 3-report stack
+- Dara Denney Creative Strategy Summit 2026 (cognitive dissonance hooks, awareness levels, research tools)
+- Sarah Levinger Consumer Behavior Framework (identity, emotion, generation, seasonal, cultural dimensions) — Operators Pod
