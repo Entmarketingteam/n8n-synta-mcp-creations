@@ -19,6 +19,7 @@ app.use('/api/enrichment', require('./src/routes/enrichment'));
 app.use('/api/leads', require('./src/routes/leads'));
 app.use('/api/warnings', require('./src/routes/warnings'));
 app.use('/api/templates', require('./src/routes/templates'));
+app.use('/api/distressed', require('./src/routes/distressed'));
 
 // Serve uploaded photos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

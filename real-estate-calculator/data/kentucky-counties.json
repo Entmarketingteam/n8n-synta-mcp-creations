@@ -1,0 +1,69 @@
+{
+  "counties": {
+    "fayette": {
+      "name": "Fayette County",
+      "seat": "Lexington",
+      "state": "KY",
+      "population": 322570,
+      "zoningDifficulty": "high",
+      "bestZones": ["R-3", "B-1", "P-1"],
+      "keyFilings": ["Recovery Residence License", "Board of Adjustment Variance"],
+      "dataSources": {
+        "courtRecords": "Kentucky Court of Justice (KyCourts.gov)",
+        "pva": "Fayette PVA (QPublic)",
+        "codeEnforcement": "LFUCG Code Enforcement / Data Portal",
+        "taxSales": "Fayette County Sheriff",
+        "zoningBoard": "LFUCG Board of Adjustment"
+      },
+      "taxSaleDate": "2026-10-06",
+      "delinquentListAvailable": "2026-09-01",
+      "notes": "2025 ordinance requires Recovery Residence License ($200/yr) and state certification. R-1 requires Fair Housing Reasonable Accommodation to exceed 4-person limit."
+    },
+    "scott": {
+      "name": "Scott County",
+      "seat": "Georgetown",
+      "state": "KY",
+      "population": 57000,
+      "zoningDifficulty": "medium",
+      "bestZones": ["A-1R", "R-2"],
+      "keyFilings": ["Conditional Use Permits (CUP)"],
+      "dataSources": {
+        "courtRecords": "eCCLIX Subscriber Portal",
+        "pva": "Scott County PVA",
+        "masterCommissioner": "Scott County Master Commissioner",
+        "planning": "Georgetown-Scott County Planning"
+      },
+      "notes": "Ordinance 23-10 allows large-scale residential care in A-1R zones (20+ acres). Requires 6-ft no-climb fence, 20-ft driveway for fire access."
+    },
+    "oldham": {
+      "name": "Oldham County",
+      "seat": "La Grange",
+      "state": "KY",
+      "population": 68000,
+      "zoningDifficulty": "low",
+      "bestZones": ["Any residential"],
+      "keyFilings": ["Building Permit (Change of Use)"],
+      "dataSources": {
+        "courtRecords": "eCCLIX Subscriber Portal",
+        "pva": "Oldham County PVA",
+        "inspections": "Oldham County Inspections Office",
+        "waterDistrict": "Oldham County Water District"
+      },
+      "ordinanceRef": "Sec. 250-075",
+      "notes": "Residential Care Facility permitted in any residential district without CUP if for persons with disabilities. Must follow zone-specific area/height/occupancy rules. Chief Building Inspector (Matthew Dunaway) tracks burnouts."
+    }
+  },
+  "signalTypes": [
+    {"id": "lis_pendens", "label": "Lis Pendens", "frequency": "daily", "urgency": "high"},
+    {"id": "probate", "label": "Probate Filing", "frequency": "daily", "urgency": "high"},
+    {"id": "tax_lien", "label": "Tax Lien", "frequency": "annual", "urgency": "medium"},
+    {"id": "water_shutoff", "label": "Water Shut-off", "frequency": "daily", "urgency": "critical"},
+    {"id": "nuisance_lien", "label": "Nuisance Lien", "frequency": "weekly", "urgency": "medium"},
+    {"id": "code_violation", "label": "Code Violation", "frequency": "weekly", "urgency": "medium"},
+    {"id": "expired_permit", "label": "Expired Permit", "frequency": "monthly", "urgency": "medium"},
+    {"id": "sale_cancellation", "label": "Sale Cancellation", "frequency": "monthly", "urgency": "high"},
+    {"id": "absentee_owner", "label": "Absentee Owner", "frequency": "varies", "urgency": "low"},
+    {"id": "burnout", "label": "Fire Damage", "frequency": "varies", "urgency": "critical"}
+  ],
+  "foiaTemplateTypes": ["water_shutoff", "expired_permits", "nuisance_liens", "delinquent_taxes"]
+}

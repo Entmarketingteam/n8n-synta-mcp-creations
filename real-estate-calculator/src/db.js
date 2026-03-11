@@ -26,6 +26,11 @@ function initSchema(database) {
     const schema = fs.readFileSync(schemaPath, 'utf-8');
     database.exec(schema);
   }
+  const distressedSchemaPath = path.join(__dirname, '..', 'db', 'distressed-schema.sql');
+  if (fs.existsSync(distressedSchemaPath)) {
+    const distressedSchema = fs.readFileSync(distressedSchemaPath, 'utf-8');
+    database.exec(distressedSchema);
+  }
 }
 
 function closeDb() {
