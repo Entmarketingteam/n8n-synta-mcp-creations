@@ -1,0 +1,456 @@
+{
+  "name": "Creator Contract Analyzer — Brand Deal Red Flag Scanner",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 📋 Creator Contract Analyzer\n\n**Built for:**\n- Influencers & content creators\n- Talent managers & agencies\n- Creator economy consultants\n\n**What this workflow does:**\n1. Watches Google Drive for new contract PDFs\n2. Pass 1: Extracts all deal terms (rate, deliverables, usage rights, exclusivity, payment timeline)\n3. Pass 2: Scans for red flags specific to creator/brand deals\n4. Generates plain-English advice with negotiation talking points\n5. Logs everything to a comparison spreadsheet\n6. Alerts on high-risk contracts via Slack\n\n**Setup:**\n1. Create a \"Brand Contracts\" folder in Google Drive\n2. Get PDF Vector API key from pdfvector.com/api-keys\n3. Create Google Sheet with columns from the Sheets sticky note\n4. Connect Slack for notifications\n5. Update all YOUR_ placeholder IDs",
+        "height": 520,
+        "width": 380
+      },
+      "id": "sticky-main",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🚩 Creator-Specific Red Flags\n\n**Rights & Ownership:**\n- Perpetual usage rights (content used forever without pay)\n- Full content ownership transfer\n- Whitelisting with no time cap or spend cap\n- Likeness rights beyond the campaign\n\n**Money Traps:**\n- Net-60+ payment terms\n- No kill fee if brand cancels\n- Performance clawbacks tied to metrics you don't control\n- Hidden costs (equipment, travel, talent) not reimbursed\n\n**Scope Creep:**\n- Unlimited revisions\n- Vague deliverable descriptions\n- Platform additions without rate adjustment\n\n**Lock-In & Control:**\n- Exclusivity longer than campaign + 30 days\n- Non-compete across entire product category\n- Brand approval on all future content (not just theirs)\n- Morality clause with subjective triggers\n\n**Missing Protections:**\n- No FTC compliance language\n- No content approval process for you\n- No termination rights for creator\n- No late payment penalty for brand\n\n**Risk Levels:**\n- 🔴 High: 2+ high-severity flags\n- 🟡 Medium: 1 high or 3+ total flags\n- 🟢 Low: Minor or no issues",
+        "height": 680,
+        "width": 340
+      },
+      "id": "sticky-flags",
+      "name": "Sticky Note - Red Flags",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📊 Google Sheets Columns\n\nCreate these columns in Row 1:\n\nBrand Name | Campaign Name | Creator Rate | Rate Type | Payment Terms | Kill Fee | Deliverables | Platforms | Content Ownership | Usage Rights Duration | Whitelisting Terms | Exclusivity Window | Exclusivity Scope | Revision Limit | Approval Process | FTC Compliance | Morality Clause | Non-Compete | Red Flags | Red Flag Count | Risk Level | Negotiation Points | Contract File | Analyzed Date",
+        "height": 180,
+        "width": 520
+      },
+      "id": "sticky-sheets",
+      "name": "Sticky Note - Sheets",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "YOUR_FOLDER_ID",
+          "mode": "list"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "gdrive-trigger",
+      "name": "New Contract Uploaded",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        140,
+        820
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "gdrive-download",
+      "name": "Download Contract",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        360,
+        820
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "operation": "extract",
+        "inputType": "file",
+        "binaryPropertyName": "data",
+        "prompt": "You are an expert talent manager and entertainment attorney reviewing a brand partnership contract for a content creator or influencer. Extract every term that matters to the creator.\n\nExtract ALL of the following:\n\n1. PARTIES & CAMPAIGN:\n   - Brand/company name and contact\n   - Creator/talent name\n   - Campaign name or description\n   - Campaign timeline (start date, end date, total duration)\n\n2. COMPENSATION:\n   - Total creator fee/rate (flat fee, per-deliverable, or hybrid)\n   - Rate type: flat fee, per-post, hourly, revenue share, affiliate/commission, product-only\n   - Payment schedule (upfront %, milestones, net-30/60/90)\n   - Kill fee if brand cancels after work begins\n   - Performance bonuses or incentives\n   - Expense reimbursement (travel, equipment, props, talent)\n   - Product/gifting value and whether it counts toward payment\n\n3. DELIVERABLES & SCOPE:\n   - Exact number and type of deliverables (posts, stories, reels, TikToks, YouTube videos, blog posts, tweets, livestreams)\n   - Which platforms\n   - Content specifications (length, format, aspect ratio, hashtags, mentions, links)\n   - Number of revisions allowed\n   - Draft/approval timeline (how many days for each round)\n   - Whether creator can repurpose content for their own channels\n\n4. CONTENT RIGHTS & USAGE:\n   - Who owns the content after campaign (creator retains, brand owns, shared)\n   - Usage rights duration (30 days, 6 months, 1 year, perpetual)\n   - Where brand can use content (their social, website, email, paid ads, TV, print, billboards, packaging)\n   - Whitelisting/dark posting terms (duration, spend cap, platforms)\n   - Whether brand can edit or modify the content\n   - Whether brand can sublicense to third parties\n   - Likeness/name/image rights and their duration\n\n5. EXCLUSIVITY & NON-COMPETE:\n   - Exclusivity window (during campaign only, or extends after)\n   - Exclusivity scope (specific competitor brands, or entire product category)\n   - Non-compete clause and duration\n   - Non-disparagement clause\n\n6. CREATOR PROTECTIONS (or lack thereof):\n   - Creator approval rights on final content usage\n   - Creator termination rights\n   - FTC/disclosure compliance language\n   - Content approval process (who approves, timeline)\n   - Late payment penalties for the brand\n   - Indemnification (who covers legal issues)\n\n7. TERMINATION & LIABILITY:\n   - Morality/moral turpitude clause (what triggers it, how subjective is the language)\n   - Termination for convenience (can either party cancel without cause)\n   - What happens to unpublished content if contract ends early\n   - Performance guarantees or clawback provisions\n   - Penalties for creator non-performance\n   - Dispute resolution (arbitration, mediation, litigation, jurisdiction)\n\n8. RED FLAGS — Flag anything that is:\n   - Perpetual or \"in perpetuity\" usage rights without additional compensation\n   - Full content ownership transfer to brand\n   - Unlimited whitelisting (no time or spend cap)\n   - Exclusivity extending more than 30 days past campaign end\n   - Non-compete covering an entire product category rather than specific competitors\n   - No kill fee provision\n   - Net-60 or longer payment terms\n   - Unlimited revision rounds\n   - Morality clause with vague or subjective triggers like \"brand discretion\"\n   - Performance clawbacks tied to engagement metrics\n   - Brand can edit content without creator approval\n   - Missing FTC compliance language\n   - No creator termination rights\n   - No late payment penalty for brand\n   - Likeness rights extending beyond campaign period\n   - Indemnification that puts all liability on creator\n   - Auto-renewal without creator opt-out\n\nFor each red flag, include: the issue, severity (High/Medium/Low), the exact clause text, and a one-sentence explanation of why it matters.",
+        "schema": "{\"type\":\"object\",\"properties\":{\"brandName\":{\"type\":\"string\",\"description\":\"Brand or company name\"},\"brandContact\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"email\":{\"type\":\"string\"},\"company\":{\"type\":\"string\"}}},\"creatorName\":{\"type\":\"string\"},\"campaignName\":{\"type\":\"string\",\"description\":\"Campaign name or brief description\"},\"campaignStart\":{\"type\":\"string\"},\"campaignEnd\":{\"type\":\"string\"},\"campaignDuration\":{\"type\":\"string\"},\"compensation\":{\"type\":\"object\",\"properties\":{\"totalRate\":{\"type\":\"number\",\"description\":\"Total creator fee in dollars\"},\"rateType\":{\"type\":\"string\",\"enum\":[\"flat_fee\",\"per_deliverable\",\"hourly\",\"revenue_share\",\"affiliate_commission\",\"product_only\",\"hybrid\"]},\"paymentSchedule\":{\"type\":\"string\",\"description\":\"Payment timeline details like net-30, 50% upfront, etc.\"},\"paymentTermDays\":{\"type\":\"number\",\"description\":\"Number of days for payment (e.g., 30 for net-30)\"},\"killFee\":{\"type\":\"string\",\"description\":\"Kill fee amount or terms if brand cancels, or 'None specified'\"},\"performanceBonus\":{\"type\":\"string\",\"description\":\"Bonus structure if any\"},\"expenseReimbursement\":{\"type\":\"string\",\"description\":\"What expenses are covered\"},\"productGifting\":{\"type\":\"string\",\"description\":\"Product/gifting details and whether it offsets payment\"}}},\"deliverables\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"e.g., Instagram Reel, TikTok video, YouTube video, IG Story set, Blog post\"},\"quantity\":{\"type\":\"number\"},\"platform\":{\"type\":\"string\"},\"specifications\":{\"type\":\"string\",\"description\":\"Length, format, hashtags, mentions, links, etc.\"}}}},\"platforms\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"All platforms involved\"},\"revisionLimit\":{\"type\":\"string\",\"description\":\"Number of allowed revisions or 'Unlimited' or 'Not specified'\"},\"approvalProcess\":{\"type\":\"string\",\"description\":\"How content is approved - timeline, rounds, who approves\"},\"contentOwnership\":{\"type\":\"string\",\"enum\":[\"creator_retains\",\"brand_owns\",\"shared\",\"not_specified\"],\"description\":\"Who owns the content\"},\"usageRights\":{\"type\":\"object\",\"properties\":{\"duration\":{\"type\":\"string\",\"description\":\"e.g., 30 days, 6 months, 1 year, perpetual\"},\"channels\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Where brand can use content: social, website, paid ads, TV, print, etc.\"},\"canEdit\":{\"type\":\"boolean\",\"description\":\"Whether brand can modify the content\"},\"canSublicense\":{\"type\":\"boolean\",\"description\":\"Whether brand can give content to third parties\"}}},\"whitelisting\":{\"type\":\"object\",\"properties\":{\"allowed\":{\"type\":\"boolean\"},\"duration\":{\"type\":\"string\",\"description\":\"Time limit for whitelisting or 'Unlimited'\"},\"spendCap\":{\"type\":\"string\",\"description\":\"Ad spend cap or 'Unlimited' or 'Not specified'\"},\"platforms\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"likeness\":{\"type\":\"object\",\"properties\":{\"granted\":{\"type\":\"boolean\",\"description\":\"Whether name/image/likeness rights are granted\"},\"duration\":{\"type\":\"string\",\"description\":\"Duration of likeness rights\"},\"scope\":{\"type\":\"string\",\"description\":\"How likeness can be used\"}}},\"exclusivity\":{\"type\":\"object\",\"properties\":{\"hasExclusivity\":{\"type\":\"boolean\"},\"window\":{\"type\":\"string\",\"description\":\"Duration of exclusivity period\"},\"scope\":{\"type\":\"string\",\"description\":\"What is exclusive - specific brands, product category, or broader\"},\"postCampaignDays\":{\"type\":\"number\",\"description\":\"Days of exclusivity after campaign ends\"}}},\"nonCompete\":{\"type\":\"object\",\"properties\":{\"hasNonCompete\":{\"type\":\"boolean\"},\"duration\":{\"type\":\"string\"},\"scope\":{\"type\":\"string\"}}},\"nonDisparagement\":{\"type\":\"boolean\"},\"moralityClause\":{\"type\":\"object\",\"properties\":{\"exists\":{\"type\":\"boolean\"},\"triggers\":{\"type\":\"string\",\"description\":\"What triggers the morality clause\"},\"subjectivity\":{\"type\":\"string\",\"enum\":[\"objective\",\"somewhat_subjective\",\"very_subjective\"],\"description\":\"How subjective the triggers are\"}}},\"terminationRights\":{\"type\":\"object\",\"properties\":{\"creatorCanTerminate\":{\"type\":\"boolean\"},\"brandCanTerminate\":{\"type\":\"boolean\"},\"terminationForConvenience\":{\"type\":\"boolean\"},\"unpublishedContentHandling\":{\"type\":\"string\"}}},\"ftcCompliance\":{\"type\":\"boolean\",\"description\":\"Whether FTC disclosure requirements are mentioned\"},\"latePaymentPenalty\":{\"type\":\"string\",\"description\":\"Penalty if brand pays late, or 'None specified'\"},\"indemnification\":{\"type\":\"string\",\"description\":\"Who bears legal liability\"},\"disputeResolution\":{\"type\":\"string\",\"description\":\"Arbitration, mediation, litigation, and jurisdiction\"},\"autoRenewal\":{\"type\":\"boolean\"},\"redFlags\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"issue\":{\"type\":\"string\",\"description\":\"Short description of the problem\"},\"severity\":{\"type\":\"string\",\"enum\":[\"High\",\"Medium\",\"Low\"]},\"clause\":{\"type\":\"string\",\"description\":\"The actual contract language\"},\"whyItMatters\":{\"type\":\"string\",\"description\":\"One sentence explaining why this is a problem for the creator\"}}}}}}"
+      },
+      "id": "pdfvector-extract",
+      "name": "Extract Contract Terms",
+      "type": "n8n-nodes-pdfvector.pdfVector",
+      "typeVersion": 1,
+      "position": [
+        580,
+        820
+      ],
+      "credentials": {
+        "pdfVectorApi": {
+          "id": "YOUR_PDFVECTOR_CREDENTIAL_ID",
+          "name": "PDF Vector account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge",
+      "name": "Merge Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "operation": "ask",
+        "inputType": "file",
+        "binaryPropertyName": "data",
+        "prompt": "You are a seasoned talent manager who has negotiated hundreds of brand deals for content creators. Review this brand partnership contract and provide actionable advice.\n\nRespond in this exact format:\n\n## QUICK VERDICT\nOne sentence: should the creator sign as-is, negotiate, or walk away?\n\n## DEAL SUMMARY\n2-3 sentences. What is this deal, what's the rate, and is the rate fair for the scope of work?\n\n## TOP RED FLAGS\nList the most concerning issues. For each:\n- What the contract says (quote the language)\n- Why it's a problem in plain English\n- What to ask for instead (specific counter-language)\n\n## MONEY CHECK\n- Stated rate vs. effective rate (factor in usage rights, exclusivity, and deliverable count)\n- If usage rights are perpetual or exclusivity is extended, estimate the fair premium that should be added (industry standard: +25-50% for extended usage, +15-30% for exclusivity)\n- Payment terms assessment: is the timeline reasonable?\n- Hidden costs the creator might absorb\n\n## NEGOTIATION SCRIPT\nGive 3-5 specific things to say back to the brand, written as actual email/message language the creator can copy-paste. Be professional but firm. Example format:\n\"Hi [Brand] — excited about this partnership! A couple of things I'd love to adjust: [specific ask with reasoning]...\"\n\n## FAIRNESS RATING\nRate as: Creator-Friendly / Balanced / Brand-Friendly / Predatory\nBrief justification.\n\n## WHAT'S MISSING\nStandard protections that should be in every creator contract but aren't in this one."
+      },
+      "id": "pdfvector-advice",
+      "name": "Creator Deal Advice",
+      "type": "n8n-nodes-pdfvector.pdfVector",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        820
+      ],
+      "credentials": {
+        "pdfVectorApi": {
+          "id": "YOUR_PDFVECTOR_CREDENTIAL_ID",
+          "name": "PDF Vector account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const deal = $('Extract Contract Terms').item.json.data;\nconst advice = $input.first().json.markdown;\nconst fileName = $('New Contract Uploaded').item.json.name;\n\n// --- Red flag analysis ---\nconst redFlags = deal.redFlags || [];\nconst highRisks = redFlags.filter(r => r.severity === 'High');\nconst mediumRisks = redFlags.filter(r => r.severity === 'Medium');\nconst lowRisks = redFlags.filter(r => r.severity === 'Low');\n\nlet riskLevel = 'Low';\nif (highRisks.length >= 2) riskLevel = 'High';\nelse if (highRisks.length === 1 || redFlags.length >= 3) riskLevel = 'Medium';\n\n// --- Compensation ---\nconst comp = deal.compensation || {};\nconst totalRate = comp.totalRate || 0;\nconst rateType = (comp.rateType || 'not_specified').replace(/_/g, ' ');\nconst paymentTerms = comp.paymentSchedule || 'Not specified';\nconst paymentDays = comp.paymentTermDays || 0;\nconst killFee = comp.killFee || 'None specified';\nconst expenseReimbursement = comp.expenseReimbursement || 'Not specified';\n\n// --- Deliverables ---\nconst deliverables = deal.deliverables || [];\nconst deliverableSummary = deliverables.length > 0\n  ? deliverables.map(d => `${d.quantity || 1}x ${d.type} (${d.platform || 'unspecified'})`).join(', ')\n  : 'Not specified';\nconst totalDeliverableCount = deliverables.reduce((sum, d) => sum + (d.quantity || 1), 0);\nconst effectivePerDeliverable = totalDeliverableCount > 0 ? Math.round(totalRate / totalDeliverableCount) : 0;\n\nconst platforms = deal.platforms && deal.platforms.length > 0\n  ? deal.platforms.join(', ')\n  : 'Not specified';\n\n// --- Content rights ---\nconst ownership = (deal.contentOwnership || 'not_specified').replace(/_/g, ' ');\nconst usageRights = deal.usageRights || {};\nconst usageDuration = usageRights.duration || 'Not specified';\nconst usageChannels = usageRights.channels && usageRights.channels.length > 0\n  ? usageRights.channels.join(', ')\n  : 'Not specified';\nconst brandCanEdit = usageRights.canEdit ? 'Yes' : 'No';\nconst brandCanSublicense = usageRights.canSublicense ? 'Yes' : 'No';\n\n// --- Whitelisting ---\nconst wl = deal.whitelisting || {};\nlet whitelistSummary = 'None';\nif (wl.allowed) {\n  whitelistSummary = `${wl.duration || 'No time limit'}`;\n  if (wl.spendCap && wl.spendCap !== 'Not specified') whitelistSummary += ` / Cap: ${wl.spendCap}`;\n  else whitelistSummary += ' / No spend cap';\n}\n\n// --- Exclusivity ---\nconst excl = deal.exclusivity || {};\nlet exclusivitySummary = 'None';\nif (excl.hasExclusivity) {\n  exclusivitySummary = `${excl.window || 'Duration not specified'}`;\n  if (excl.scope) exclusivitySummary += ` — Scope: ${excl.scope}`;\n  if (excl.postCampaignDays) exclusivitySummary += ` (${excl.postCampaignDays} days post-campaign)`;\n}\n\n// --- Non-compete ---\nconst nc = deal.nonCompete || {};\nlet nonCompeteSummary = 'None';\nif (nc.hasNonCompete) {\n  nonCompeteSummary = `${nc.duration || 'Duration not specified'}`;\n  if (nc.scope) nonCompeteSummary += ` — ${nc.scope}`;\n}\n\n// --- Morality clause ---\nconst moral = deal.moralityClause || {};\nlet moralitySummary = 'None';\nif (moral.exists) {\n  moralitySummary = `${moral.subjectivity || 'Unknown'} subjectivity`;\n  if (moral.triggers) moralitySummary += ` — Triggers: ${moral.triggers}`;\n}\n\n// --- Likeness ---\nconst lik = deal.likeness || {};\nlet likenessSummary = 'Not granted';\nif (lik.granted) {\n  likenessSummary = `${lik.duration || 'No time limit'}`;\n  if (lik.scope) likenessSummary += ` — ${lik.scope}`;\n}\n\n// --- Termination ---\nconst term = deal.terminationRights || {};\nconst creatorCanTerminate = term.creatorCanTerminate ? 'Yes' : 'No';\nconst ftcCompliance = deal.ftcCompliance ? 'Yes' : 'No / Not mentioned';\nconst latePaymentPenalty = deal.latePaymentPenalty || 'None specified';\nconst revisionLimit = deal.revisionLimit || 'Not specified';\nconst approvalProcess = deal.approvalProcess || 'Not specified';\n\n// --- Format red flags for sheets ---\nconst flagsSummary = redFlags.length > 0\n  ? redFlags.map(r => `[${r.severity}] ${r.issue}`).join('; ')\n  : 'None identified';\n\n// Top negotiation points (from high-severity flags)\nconst negotiationPoints = redFlags\n  .filter(r => r.severity === 'High' || r.severity === 'Medium')\n  .map(r => `${r.issue}: ${r.whyItMatters || ''}`)\n  .join(' | ') || 'Contract looks reasonable';\n\n// Truncate advice for sheets\nconst adviceShort = advice && advice.length > 1000\n  ? advice.substring(0, 1000) + '...'\n  : advice;\n\nreturn [{\n  json: {\n    // Identity\n    brandName: deal.brandName || 'Not specified',\n    campaignName: deal.campaignName || 'Not specified',\n    creatorName: deal.creatorName || 'Not specified',\n    campaignStart: deal.campaignStart || '',\n    campaignEnd: deal.campaignEnd || '',\n\n    // Money\n    totalRate: totalRate,\n    rateType: rateType,\n    effectivePerDeliverable: effectivePerDeliverable,\n    paymentTerms: paymentTerms,\n    paymentDays: paymentDays,\n    killFee: killFee,\n    expenseReimbursement: expenseReimbursement,\n\n    // Scope\n    deliverables: deliverableSummary,\n    totalDeliverableCount: totalDeliverableCount,\n    platforms: platforms,\n    revisionLimit: revisionLimit,\n    approvalProcess: approvalProcess,\n\n    // Rights\n    contentOwnership: ownership,\n    usageDuration: usageDuration,\n    usageChannels: usageChannels,\n    brandCanEdit: brandCanEdit,\n    brandCanSublicense: brandCanSublicense,\n    whitelisting: whitelistSummary,\n    likeness: likenessSummary,\n\n    // Restrictions\n    exclusivity: exclusivitySummary,\n    nonCompete: nonCompeteSummary,\n    nonDisparagement: deal.nonDisparagement ? 'Yes' : 'No',\n    moralityClause: moralitySummary,\n\n    // Protections\n    creatorCanTerminate: creatorCanTerminate,\n    ftcCompliance: ftcCompliance,\n    latePaymentPenalty: latePaymentPenalty,\n    indemnification: deal.indemnification || 'Not specified',\n    disputeResolution: deal.disputeResolution || 'Not specified',\n    autoRenewal: deal.autoRenewal ? 'Yes' : 'No',\n\n    // Risk\n    redFlagCount: redFlags.length,\n    highRiskCount: highRisks.length,\n    mediumRiskCount: mediumRisks.length,\n    flagsSummary: flagsSummary,\n    riskLevel: riskLevel,\n    negotiationPoints: negotiationPoints,\n\n    // Advice\n    creatorAdvice: advice,\n    creatorAdviceShort: adviceShort,\n\n    // Meta\n    fileName: fileName,\n    fileId: $('New Contract Uploaded').item.json.id,\n    processedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "compile-analysis",
+      "name": "Compile Deal Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Brand Name": "={{ $json.brandName }}",
+            "Campaign Name": "={{ $json.campaignName }}",
+            "Creator Rate": "={{ $json.totalRate }}",
+            "Rate Type": "={{ $json.rateType }}",
+            "Payment Terms": "={{ $json.paymentTerms }}",
+            "Kill Fee": "={{ $json.killFee }}",
+            "Deliverables": "={{ $json.deliverables }}",
+            "Platforms": "={{ $json.platforms }}",
+            "Content Ownership": "={{ $json.contentOwnership }}",
+            "Usage Rights Duration": "={{ $json.usageDuration }}",
+            "Whitelisting Terms": "={{ $json.whitelisting }}",
+            "Exclusivity Window": "={{ $json.exclusivity }}",
+            "Exclusivity Scope": "={{ $json.nonCompete }}",
+            "Revision Limit": "={{ $json.revisionLimit }}",
+            "Approval Process": "={{ $json.approvalProcess }}",
+            "FTC Compliance": "={{ $json.ftcCompliance }}",
+            "Morality Clause": "={{ $json.moralityClause }}",
+            "Non-Compete": "={{ $json.nonCompete }}",
+            "Red Flags": "={{ $json.flagsSummary }}",
+            "Red Flag Count": "={{ $json.redFlagCount }}",
+            "Risk Level": "={{ $json.riskLevel }}",
+            "Negotiation Points": "={{ $json.negotiationPoints }}",
+            "Contract File": "={{ $json.fileName }}",
+            "Analyzed Date": "={{ $json.processedAt.split('T')[0] }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "sheets-log",
+      "name": "Log to Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1460,
+        820
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "high-risk-check",
+              "leftValue": "={{ $('Compile Deal Analysis').item.json.riskLevel }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "if-high-risk",
+      "name": "High Risk Deal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "list"
+        },
+        "text": "=🚨 *HIGH RISK BRAND DEAL — DO NOT SIGN YET*\n\n*Brand:* {{ $('Compile Deal Analysis').item.json.brandName }}\n*Campaign:* {{ $('Compile Deal Analysis').item.json.campaignName }}\n*Rate:* ${{ $('Compile Deal Analysis').item.json.totalRate }} ({{ $('Compile Deal Analysis').item.json.rateType }})\n*Effective per deliverable:* ${{ $('Compile Deal Analysis').item.json.effectivePerDeliverable }}\n\n⚠️ *{{ $('Compile Deal Analysis').item.json.redFlagCount }} Red Flags Found ({{ $('Compile Deal Analysis').item.json.highRiskCount }} high severity):*\n{{ $('Compile Deal Analysis').item.json.flagsSummary }}\n\n🔑 *Key Issues:*\n- Content Ownership: {{ $('Compile Deal Analysis').item.json.contentOwnership }}\n- Usage Rights: {{ $('Compile Deal Analysis').item.json.usageDuration }}\n- Whitelisting: {{ $('Compile Deal Analysis').item.json.whitelisting }}\n- Exclusivity: {{ $('Compile Deal Analysis').item.json.exclusivity }}\n- Kill Fee: {{ $('Compile Deal Analysis').item.json.killFee }}\n\n💡 *Top Negotiation Points:*\n{{ $('Compile Deal Analysis').item.json.negotiationPoints }}\n\n📋 *Contract:* {{ $('Compile Deal Analysis').item.json.fileName }}",
+        "otherOptions": {}
+      },
+      "id": "slack-alert",
+      "name": "High Risk Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        1900,
+        720
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "list"
+        },
+        "text": "=✅ *Brand Deal Analyzed*\n\n*Brand:* {{ $('Compile Deal Analysis').item.json.brandName }}\n*Campaign:* {{ $('Compile Deal Analysis').item.json.campaignName }}\n*Rate:* ${{ $('Compile Deal Analysis').item.json.totalRate }} ({{ $('Compile Deal Analysis').item.json.rateType }})\n*Risk Level:* {{ $('Compile Deal Analysis').item.json.riskLevel }}\n*Red Flags:* {{ $('Compile Deal Analysis').item.json.redFlagCount }}\n\n📋 *Contract:* {{ $('Compile Deal Analysis').item.json.fileName }}",
+        "otherOptions": {}
+      },
+      "id": "slack-notify",
+      "name": "Analysis Complete",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        1900,
+        920
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New Contract Uploaded": {
+      "main": [
+        [
+          {
+            "node": "Download Contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Contract": {
+      "main": [
+        [
+          {
+            "node": "Extract Contract Terms",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Contract Terms": {
+      "main": [
+        [
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Data": {
+      "main": [
+        [
+          {
+            "node": "Creator Deal Advice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creator Deal Advice": {
+      "main": [
+        [
+          {
+            "node": "Compile Deal Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compile Deal Analysis": {
+      "main": [
+        [
+          {
+            "node": "Log to Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "High Risk Deal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Risk Deal?": {
+      "main": [
+        [
+          {
+            "node": "High Risk Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analysis Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Creator Economy"
+    },
+    {
+      "name": "Contract Analysis"
+    },
+    {
+      "name": "Influencer"
+    },
+    {
+      "name": "Brand Deals"
+    },
+    {
+      "name": "PDF Vector"
+    }
+  ],
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
