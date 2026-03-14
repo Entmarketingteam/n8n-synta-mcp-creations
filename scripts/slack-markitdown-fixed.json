@@ -54,7 +54,7 @@
             {
               "id": "channel_id",
               "name": "channel_id",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.channel_id) || $json.channel_id || '' }}",
+              "value": "={{ ($json.body && $json.body.event && ($json.body.event.channel || $json.body.event.channel_id)) || $json.channel || $json.channel_id || '' }}",
               "type": "string"
             },
             {
@@ -481,7 +481,7 @@
             {
               "id": "channel_id",
               "name": "channel_id",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.channel_id) || $json.channel_id || '' }}",
+              "value": "={{ ($json.body && $json.body.event && ($json.body.event.channel || $json.body.event.channel_id)) || $json.channel || $json.channel_id || '' }}",
               "type": "string"
             },
             {
@@ -493,7 +493,7 @@
             {
               "id": "url",
               "name": "url",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.text) || $json.text || '' }}",
+              "value": "={{ (($json.body && $json.body.event && $json.body.event.text) || $json.text || '').replace(/<(https?:\\/\\/[^|>]+)[^>]*>/i, '$1').match(/https?:\\/\\/[^\\s<>]+/i)?.[0] || '' }}",
               "type": "string"
             }
           ]
@@ -718,7 +718,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2000,
+        300,
         110
       ],
       "parameters": {
@@ -957,40 +957,18 @@
         ],
         [
           {
+            "node": "Respond OK to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond OK to Slack": {
+      "main": [
+        [
+          {
             "node": "Event type (file vs message)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack reply (success)": {
-      "main": [
-        [
-          {
-            "node": "Respond OK to Slack",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack reply (error)": {
-      "main": [
-        [
-          {
-            "node": "Respond OK to Slack",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack reply (no URL)": {
-      "main": [
-        [
-          {
-            "node": "Respond OK to Slack",
             "type": "main",
             "index": 0
           }
