@@ -1,0 +1,2482 @@
+{
+  "name": "AI Social Media Automation for Multiple Platforms using Blotato",
+  "nodes": [
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        864
+      ],
+      "id": "0bccaca7-67f0-4ea9-a356-fa1993eac803",
+      "name": "Wait4",
+      "webhookId": "df499f7f-1dbc-4bc0-ace1-2238da8ac73e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba9e062e-9b90-4e6d-9dbe-4d5abea09609",
+              "leftValue": "={{ $json.item.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        752
+      ],
+      "id": "c4d476fb-77a6-4be2-99c9-a884ae008ff2",
+      "name": "If Else"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cb70ee1a-0be3-4d87-83e0-14682398b72b",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "=completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -928,
+        864
+      ],
+      "id": "c99007fb-df85-42b7-9c4b-c379e6aa8308",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1728,
+        864
+      ],
+      "id": "4c268c64-d16b-4cec-aec7-296b87910a6d",
+      "name": "Telegram Trigger",
+      "webhookId": "ea7ab04d-bdf9-4740-a769-2e88449be098",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "source",
+        "sourceUrl": "={{ $json.message.text }}",
+        "customInstructions": "create all transcription of this youtube video and return the title in the first line."
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        864
+      ],
+      "id": "8a34dc72-45cb-4021-bd0b-b0b81614425e",
+      "name": "Create Transcription",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "source",
+        "operation": "get",
+        "sourceId": "={{ $json.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        864
+      ],
+      "id": "018c487a-de64-42c7-8e9d-7d88229aef05",
+      "name": "Get Transcription",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -752,
+        928
+      ],
+      "id": "64465c33-045a-40a6-9b2e-64760bc10fb4",
+      "name": "Wait",
+      "webhookId": "2fdfae92-aeb8-4f19-92e1-0eeeaf250a73"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "templateId": {
+          "__rl": true,
+          "value": "/base/v2/tweet-card/ba413be6-a840-4e60-8fd6-0066d3b427df/v1",
+          "mode": "list",
+          "cachedResultName": "Twitter/X style quote cards with minimal style"
+        },
+        "prompt": "=create instagram carousel with this detailed bullet points :  {{ $json.content }}",
+        "templateInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "verified": true,
+            "profileImage": "https://www.dr-firas.com/logo.jpg",
+            "authorName": "Dr. FIRAS",
+            "handle": "doc.firass",
+            "theme": "dark",
+            "aspectRatio": "9:16"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "profileImage",
+              "displayName": "Profile Photo URL * (publicly accessible URL)",
+              "required": true,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "quotes",
+              "displayName": "Quotes (e.g. [\"item 1\", \"item 2\"])",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "authorName",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "handle",
+              "displayName": "Social Media Handle",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified",
+              "displayName": "Show Verified Badge",
+              "required": false,
+              "defaultMatch": false,
+              "type": "boolean",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "theme",
+              "displayName": "Theme",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "Dark",
+                  "value": "dark"
+                },
+                {
+                  "name": "Light",
+                  "value": "light"
+                }
+              ]
+            },
+            {
+              "id": "aspectRatio",
+              "displayName": "Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "4:5",
+                  "value": "4:5"
+                },
+                {
+                  "name": "1:1",
+                  "value": "1:1"
+                },
+                {
+                  "name": "9:16",
+                  "value": "9:16"
+                }
+              ]
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        48,
+        752
+      ],
+      "id": "d31dada1-b2f7-4ec4-9443-8d5dcc5fe5e7",
+      "name": "Create visual",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "source",
+        "sourceType": "perplexity-query",
+        "sourceQuery": "=from this transcription, and Check all information and summarize in 5 detailed bullet points for an instagram carousel:\nthe transcription :  {{ $json.content }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -1648,
+        1472
+      ],
+      "id": "b763d813-9fe1-4e6f-9638-494725d74593",
+      "name": "Check with perplexity ai",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cb70ee1a-0be3-4d87-83e0-14682398b72b",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "=completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1168,
+        1472
+      ],
+      "id": "3a1a3e6c-cebf-4f34-bce4-4da135f81239",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -992,
+        1536
+      ],
+      "id": "93d0876b-b47f-4075-93a6-43149f48c020",
+      "name": "Wait1",
+      "webhookId": "4d3978a4-2bca-4381-a0fd-5804be6cef4d"
+    },
+    {
+      "parameters": {
+        "resource": "source",
+        "operation": "get",
+        "sourceId": "={{ $json.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -1424,
+        1472
+      ],
+      "id": "324717e0-d140-4e2b-a909-c41cf5346c10",
+      "name": "Get content",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "file": "={{ $json.item.imageUrls[0] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        736
+      ],
+      "id": "7ebada37-4be8-4445-886a-f7381c9e92c7",
+      "name": "Send a photo message",
+      "webhookId": "559fe6c8-7212-463b-8fc1-eccaee979cbf",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "message": "=Here is the post for approval.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1104,
+        736
+      ],
+      "id": "5ad33634-d8d6-4cf9-86e9-70f12d613301",
+      "name": "post for approval",
+      "webhookId": "cab3fa1c-f34a-4d8c-a90c-4b04ddd1f8c4",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "get",
+        "videoId": "={{ $('Create visual').item.json.item.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        304,
+        752
+      ],
+      "id": "5293ad13-2605-4758-b37e-512f986f680c",
+      "name": "Get visual",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Published",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        736
+      ],
+      "id": "cb13c25e-2f2a-4c27-8b6a-89bacc7d47cd",
+      "name": "Send a text message",
+      "webhookId": "774c0272-f4f4-425d-b944-00b4c233b51d",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        1200
+      ],
+      "id": "15b1368c-e7fa-4e57-9b86-6e770f1e9b5b",
+      "name": "Wait5",
+      "webhookId": "7ac7094c-bf53-458f-bf77-33aebcaf9235"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba9e062e-9b90-4e6d-9dbe-4d5abea09609",
+              "leftValue": "={{ $json.item.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        1120
+      ],
+      "id": "15615ae7-f865-4da8-ad88-dc07c36836b6",
+      "name": "If Else1"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "templateId": {
+          "__rl": true,
+          "value": "/base/v2/ai-story-video/5903fe43-514d-40ee-a060-0d6628c5f8fd/v1",
+          "mode": "list",
+          "cachedResultName": "AI Video with AI Voice"
+        },
+        "prompt": "=create ai video with ai voice with this detailed bullet points :  {{ $json.content }}",
+        "templateInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "aspectRatio": "9:16",
+            "voiceName": "Will (American, friendly)",
+            "aiImageModel": "replicate/recraft-ai/recraft-v3"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "scenes",
+              "displayName": "Scenes (e.g. [{\"key\": \"value\"}])",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "voiceName",
+              "displayName": "AI Voice",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "Alice (British, confident)",
+                  "value": "Alice (British, confident)"
+                },
+                {
+                  "name": "Aria (American, expressive)",
+                  "value": "Aria (American, expressive)"
+                },
+                {
+                  "name": "Bill (American, trustworthy)",
+                  "value": "Bill (American, trustworthy)"
+                },
+                {
+                  "name": "Brian (American, deep)",
+                  "value": "Brian (American, deep)"
+                },
+                {
+                  "name": "Callum (Transatlantic, intense)",
+                  "value": "Callum (Transatlantic, intense)"
+                },
+                {
+                  "name": "Charlie (Australian, natural)",
+                  "value": "Charlie (Australian, natural)"
+                },
+                {
+                  "name": "Charlotte (Swedish, seductive)",
+                  "value": "Charlotte (Swedish, seductive)"
+                },
+                {
+                  "name": "Chris (American, casual)",
+                  "value": "Chris (American, casual)"
+                },
+                {
+                  "name": "Daniel (British, authoritative)",
+                  "value": "Daniel (British, authoritative)"
+                },
+                {
+                  "name": "Eric (American, friendly)",
+                  "value": "Eric (American, friendly)"
+                },
+                {
+                  "name": "George (British, warm)",
+                  "value": "George (British, warm)"
+                },
+                {
+                  "name": "Jessica (American, expressive)",
+                  "value": "Jessica (American, expressive)"
+                },
+                {
+                  "name": "Laura (American, upbeat)",
+                  "value": "Laura (American, upbeat)"
+                },
+                {
+                  "name": "Liam (American, articulate)",
+                  "value": "Liam (American, articulate)"
+                },
+                {
+                  "name": "Lily (British, warm)",
+                  "value": "Lily (British, warm)"
+                },
+                {
+                  "name": "Matilda (American, friendly)",
+                  "value": "Matilda (American, friendly)"
+                },
+                {
+                  "name": "River (American, confident)",
+                  "value": "River (American, confident)"
+                },
+                {
+                  "name": "Roger (American, confident)",
+                  "value": "Roger (American, confident)"
+                },
+                {
+                  "name": "Sarah (American, soft)",
+                  "value": "Sarah (American, soft)"
+                },
+                {
+                  "name": "Will (American, friendly)",
+                  "value": "Will (American, friendly)"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "aiImageModel",
+              "displayName": "AI Image Model",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "Replicate/black-forest-labs/flux-schnell",
+                  "value": "replicate/black-forest-labs/flux-schnell"
+                },
+                {
+                  "name": "Replicate/black-forest-labs/flux-dev",
+                  "value": "replicate/black-forest-labs/flux-dev"
+                },
+                {
+                  "name": "Replicate/black-forest-labs/flux-1.1-pro",
+                  "value": "replicate/black-forest-labs/flux-1.1-pro"
+                },
+                {
+                  "name": "Replicate/black-forest-labs/flux-1.1-pro-ultra",
+                  "value": "replicate/black-forest-labs/flux-1.1-pro-ultra"
+                },
+                {
+                  "name": "Replicate/recraft-ai/recraft-v3",
+                  "value": "replicate/recraft-ai/recraft-v3"
+                },
+                {
+                  "name": "Replicate/ideogram-ai/ideogram-v2",
+                  "value": "replicate/ideogram-ai/ideogram-v2"
+                },
+                {
+                  "name": "Replicate/luma/photon",
+                  "value": "replicate/luma/photon"
+                },
+                {
+                  "name": "Openai/gpt-image-1",
+                  "value": "openai/gpt-image-1"
+                },
+                {
+                  "name": "Fal-ai/nano-banana",
+                  "value": "fal-ai/nano-banana"
+                },
+                {
+                  "name": "Fal-ai/nano-banana/edit",
+                  "value": "fal-ai/nano-banana/edit"
+                },
+                {
+                  "name": "Fal-ai/nano-banana-pro",
+                  "value": "fal-ai/nano-banana-pro"
+                },
+                {
+                  "name": "Fal-ai/nano-banana-pro/edit",
+                  "value": "fal-ai/nano-banana-pro/edit"
+                },
+                {
+                  "name": "Fal-ai/imagen4/preview/fast",
+                  "value": "fal-ai/imagen4/preview/fast"
+                },
+                {
+                  "name": "Fal-ai/bytedance/seedream/v4.5/text-to-image",
+                  "value": "fal-ai/bytedance/seedream/v4.5/text-to-image"
+                },
+                {
+                  "name": "Fal-ai/bytedance/seedream/v4.5/edit",
+                  "value": "fal-ai/bytedance/seedream/v4.5/edit"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "animateAiImages",
+              "displayName": "(Optional) Animate AI Images into Videos",
+              "required": false,
+              "defaultMatch": false,
+              "type": "boolean",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "captionPosition",
+              "displayName": "Caption Position",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "Top",
+                  "value": "top"
+                },
+                {
+                  "name": "Center",
+                  "value": "center"
+                },
+                {
+                  "name": "Bottom",
+                  "value": "bottom"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "highlightColor",
+              "displayName": "Highlight Color",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "transition",
+              "displayName": "Transition Effect (Optional)",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "None",
+                  "value": "none"
+                },
+                {
+                  "name": "Fade",
+                  "value": "fade"
+                },
+                {
+                  "name": "Slide",
+                  "value": "slide"
+                },
+                {
+                  "name": "Zoom",
+                  "value": "zoom"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "aspectRatio",
+              "displayName": "Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "16:9",
+                  "value": "16:9"
+                },
+                {
+                  "name": "1:1",
+                  "value": "1:1"
+                },
+                {
+                  "name": "4:5",
+                  "value": "4:5"
+                },
+                {
+                  "name": "9:16",
+                  "value": "9:16"
+                }
+              ]
+            },
+            {
+              "id": "trimToVoiceover",
+              "displayName": "Trim to Voiceover",
+              "required": false,
+              "defaultMatch": false,
+              "type": "boolean",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1120
+      ],
+      "id": "181f370e-2b5f-46e6-9a6e-c302c1c6d094",
+      "name": "Create visual1",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "get",
+        "videoId": "={{ $('Create visual1').item.json.item.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        320,
+        1120
+      ],
+      "id": "82cbdb10-1ea2-42da-8bd6-38c064160244",
+      "name": "Get visual1",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger1').item.json.message.chat.id }}",
+        "text": "Published",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        1104
+      ],
+      "id": "3af37a27-c8a9-445f-8e86-f0490548e803",
+      "name": "Send notification : Published",
+      "webhookId": "7e875fb2-d5b6-497f-9f82-24967e59fb95",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Template : AI Video with AI Voice\n",
+        "height": 96,
+        "width": 608,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        1120
+      ],
+      "id": "1647139e-c9dc-4556-9cfb-e0dbb9f29000",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Template : Tweet Card Carousel with Minimal Style\n\n",
+        "height": 96,
+        "width": 608,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        752
+      ],
+      "id": "38adcc21-951c-415c-a73b-eb09e255d84c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        1552
+      ],
+      "id": "f7f4c710-1b3a-4e61-a292-7d0ab75ec91d",
+      "name": "Wait9",
+      "webhookId": "a1f9782e-9c66-441e-908d-0b7343f1380c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba9e062e-9b90-4e6d-9dbe-4d5abea09609",
+              "leftValue": "={{ $json.item.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        1456
+      ],
+      "id": "cae192f1-dd3c-43f4-b5e6-55994b906df0",
+      "name": "If Else3"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "templateId": {
+          "__rl": true,
+          "value": "/base/v2/images-with-text/0ddb8655-c3da-43da-9f7d-be1915ca7818/v1",
+          "mode": "list",
+          "cachedResultName": "Image Slideshow with Prominent Text"
+        },
+        "prompt": "=create ai video with ai voice with this detailed bullet points :  {{ $json.content }}",
+        "templateInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "aspectRatio": "9:16"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "slides",
+              "displayName": "Slides (e.g. [{\"key\": \"value\"}])",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "slideDuration",
+              "displayName": "Slide Duration (seconds)",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "aspectRatio",
+              "displayName": "Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "16:9",
+                  "value": "16:9"
+                },
+                {
+                  "name": "1:1",
+                  "value": "1:1"
+                },
+                {
+                  "name": "4:5",
+                  "value": "4:5"
+                },
+                {
+                  "name": "9:16",
+                  "value": "9:16"
+                }
+              ]
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1456
+      ],
+      "id": "beb81010-7c0b-456a-8f86-986fc9b46b6e",
+      "name": "Create visual3",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "get",
+        "videoId": "={{ $('Create visual3').item.json.item.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        304,
+        1456
+      ],
+      "id": "6b2bada7-371f-449b-8c5e-f5cff9f3b6d8",
+      "name": "Get visual3",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger3').item.json.message.chat.id }}",
+        "text": "Published",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        1440
+      ],
+      "id": "bf10a760-3177-4874-996c-6853361bf9f6",
+      "name": "Send notification : Published2",
+      "webhookId": "4f0f1d29-89a2-4814-ad64-af9963adbbdb",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "platform": "facebook",
+        "accountId": {
+          "__rl": true,
+          "value": "1759",
+          "mode": "list",
+          "cachedResultName": "Firass Ben",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1759"
+        },
+        "postContentText": "Comment \"learn\" and I'll DM you more information!",
+        "postContentMediaUrls": "={{ $json.item.mediaUrl }}",
+        "facebookPageId": {
+          "__rl": true,
+          "value": "101603614680195",
+          "mode": "list",
+          "cachedResultName": "Dr. Firas",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1759/subaccounts/101603614680195"
+        },
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1440
+      ],
+      "id": "9e4439ea-1bcd-4bcc-8c02-9ac69f6e2b41",
+      "name": "Create Facebook2",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Template : Image Slideshow with Prominent Text\n\n",
+        "height": 96,
+        "width": 608,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        1456
+      ],
+      "id": "f55be67b-7d2d-4f31-9a31-ebf059cbe494",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        1904
+      ],
+      "id": "735c4a4d-5146-4623-a985-843937cbb2ba",
+      "name": "Wait12",
+      "webhookId": "971ec370-0ff7-4926-b4a0-3abd7e2f49f2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba9e062e-9b90-4e6d-9dbe-4d5abea09609",
+              "leftValue": "={{ $json.item.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        1808
+      ],
+      "id": "03fde674-4313-46b5-adb4-9887b4c79eb8",
+      "name": "If Else4"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "templateId": {
+          "__rl": true,
+          "value": "8800be71-52df-4ac7-ac94-df9d8a494d0f",
+          "mode": "list",
+          "cachedResultName": "Generate a TV news broadcast style infographic with a professional news anchor, breaking news chyron, and lower third ticker using AI image generation."
+        },
+        "prompt": "=create ai video with ai voice with this detailed bullet points :  {{ $json.content }}",
+        "templateInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "footerText": "Dr. FIRAS"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "description",
+              "displayName": "Infographic Description",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "footerText",
+              "displayName": "Footer CTA Text",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1808
+      ],
+      "id": "90bf6194-13d9-485e-b409-4b03dba345bb",
+      "name": "Create visual4",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "get",
+        "videoId": "={{ $('Create visual4').item.json.item.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        352,
+        1808
+      ],
+      "id": "05ddde61-0916-4259-b4f8-a1493bc12cfb",
+      "name": "Get visual4",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger4').item.json.message.chat.id }}",
+        "text": "Published",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        1792
+      ],
+      "id": "bd7a4b46-99fc-4927-a6d7-c2ccf0c62322",
+      "name": "Send notification : Published3",
+      "webhookId": "dc10443d-d40b-44fa-abbe-67c666db9e42",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "accountId": {
+          "__rl": true,
+          "value": "11892",
+          "mode": "list",
+          "cachedResultName": "doc.firass",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/11892"
+        },
+        "postContentText": "Comment \"learn\" and I'll DM you more information!",
+        "postContentMediaUrls": "={{ $json.item.mediaUrl }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1792
+      ],
+      "id": "a7fce27b-c594-4113-8296-4cb8e4b31eb4",
+      "name": "Create Linkedin3",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Template : Breaking News\n\n\n",
+        "height": 96,
+        "width": 608,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        1808
+      ],
+      "id": "11e14e4f-3842-4ef7-8523-28bb18cdb224",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        2224
+      ],
+      "id": "b0698453-f25c-4d9e-896a-66d1e455f844",
+      "name": "Wait15",
+      "webhookId": "c7868d28-d076-43aa-b26a-4bd7dea9538e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba9e062e-9b90-4e6d-9dbe-4d5abea09609",
+              "leftValue": "={{ $json.item.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        2144
+      ],
+      "id": "d5782a49-cb68-44e5-913c-8abda2e0f227",
+      "name": "If Else5"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "templateId": {
+          "__rl": true,
+          "value": "/base/v2/tutorial-carousel/e095104b-e6c5-4a81-a89d-b0df3d7c5baf/v1",
+          "mode": "list",
+          "cachedResultName": "Tutorial Carousel with Monocolor Background"
+        },
+        "prompt": "=create ai video with ai voice with this detailed bullet points :  {{ $json.content }}",
+        "templateInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "profileImage": "https://www.dr-firas.com/logo.jpg",
+            "aspectRatio": "4:5",
+            "authorName": "Dr. FIRAS",
+            "companyName": "@doc.firass"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "profileImage",
+              "displayName": "Profile Image * (publicly accessible URL)",
+              "required": true,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "font",
+              "displayName": "Font",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "Font-sans",
+                  "value": "font-sans"
+                },
+                {
+                  "name": "Font-serif",
+                  "value": "font-serif"
+                },
+                {
+                  "name": "Font-mono",
+                  "value": "font-mono"
+                },
+                {
+                  "name": "Font-retro",
+                  "value": "font-retro"
+                },
+                {
+                  "name": "Font-montserrat",
+                  "value": "font-montserrat"
+                },
+                {
+                  "name": "Font-quicksand",
+                  "value": "font-quicksand"
+                },
+                {
+                  "name": "Font-philosopher",
+                  "value": "font-philosopher"
+                },
+                {
+                  "name": "Font-poppins",
+                  "value": "font-poppins"
+                },
+                {
+                  "name": "Font-raleway",
+                  "value": "font-raleway"
+                },
+                {
+                  "name": "Font-opensans",
+                  "value": "font-opensans"
+                },
+                {
+                  "name": "Font-lato",
+                  "value": "font-lato"
+                },
+                {
+                  "name": "Font-oswald",
+                  "value": "font-oswald"
+                },
+                {
+                  "name": "Font-playfair",
+                  "value": "font-playfair"
+                },
+                {
+                  "name": "Font-roboto",
+                  "value": "font-roboto"
+                },
+                {
+                  "name": "Font-ptsans",
+                  "value": "font-ptsans"
+                },
+                {
+                  "name": "Font-dmsans",
+                  "value": "font-dmsans"
+                },
+                {
+                  "name": "Font-nunito",
+                  "value": "font-nunito"
+                },
+                {
+                  "name": "Font-comfortaa",
+                  "value": "font-comfortaa"
+                },
+                {
+                  "name": "Font-worksans",
+                  "value": "font-worksans"
+                },
+                {
+                  "name": "Font-fjallaone",
+                  "value": "font-fjallaone"
+                },
+                {
+                  "name": "Font-rubik",
+                  "value": "font-rubik"
+                },
+                {
+                  "name": "Font-barlow",
+                  "value": "font-barlow"
+                },
+                {
+                  "name": "Font-bebasnue",
+                  "value": "font-bebasnue"
+                },
+                {
+                  "name": "Font-caveat",
+                  "value": "font-caveat"
+                },
+                {
+                  "name": "Font-pacifico",
+                  "value": "font-pacifico"
+                }
+              ]
+            },
+            {
+              "id": "hashtag",
+              "displayName": "Hashtag",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "title",
+              "displayName": "Main Title",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "introBackgroundColor",
+              "displayName": "Intro Background Color",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "contentSlides",
+              "displayName": "Content Slides (e.g. [{\"key\": \"value\"}])",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "contentBackgroundColor",
+              "displayName": "Content Background Color",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "accentColor",
+              "displayName": "Accent Color",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "authorName",
+              "displayName": "Author Name",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "companyName",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "ctaGreeting",
+              "displayName": "CTA Greeting",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "ctaDescription",
+              "displayName": "CTA Description",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "ctaButtons",
+              "displayName": "CTA Buttons (e.g. [\"item 1\", \"item 2\"])",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "ctaBackgroundColor",
+              "displayName": "CTA Background Color",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "aspectRatio",
+              "displayName": "Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "type": "options",
+              "display": true,
+              "canBeUsedToMatch": false,
+              "options": [
+                {
+                  "name": "4:5",
+                  "value": "4:5"
+                },
+                {
+                  "name": "1:1",
+                  "value": "1:1"
+                },
+                {
+                  "name": "9:16",
+                  "value": "9:16"
+                }
+              ]
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        48,
+        2144
+      ],
+      "id": "19ca355e-ddf9-4f70-975f-c78040e99a11",
+      "name": "Create visual5",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "get",
+        "videoId": "={{ $('Create visual5').item.json.item.id }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        336,
+        2144
+      ],
+      "id": "0f9aa46a-1900-4705-a088-9e346b9ff226",
+      "name": "Get visual5",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger5').item.json.message.chat.id }}",
+        "text": "Published",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        2128
+      ],
+      "id": "02b9a06c-5ef5-4ce2-95fe-056f58553d1e",
+      "name": "Send notification : Published4",
+      "webhookId": "8de85143-0b9a-4e40-9504-29ca1fd4c376",
+      "credentials": {
+        "telegramApi": {
+          "id": "UbzBIM8v64vHeiI9",
+          "name": "Telegram_Blotato"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Template : Tutorial Carousel with Monocolor Background\n\n\n\n\n",
+        "height": 96,
+        "width": 608,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        2144
+      ],
+      "id": "eedea83a-ff78-42f3-b642-980251d4bce6",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 5
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -752,
+        1408
+      ],
+      "id": "deb4c97b-c7b0-4804-8e12-d65967a2e78f",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "platform": "tiktok",
+        "accountId": {
+          "__rl": true,
+          "value": "2079",
+          "mode": "list",
+          "cachedResultName": "elitecybzcs",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/2079"
+        },
+        "postContentText": "Comment \"learn\" and I'll DM you more information!",
+        "postContentMediaUrls": "={{ $json.item.mediaUrl }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1104
+      ],
+      "id": "6164c454-a825-413c-b62f-fb717dd93327",
+      "name": "Create Tiktok",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "accountId": {
+          "__rl": true,
+          "value": "11892",
+          "mode": "list",
+          "cachedResultName": "doc.firass",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/11892"
+        },
+        "postContentText": "Comment \"learn\" and I'll DM you more information!",
+        "postContentMediaUrls": "={{ $('If Else').item.json.item.imageUrls }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        736
+      ],
+      "id": "4a22d1e2-f27c-4d55-acc5-18b564597263",
+      "name": "Create Instagram",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.item.imageUrls[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1008,
+        1440
+      ],
+      "id": "4fd6b63c-8ee3-4dee-b760-d1c85ef8accd",
+      "name": "Get image/video"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.item.imageUrls[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1008,
+        1104
+      ],
+      "id": "37dc203f-33c8-40b6-bfd8-d371b3ff95f3",
+      "name": "Get image/video1"
+    },
+    {
+      "parameters": {
+        "platform": "twitter",
+        "accountId": {
+          "__rl": true,
+          "value": "1289",
+          "mode": "list",
+          "cachedResultName": "Docteur_Firas",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1289"
+        },
+        "postContentText": "Comment \"learn\" and I'll DM you more information!",
+        "postContentMediaUrls": "={{ $json.item.imageUrls }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        2128
+      ],
+      "id": "f0911d83-3dea-471f-a179-691a058fa623",
+      "name": "Create Twitter",
+      "credentials": {
+        "blotatoApi": {
+          "id": "wozsYJYLfCZO37j8",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.item.imageUrls[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1024,
+        1792
+      ],
+      "id": "d4ed79bc-cb2d-4339-aa84-456f5bf3221c",
+      "name": "Get image/video2"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.item.imageUrls[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1024,
+        2128
+      ],
+      "id": "8d53230a-25c3-4902-a5bb-551a021d8433",
+      "name": "Get image/video3"
+    },
+    {
+      "parameters": {
+        "content": "# 🚀  AI Social Media Automation for Multiple Platforms using Blotato\n## (By Dr. Firas)\n\n![Blotato](https://www.dr-firas.com/blotato2.png)\n\n\n# 📘 Documentation  \nAccess detailed setup instructions, API config, platform connection guides, and workflow customization tips: 📎 [Open the full documentation on Notion](https://automatisation.notion.site/AI-Social-Media-Automation-for-Multiple-Platforms-using-Blotato-30a3d6550fd98051adc4eaa6e676478c?source=copy_link)\n\n## 🔐 Setup\n\n1. **Required accounts & credentials**\n   - n8n (self-hosted or cloud)\n   - **[Blotato](https://blotato.com/?ref=firas)** API account\n   - Telegram Bot (BotFather)\n   - Social media accounts connected in **[Blotato](https://blotato.com/?ref=firas)**\n\n2. **Configure credentials in n8n**\n   - Telegram API credentials\n   - **[Blotato](https://blotato.com/?ref=firas)** API credentials\n\n3. **Import the workflow**\n   - Import the provided JSON file into n8n.\n   - Activate the workflow.\n\n4. **Telegram usage**\n   - Send a YouTube link or content to the Telegram bot to trigger the workflow.\n\n---\n## What this workflow does\n\n1. **Trigger via Telegram**  \n   - Send a YouTube URL or text message to start the workflow.\n\n2. **AI Transcription**  \n   - Extracts and transcribes the full video content.\n   - Returns the video title and clean transcript.\n\n3. **Fact-checking & Summarization**  \n   - Uses Perplexity AI to validate information.\n   - Generates a concise, structured summary (bullet points).\n\n4. **Dynamic Template Selection (Switch Node)**  \n   Automatically routes content to one of several visual formats\n\n5. **AI Visual Generation (Blotato)**  \n   - Generates images or videos based on the selected template.\n   - Supports vertical, square, and feed-friendly formats.\n\n6. **Approval via Telegram**  \n   - Sends the generated visual for manual approval.\n   - Ensures quality control before publishing.\n\n7. **Multi-Platform Publishing**  \n   - Publishes automatically to: - Instagram - TikTok - Facebook - LinkedIn - Twitter/X\n",
+        "height": 1780,
+        "width": 652
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2448,
+        752
+      ],
+      "id": "f3f42bba-89ce-4c6e-8768-e87bdcaf2140",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## Step 1 – Retrieve the video transcription",
+        "height": 496,
+        "width": 1136,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        752
+      ],
+      "id": "66a47843-77e1-448d-9736-958fbaab883d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Step 2 – Create an optimized prompt using Blotato AI Research",
+        "height": 496,
+        "width": 1136,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        1280
+      ],
+      "id": "dc60354e-5353-4138-acc3-e5b8f37bc2b7",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Get visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Else": {
+      "main": [
+        [
+          {
+            "node": "Send a photo message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Check with perplexity ai",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Transcription": {
+      "main": [
+        [
+          {
+            "node": "Get Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Transcription": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create visual": {
+      "main": [
+        [
+          {
+            "node": "Get visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check with perplexity ai": {
+      "main": [
+        [
+          {
+            "node": "Get content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get content": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a photo message": {
+      "main": [
+        [
+          {
+            "node": "post for approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "post for approval": {
+      "main": [
+        [
+          {
+            "node": "Create Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get visual": {
+      "main": [
+        [
+          {
+            "node": "If Else",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "Get visual1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Else1": {
+      "main": [
+        [
+          {
+            "node": "Get image/video1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create visual1": {
+      "main": [
+        [
+          {
+            "node": "Get visual1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get visual1": {
+      "main": [
+        [
+          {
+            "node": "If Else1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait9": {
+      "main": [
+        [
+          {
+            "node": "Get visual3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Else3": {
+      "main": [
+        [
+          {
+            "node": "Get image/video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create visual3": {
+      "main": [
+        [
+          {
+            "node": "Get visual3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get visual3": {
+      "main": [
+        [
+          {
+            "node": "If Else3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait12": {
+      "main": [
+        [
+          {
+            "node": "Get visual4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Else4": {
+      "main": [
+        [
+          {
+            "node": "Get image/video2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create visual4": {
+      "main": [
+        [
+          {
+            "node": "Get visual4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get visual4": {
+      "main": [
+        [
+          {
+            "node": "If Else4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait15": {
+      "main": [
+        [
+          {
+            "node": "Get visual5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Else5": {
+      "main": [
+        [
+          {
+            "node": "Get image/video3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait15",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create visual5": {
+      "main": [
+        [
+          {
+            "node": "Get visual5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get visual5": {
+      "main": [
+        [
+          {
+            "node": "If Else5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Create visual",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create visual1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create visual3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create visual4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create visual5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tiktok": {
+      "main": [
+        [
+          {
+            "node": "Send notification : Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Instagram": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Facebook2": {
+      "main": [
+        [
+          {
+            "node": "Send notification : Published2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get image/video": {
+      "main": [
+        [
+          {
+            "node": "Create Facebook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get image/video1": {
+      "main": [
+        [
+          {
+            "node": "Create Tiktok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Linkedin3": {
+      "main": [
+        [
+          {
+            "node": "Send notification : Published3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Twitter": {
+      "main": [
+        [
+          {
+            "node": "Send notification : Published4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get image/video2": {
+      "main": [
+        [
+          {
+            "node": "Create Linkedin3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get image/video3": {
+      "main": [
+        [
+          {
+            "node": "Create Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "2c7ea587-f5e8-4384-88cf-6bcdef1781f6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "de822f81f3a2367cef7d9549771a77783236bc9596481be2ae65c05fbcc4b4fd"
+  },
+  "id": "Vfo9bKJdoaTSvfdn",
+  "tags": []
+}

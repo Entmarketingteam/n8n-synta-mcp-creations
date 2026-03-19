@@ -1,0 +1,239 @@
+{
+  "name": "🌐 Website Content Crawler Subworkflow",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ea225a0e-49e4-4d58-bf26-5f547f578028",
+      "name": "Trigger - On Subworkflow Start"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/aYG0l9s7dbB7j3gbS/run-sync-get-dataset-items",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{APIFY_API_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"aggressivePrune\": false,\n    \"clickElementsCssSelector\": \"[aria-expanded=\\\"false\\\"]\",\n    \"clientSideMinChangePercentage\": 15,\n    \"crawlerType\": \"playwright:adaptive\",\n    \"debugLog\": false,\n    \"debugMode\": false,\n    \"expandIframes\": true,\n    \"ignoreCanonicalUrl\": false,\n    \"keepUrlFragments\": false,\n    \"proxyConfiguration\": {\n        \"useApifyProxy\": true\n    },\n    \"readableTextCharThreshold\": 100,\n    \"removeCookieWarnings\": true,\n    \"removeElementsCssSelector\": \"nav, footer, script, style, noscript, svg, img[src^='data:'],\\n[role=\\\"alert\\\"],\\n[role=\\\"banner\\\"],\\n[role=\\\"dialog\\\"],\\n[role=\\\"alertdialog\\\"],\\n[role=\\\"region\\\"][aria-label*=\\\"skip\\\" i],\\n[aria-modal=\\\"true\\\"]\",\n    \"renderingTypeDetectionPercentage\": 10,\n    \"saveFiles\": false,\n    \"saveHtml\": false,\n    \"saveHtmlAsFile\": false,\n    \"saveMarkdown\": true,\n    \"saveScreenshots\": false,\n    \"startUrls\": [\n        {\n            \"url\": \"{{ $json.query }}\",\n            \"method\": \"GET\"\n        }\n    ],\n    \"useSitemaps\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "6688ef92-ab90-4c0c-9b6b-3d7edb254ee8",
+      "name": "Scrape Website Content (via Apify)"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1JewfKbdS6gJhVFz0Maz6jpoDxQrByKyy77I5s7UvLD4",
+          "mode": "list",
+          "cachedResultName": "GoogleMaps_LEADS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JewfKbdS6gJhVFz0Maz6jpoDxQrByKyy77I5s7UvLD4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1886744055,
+          "mode": "list",
+          "cachedResultName": "MYWEBBASE",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JewfKbdS6gJhVFz0Maz6jpoDxQrByKyy77I5s7UvLD4/edit#gid=1886744055"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "crawl",
+              "displayName": "crawl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "metadata",
+              "displayName": "metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "screenshotUrl",
+              "displayName": "screenshotUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "markdown",
+              "displayName": "markdown",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "debug",
+              "displayName": "debug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        460,
+        0
+      ],
+      "id": "6089c2f4-03d0-4e20-87e9-4e233c730d6d",
+      "name": "Save Website Data to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "51us92xkOlrvArhV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        680,
+        0
+      ],
+      "id": "426107a0-ba78-49b8-b70a-3e99107ae4ab",
+      "name": "Aggregate Website Content"
+    },
+    {
+      "parameters": {
+        "content": "# 🌐 Website Content Crawler Subworkflow\n\nThis subworkflow processes URLs to extract readable website content using Apify's Website Content Crawler.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## Purpose\n- Extracts detailed and structured content from business websites.\n- Enhances leads with enriched, on-site information.\n\n## Actions\n1. **Trigger**: Receives URL from main workflow.\n2. **API Call**: Uses Apify Website Crawler actor to collect site data.\n3. **Storage**: Appends data into a designated Google Sheet.\n4. **Aggregation**: Structures the content for analysis.\n\n## Requirements\n- Apify API token with access to Website Content Crawler\n- Properly formatted URL input (no quotes)\n- Google Sheets credentials and configured sheet\n\n",
+        "height": 700,
+        "width": 1160,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -140
+      ],
+      "id": "c085bbe0-725c-47d0-8eb8-302205d1943d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger - On Subworkflow Start": {
+      "main": [
+        [
+          {
+            "node": "Scrape Website Content (via Apify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Website Content (via Apify)": {
+      "main": [
+        [
+          {
+            "node": "Save Website Data to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Website Data to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Website Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6ad84138-7052-4ed6-a0d3-c733e2c356ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a2b23892dd6989fda7c1209b381f5850373a7d2b85609624d7c2b7a092671d44"
+  },
+  "id": "I7KceT8Mg1lW7BW4",
+  "tags": []
+}

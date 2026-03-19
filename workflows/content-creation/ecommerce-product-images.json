@@ -1,0 +1,967 @@
+{
+  "name": "💥 Create scalable e-commerce product images with atlascloud using NanoBanana Pro III - vide ok",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload 3 Images for Analysis ",
+        "formDescription": "Please upload exactly 3 images for AI-powered analysis",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "image1",
+              "fieldLabel": "Image 1",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".jpg, .jpeg, .png, .gif, .bmp, .webp",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Image2",
+              "fieldLabel": "Image 2",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".jpg, .jpeg, .png, .gif, .bmp, .webp",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Image3",
+              "fieldLabel": "Image 3",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".jpg, .jpeg, .png, .gif, .bmp, .webp",
+              "requiredField": true
+            },
+            {
+              "fieldName": "notes",
+              "fieldLabel": "Optional Notes"
+            }
+          ]
+        },
+        "options": {
+          "buttonLabel": "Analyze Images"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        -656,
+        -416
+      ],
+      "id": "d32f2efc-96d4-460c-acca-3d4271e96be3",
+      "name": "Form Trigger (3 images)",
+      "webhookId": "1c6b474c-c6c4-462b-8459-765871ba70c3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "330c555d-c5d5-4e14-af52-1d45ed2ac896",
+              "leftValue": "={{ $binary.image1 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "975e8e54-27fb-4513-ac45-d719ad1157b0",
+              "leftValue": "={{ $binary.Image2 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "02ec63f3-9dd8-4db1-986e-69cac26e245d",
+              "leftValue": "={{ $binary.Image3 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -416,
+        -416
+      ],
+      "id": "b52765ea-f694-4a3d-9047-db35528a5a28",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20d99650-4a2f-41cc-be31-2f4d1f436712",
+              "name": "error",
+              "value": "Please upload 3 images (image1, image2, image3).",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -160
+      ],
+      "id": "5fc9d593-7d41-4a7e-a77c-a0ce436600f2",
+      "name": "Error Response - Missing Files"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "065fa52e-70ee-4b41-8fa2-ad66ea218fe6",
+              "name": "image0",
+              "value": "={{ $binary.image1 }}",
+              "type": "object"
+            },
+            {
+              "id": "70b7494e-b43b-45ff-9da3-7b8e585b2a0d",
+              "name": "image1",
+              "value": "={{ $binary.Image2 }}",
+              "type": "object"
+            },
+            {
+              "id": "59862088-7957-4281-897b-9569d70a1c75",
+              "name": "image2",
+              "value": "={{ $binary.Image3 }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -432
+      ],
+      "id": "39315c75-3f8e-4fab-8b90-f6f2f565f27c",
+      "name": "Normalize binary names"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = items[0];\n\nif (\n  !item.binary ||\n  !item.binary.image1 ||\n  !item.binary.Image2 ||\n  !item.binary.Image3\n) {\n  throw new Error('Missing binary images (expected image1, image2, image3)');\n}\n\nreturn [\n  {\n    json: { imageNumber: 1 },\n    binary: { image: item.binary.image1 }\n  },\n  {\n    json: { imageNumber: 2 },\n    binary: { image: item.binary.Image2 }\n  },\n  {\n    json: { imageNumber: 3 },\n    binary: { image: item.binary.Image3 }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        -432
+      ],
+      "id": "d3d728e3-e8a5-4247-b410-52dbd14527f7",
+      "name": "Split images"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "image",
+        "name": "={{$binary.image.fileName}}",
+        "driveId": {
+          "__rl": true,
+          "value": "=<__PLACEHOLDER_VALUE__Google DRIVE Document ID___>",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "=<__PLACEHOLDER_VALUE__Google DRIVE Document ID___>",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        272,
+        -672
+      ],
+      "id": "f44e2982-4e1e-4381-8057-b07c81d53bce",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "odf7JAwyqVFVZBhQ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "Describe the image in detail. Include: objects, people, setting, actions, colors, and any text visible.",
+        "inputType": "base64",
+        "binaryPropertyName": "image",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        272,
+        -160
+      ],
+      "id": "4b785c13-f071-4a76-b925-d938fc4e81d2",
+      "name": "Analyze image",
+      "credentials": {
+        "openAiApi": {
+          "id": "HUbsD20wv3CFr7gN",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        496,
+        -448
+      ],
+      "id": "25da78a8-5dc2-4084-93fe-a60c346da99f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractOpenAIText(it) {\n  // Après Merge by position, OpenAI est sous la clé \"0\"\n  const openai = it.json?.[\"0\"];\n\n  if (openai?.content && Array.isArray(openai.content)) {\n    const t = openai.content.map(x => x?.text).filter(Boolean).join(\"\\n\");\n    if (t) return t;\n  }\n\n  // fallback\n  if (typeof openai?.text === \"string\" && openai.text.trim()) {\n    return openai.text.trim();\n  }\n\n  return null;\n}\n\nfunction extractDriveUrl(it) {\n  return it.json?.webContentLink || it.json?.webViewLink || null;\n}\n\nfunction formatTmpfilesPublicUrl(it) {\n  const raw = it.json?.data?.url;\n  if (!raw) return null;\n\n  return raw.replace(\n    /^http:\\/\\/tmpfiles\\.org\\/(\\d+)\\/(.*)$/i,\n    \"https://tmpfiles.org/dl/$1/$2\"\n  );\n}\n\nconst rows = items.map((it, idx) => ({\n  n: idx + 1,\n  desc: extractOpenAIText(it) || \"No description\",\n  url: extractDriveUrl(it) || \"No link\",\n  url_public: formatTmpfilesPublicUrl(it) || \"No link\",\n}));\n\nreturn [{\n  json: {\n    image1Description: rows[0]?.desc || \"No description\",\n    image2Description: rows[1]?.desc || \"No description\",\n    image3Description: rows[2]?.desc || \"No description\",\n\n    // URLs Drive\n    image1Url: rows[0]?.url || \"No link\",\n    image2Url: rows[1]?.url || \"No link\",\n    image3Url: rows[2]?.url || \"No link\",\n    imageUrls: rows.map(r => r.url).filter(u => u && u !== \"No link\"),\n\n    // URLs publiques formatées (tmpfiles → /dl/)\n    image1Url_public: rows[0]?.url_public || \"No link\",\n    image2Url_public: rows[1]?.url_public || \"No link\",\n    image3Url_public: rows[2]?.url_public || \"No link\",\n    imageUrls_public: rows\n      .map(r => r.url_public)\n      .filter(u => u && u !== \"No link\"),\n\n    allDescriptions: rows.map(r => `Image ${r.n}: ${r.desc}`).join(\"\\n\\n\"),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -432
+      ],
+      "id": "e9c90cf0-e7fb-4819-978e-a21be8b4b54b",
+      "name": "Aggregate descriptions"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        -160
+      ],
+      "id": "62e6048c-75d7-44a0-becd-5081de7c2cba",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "HUbsD20wv3CFr7gN",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"image_prompt\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1136,
+        -160
+      ],
+      "id": "9f06b5df-3e84-40b0-bf14-c53004137a0f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.atlascloud.ai/api/v1/model/generateImage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <__PLACEHOLDER_VALUE__atlascloud Key__>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/nano-banana-pro/edit\",\n  \"aspect_ratio\": \"1:1\",\n  \"enable_base64_output\": false,\n  \"enable_sync_mode\": false,\n  \"images\": {{ JSON.stringify($('Aggregate descriptions').item.json.imageUrls_public) }},\n  \"output_format\": \"png\",\n\"prompt\": \"{{ \n  ($json.output.image_prompt || '')\n    .replace(/\\r?\\n/g, '\\\\n')\n    .replace(/\"/g, '\\\\\"')\n}}\",\n  \"resolution\": \"2k\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1296,
+        -432
+      ],
+      "id": "20269caf-083b-4244-8144-0d620f2c2d4c",
+      "name": "NanoBanana: Create Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://tmpfiles.org/api/v1/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "image"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        -432
+      ],
+      "id": "4172a90b-185d-4086-ab2f-f376c796e09d",
+      "name": "Build Public Image URL"
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        -432
+      ],
+      "id": "74d2fd99-39e5-4c8f-b543-eee7a5998625",
+      "name": "Wait",
+      "webhookId": "4278ca82-b6cf-44d2-a1bc-3ccce859e7a5"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.atlascloud.ai/api/v1/model/prediction/{{ $json.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <__PLACEHOLDER_VALUE__atlascloud Key__>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1744,
+        -432
+      ],
+      "id": "6fa18932-7a9c-4e12-a546-56a9d4c28e6b",
+      "name": "Download Edited Image"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=<__PLACEHOLDER_VALUE__Google Sheets Document ID__>",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "=<__PLACEHOLDER_VALUE__Sheet Tab Name__>",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "nanobanana_done",
+            "image_1": "={{ $('Aggregate descriptions').item.json.image1Url }}",
+            "image_2": "={{ $('Aggregate descriptions').item.json.image1Url }}",
+            "image_3": "={{ $('Aggregate descriptions').item.json.image3Url }}",
+            "description_all": "={{ $('Aggregate descriptions').item.json.allDescriptions }}",
+            "image_nanobanana": "={{ $json.webContentLink }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_1",
+              "displayName": "image_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_2",
+              "displayName": "image_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_3",
+              "displayName": "image_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description_all",
+              "displayName": "description_all",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_nanobanana",
+              "displayName": "image_nanobanana",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_contactsheet",
+              "displayName": "image_contactsheet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_image_1",
+              "displayName": "new_image_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_image_2",
+              "displayName": "new_image_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_image_3",
+              "displayName": "new_image_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_image_4",
+              "displayName": "new_image_4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_image_5",
+              "displayName": "new_image_5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_image_6",
+              "displayName": "new_image_6",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_1",
+              "displayName": "video_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_2",
+              "displayName": "video_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_3",
+              "displayName": "video_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_4",
+              "displayName": "video_4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_5",
+              "displayName": "video_5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_6",
+              "displayName": "video_6",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Final video",
+              "displayName": "Final video",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2416,
+        -432
+      ],
+      "id": "4a816d1f-6a14-4151-9847-979eb5871cc2",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YlIXFU6zUDsqwmRG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data.outputs[0] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1968,
+        -432
+      ],
+      "id": "f36f01f2-14c1-4a9f-b81c-a04a7154cd54",
+      "name": "Download Final PNG (binary)"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.data.id }}",
+        "driveId": {
+          "__rl": true,
+          "value": "=<__PLACEHOLDER_VALUE__Google DRIVE Document ID___>",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "=<__PLACEHOLDER_VALUE__Google DRIVE Document ID___>",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2192,
+        -432
+      ],
+      "id": "1a8f03bd-254e-4367-9a07-dd25337765d2",
+      "name": "Upload file Nanobanana",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "odf7JAwyqVFVZBhQ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## AI Image Generation Workflow\n\nThis workflow processes 3 uploaded images through AI analysis and generates a new fashion photoshoot image.\n\n**Flow:** Form Upload → Validation → Image Analysis → AI Prompt Generation → Image Creation → Storage\n\n## Step 1: Input Validation\n\n**Form Trigger** receives 3 images from user\n\n**If** node checks all 3 images exist\n- ✓ True: Continue to processing\n- ✗ False: Return error message\n\n## Step 2: Image Processing\n\n**Split images** creates 3 separate items (one per image)\n\nFor each image in parallel:\n- **Upload file** → Google Drive (permanent storage)\n- **Analyze image** → GPT-4O describes content\n- **Build Public URL** → tmpfiles.org (public access)\n\n**Merge** combines all results back together\n\n## Step 3: AI Prompt Generation\n\n**Aggregate descriptions** combines all 3 image descriptions\n\n**AI Agent** (GPT-4.1-mini) creates a fashion photoshoot prompt:\n- Uses image descriptions as input\n- Follows predefined style template\n- Outputs structured JSON with image_prompt field\n\n## Step 4: Image Generation\n\n**NanoBanana: Create Image** sends request to API\n- Uses public image URLs and AI-generated prompt\n- API → www.atlascloud.ai\n\n#  📘 Documentation  \n- Access detailed setup instructions, API config, platform connection guides, and workflow customization tips:\n📎 [Open the full documentation on Notion](https://automatisation.notion.site/Create-scalable-e-commerce-product-images-from-photos-using-NanoBanana-Pro-2e33d6550fd9808e8891f7d606b49df7?source=copy_link)",
+        "height": 1128,
+        "width": 512
+      },
+      "id": "1ca249a0-6ac1-4512-93f8-63baa120180e",
+      "name": "Note - Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        -784
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your task is to create an image prompt following the system guidelines.  \nEnsure that the reference image is represented as **accurately as possible**, including all text elements.  \n\nUse the following inputs:  \n\n- **IMAGES’s description:**  \n{{ $json.allDescriptions }}\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You output a prompt that is a variation of the prompt below. Follow this prompt exactly but just change:\n\n-the hand positioning based on what makes sense for the product\n-how the product is worn and where it is placed\n\neverything else stays the same\n\n***\n\nShow a high fashion studio photoshoot image of this reference character as a photorealistic model wearing the featured apparel and product, captured as a full body shot. The model looks slightly past the camera with a bored expression and raised eyebrows. One hand is lifted, with two fingers interacting with or touching the featured product in a natural, stylish way.\n\nThe setting is a clean studio environment with a solid color background that matches the primary color of the character. The featured product is intentionally prominent.\n\nThe image is shot from a low angle, looking up at the subject to emphasize presence and dominance.\n\nThe photo is captured on Fuji Velvia film using a 55mm prime lens with hard flash lighting. Light is concentrated on the subject and softly fades toward the edges of the frame. The image is intentionally overexposed, with visible film grain and heavy oversaturation. Skin appears shiny, almost oily, and the featured product shows harsh white reflections that highlight its surface and form.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        944,
+        -432
+      ],
+      "id": "654ea1aa-3071-4b11-823b-5c4040ec715d",
+      "name": "Generate Image Prompt"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form Trigger (3 images)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Normalize binary names",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response - Missing Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize binary names": {
+      "main": [
+        [
+          {
+            "node": "Split images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split images": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Public Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate descriptions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate descriptions": {
+      "main": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NanoBanana: Create Image": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Public Image URL": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Download Edited Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Edited Image": {
+      "main": [
+        [
+          {
+            "node": "Download Final PNG (binary)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Final PNG (binary)": {
+      "main": [
+        [
+          {
+            "node": "Upload file Nanobanana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file Nanobanana": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "NanoBanana: Create Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "83fdd68f-64ae-4b00-a1a9-b8f8bbdd5dab",
+  "meta": {
+    "instanceId": "de822f81f3a2367cef7d9549771a77783236bc9596481be2ae65c05fbcc4b4fd"
+  },
+  "id": "dp5oMxNtiDV7ZQwO",
+  "tags": []
+}
