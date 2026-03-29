@@ -1,36 +1,40 @@
 #!/usr/bin/env node
 /**
- * Fetch workflow BaABQXevdM8jJVuH from n8n, apply all IF + Set node fixes, PUT back.
+ * Deploy the fixed slack-markitdown workflow to n8n and activate it.
  *
- * Requires: N8N_API_KEY, optional N8N_BASE_URL (default https://entagency.app.n8n.cloud)
- * Run: node scripts/fix-slack-markitdown-workflow.js
+ * Reads: scripts/slack-markitdown-fixed.json
+ * Target: workflow BaABQXevdM8jJVuH on entagency.app.n8n.cloud
+ *
+ * Requires: N8N_API_KEY (via Doppler or env)
+ * Run:  doppler run -- node scripts/fix-slack-markitdown-workflow.js
+ *   or: N8N_API_KEY=xxx node scripts/fix-slack-markitdown-workflow.js
+ *
+ * Flags:
+ *   --dry-run     Print the payload without deploying
+ *   --no-activate Deploy but don't activate the workflow
  */
 
 const https = require('https');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-const N8N_BASE_URL = process.env.N8N_BASE_URL || 'https://entagency.app.n8n.cloud';
+const N8N_BASE_URL = (process.env.N8N_BASE_URL || 'https://entagency.app.n8n.cloud').replace(/\/$/, '');
 const N8N_API_KEY = process.env.N8N_API_KEY;
 const WORKFLOW_ID = 'BaABQXevdM8jJVuH';
+const WORKFLOW_FILE = path.join(__dirname, 'slack-markitdown-fixed.json');
 
-function parseUrl(url) {
-  const u = new URL(url);
-  return {
-    protocol: u.protocol,
-    hostname: u.hostname,
-    port: u.port || (u.protocol === 'https:' ? 443 : 80),
-    path: u.pathname + u.search,
-  };
-}
+const DRY_RUN = process.argv.includes('--dry-run');
+const NO_ACTIVATE = process.argv.includes('--no-activate');
 
 function request(options, body) {
   return new Promise((resolve, reject) => {
-    const url = parseUrl(options.url);
-    const lib = url.protocol === 'https:' ? https : http;
-    const reqOptions = {
-      hostname: url.hostname,
-      port: url.port,
-      path: url.path,
+    const u = new URL(options.url);
+    const lib = u.protocol === 'https:' ? https : http;
+    const req = lib.request({
+      hostname: u.hostname,
+      port: u.port || (u.protocol === 'https:' ? 443 : 80),
+      path: u.pathname + u.search,
       method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -38,8 +42,7 @@ function request(options, body) {
         'X-N8N-API-KEY': N8N_API_KEY,
         ...options.headers,
       },
-    };
-    const req = lib.request(reqOptions, (res) => {
+    }, (res) => {
       let data = '';
       res.on('data', (ch) => (data += ch));
       res.on('end', () => {
@@ -58,225 +61,64 @@ function request(options, body) {
   });
 }
 
-const ifOptions = { caseSensitive: true, leftValue: '', typeValidation: 'strict' };
-
-function fixNode(node) {
-  const name = node.name;
-  const params = node.parameters || {};
-
-  // --- IF nodes: add conditions.conditions array ---
-  if (node.type === 'n8n-nodes-base.if' && node.typeVersion === 2) {
-    const conditions = params.conditions || {};
-    if (!Array.isArray(conditions.conditions)) {
-      let leftValue, rightValue, operator;
-      switch (name) {
-        case 'Slack URL verification?':
-          leftValue = "={{ ($json.body && $json.body.type) || $json.type || '' }}";
-          rightValue = 'url_verification';
-          operator = { type: 'string', operation: 'equals' };
-          break;
-        case 'Event type (file vs message)':
-          leftValue = "={{ ($json.body && $json.body.event && $json.body.event.type) || ($json.event && $json.event.type) || '' }}";
-          rightValue = 'file_shared';
-          operator = { type: 'string', operation: 'equals' };
-          break;
-        case 'Not from bot?':
-          leftValue = "={{ ($json.body && $json.body.event && $json.body.event.bot_id) || ($json.event && $json.event.bot_id) || '' }}";
-          rightValue = '';
-          operator = { type: 'string', operation: 'equals' };
-          break;
-        case 'Has URL?':
-          leftValue = '={{ $json.url }}';
-          rightValue = '';
-          operator = { type: 'string', operation: 'notEmpty' };
-          break;
-        case 'Conversion OK?':
-          leftValue = '={{ $json.ok }}';
-          rightValue = true;
-          operator = { type: 'boolean', operation: 'equals' };
-          break;
-        default:
-          return node;
-      }
-      node.parameters = {
-        ...params,
-        conditions: {
-          combinator: conditions.combinator || 'and',
-          options: conditions.options || ifOptions,
-          conditions: [{ id: name.replace(/\?|\s/g, '_').slice(0, 20), leftValue, rightValue, operator }],
-        },
-      };
-    }
-    return node;
-  }
-
-  // --- Set nodes: add assignments ---
-  if (node.type === 'n8n-nodes-base.set' && node.typeVersion === 3.4) {
-    const hasAssignments = params.assignments && Array.isArray(params.assignments.assignments) && params.assignments.assignments.length > 0;
-    if (!hasAssignments) {
-      switch (name) {
-        case 'Normalize inbound (Slack → internal)':
-          node.parameters = {
-            ...params,
-            mode: 'manual',
-            duplicateItem: false,
-            assignments: {
-              assignments: [
-                { id: 'source', name: 'source', value: 'slack', type: 'string' },
-                { id: 'channel_id', name: 'channel_id', value: "={{ ($json.body && $json.body.event && $json.body.event.channel_id) || $json.channel_id || '' }}", type: 'string' },
-                { id: 'thread_ts', name: 'thread_ts', value: "={{ ($json.body && $json.body.event && $json.body.event.ts) || $json.thread_ts || '' }}", type: 'string' },
-                { id: 'file_id', name: 'file_id', value: "={{ ($json.body && $json.body.event && $json.body.event.file_id) || $json.file_id || '' }}", type: 'string' },
-                { id: 'filename', name: 'filename', value: "={{ ($json.body && $json.body.event && $json.body.event.file && $json.body.event.file.name) || $json.filename || 'document' }}", type: 'string' },
-                { id: 'ok', name: 'ok', value: true, type: 'boolean' },
-              ],
-            },
-            options: {},
-          };
-          break;
-        case 'Normalize message (URL)':
-          node.parameters = {
-            ...params,
-            mode: 'manual',
-            duplicateItem: false,
-            assignments: {
-              assignments: [
-                { id: 'channel_id', name: 'channel_id', value: "={{ ($json.body && $json.body.event && $json.body.event.channel_id) || $json.channel_id || '' }}", type: 'string' },
-                { id: 'thread_ts', name: 'thread_ts', value: "={{ ($json.body && $json.body.event && $json.body.event.ts) || $json.thread_ts || '' }}", type: 'string' },
-                { id: 'url', name: 'url', value: "={{ ($json.body && $json.body.event && $json.body.event.text) || $json.text || '' }}", type: 'string' },
-              ],
-            },
-            options: {},
-          };
-          break;
-        case 'Reply context (file)':
-          node.parameters = {
-            ...params,
-            mode: 'manual',
-            duplicateItem: false,
-            assignments: {
-              assignments: [
-                { id: 'channel_id', name: 'channel_id', value: "={{ $('Normalize inbound (Slack → internal)').item.json.channel_id }}", type: 'string' },
-                { id: 'thread_ts', name: 'thread_ts', value: "={{ $('Normalize inbound (Slack → internal)').item.json.thread_ts }}", type: 'string' },
-              ],
-            },
-            options: {},
-          };
-          break;
-        case 'Reply context (message)':
-          node.parameters = {
-            ...params,
-            mode: 'manual',
-            duplicateItem: false,
-            assignments: {
-              assignments: [
-                { id: 'channel_id', name: 'channel_id', value: "={{ $('Normalize message (URL)').item.json.channel_id }}", type: 'string' },
-                { id: 'thread_ts', name: 'thread_ts', value: "={{ $('Normalize message (URL)').item.json.thread_ts }}", type: 'string' },
-              ],
-            },
-            options: {},
-          };
-          break;
-        case 'Normalize MarkItDown response':
-          node.parameters = {
-            ...params,
-            mode: 'manual',
-            duplicateItem: false,
-            assignments: {
-              assignments: [
-                { id: 'channel_id', name: 'channel_id', value: "={{ $('Normalize inbound (Slack → internal)').item.json.channel_id || $('Normalize message (URL)').item.json.channel_id }}", type: 'string' },
-                { id: 'thread_ts', name: 'thread_ts', value: "={{ $('Normalize inbound (Slack → internal)').item.json.thread_ts || $('Normalize message (URL)').item.json.thread_ts }}", type: 'string' },
-                { id: 'ok', name: 'ok', value: "={{ ($json.body && $json.body.markdown) || $json.markdown ? true : false }}", type: 'boolean' },
-                { id: 'markdown', name: 'markdown', value: "={{ ($json.body && $json.body.markdown) || $json.markdown || '' }}", type: 'string' },
-                { id: 'error', name: 'error', value: "={{ ($json.body && $json.body.error) || $json.error || '' }}", type: 'string' },
-              ],
-            },
-            options: {},
-          };
-          break;
-        case 'Normalize LLM output':
-          node.parameters = {
-            ...params,
-            mode: 'manual',
-            duplicateItem: false,
-            assignments: {
-              assignments: [
-                { id: 'channel_id', name: 'channel_id', value: "={{ $('Normalize MarkItDown response').item.json.channel_id }}", type: 'string' },
-                { id: 'thread_ts', name: 'thread_ts', value: "={{ $('Normalize MarkItDown response').item.json.thread_ts }}", type: 'string' },
-                { id: 'llm_response', name: 'llm_response', value: "={{ $json.message && $json.message.content || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content) || $json.text || JSON.stringify($json) }}", type: 'string' },
-              ],
-            },
-            options: {},
-          };
-          break;
-        default:
-          break;
-      }
-    }
-    return node;
-  }
-
-  return node;
-}
-
 async function main() {
-  let workflow;
+  // 1. Read the fixed workflow JSON
+  if (!fs.existsSync(WORKFLOW_FILE)) {
+    console.error('Missing workflow file:', WORKFLOW_FILE);
+    process.exit(1);
+  }
+  const workflow = JSON.parse(fs.readFileSync(WORKFLOW_FILE, 'utf8'));
 
-  const fromFile = process.argv.find((a) => a.startsWith('--from-file='));
-  const outputFile = process.argv.find((a) => a.startsWith('--output='));
-
-  if (fromFile) {
-    const path = fromFile.split('=')[1];
-    const fs = require('fs');
-    const raw = JSON.parse(fs.readFileSync(path, 'utf8'));
-    workflow = raw.data || raw;
-    if (!workflow.nodes || !workflow.connections) {
-      console.error('Invalid workflow file: need data.nodes and data.connections');
-      process.exit(1);
-    }
-  } else if (N8N_API_KEY) {
-    const base = N8N_BASE_URL.replace(/\/$/, '');
-    const getUrl = `${base}/api/v1/workflows/${WORKFLOW_ID}`;
-    const putUrl = `${base}/api/v1/workflows/${WORKFLOW_ID}`;
-    console.log('Fetching workflow...');
-    const getRes = await request({ url: getUrl, method: 'GET' });
-    workflow = getRes.data || getRes;
-    if (!workflow.nodes || !workflow.connections) {
-      console.error('Invalid workflow response:', Object.keys(getRes));
-      process.exit(1);
-    }
-  } else {
-    console.error('Missing N8N_API_KEY. Set it in your environment, or use --from-file=path/to/workflow.json --output=fixed.json');
+  if (!workflow.nodes || !workflow.connections) {
+    console.error('Invalid workflow file: needs nodes and connections');
     process.exit(1);
   }
 
-  console.log('Applying fixes to', workflow.nodes.length, 'nodes...');
-  workflow.nodes = workflow.nodes.map(fixNode);
+  console.log(`Loaded ${workflow.nodes.length} nodes from ${path.basename(WORKFLOW_FILE)}`);
 
-  if (outputFile) {
-    const path = outputFile.split('=')[1];
-    const fs = require('fs');
-    fs.writeFileSync(path, JSON.stringify({ nodes: workflow.nodes, connections: workflow.connections }, null, 2));
-    console.log('Wrote', path);
-    return;
-  }
-
-  if (!N8N_API_KEY) return;
-
-  const base = N8N_BASE_URL.replace(/\/$/, '');
-  const putUrl = `${base}/api/v1/workflows/${WORKFLOW_ID}`;
-  console.log('Putting workflow back...');
-  const putPayload = {
-    name: workflow.name,
+  const payload = {
+    name: 'Slack file/URL → MarkItDown → LLM → reply',
     nodes: workflow.nodes,
     connections: workflow.connections,
     settings: workflow.settings || { executionOrder: 'v1' },
   };
-  await request({ url: putUrl, method: 'PUT' }, putPayload);
 
-  console.log('Done. Workflow "Slack file → MarkItDown → LLM → reply" updated. Activate and test from Slack.');
+  if (DRY_RUN) {
+    console.log('\n--dry-run: would PUT to', `${N8N_BASE_URL}/api/v1/workflows/${WORKFLOW_ID}`);
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  if (!N8N_API_KEY) {
+    console.error('Missing N8N_API_KEY. Run with: doppler run -- node scripts/fix-slack-markitdown-workflow.js');
+    process.exit(1);
+  }
+
+  // 2. Deploy: PUT the workflow
+  const putUrl = `${N8N_BASE_URL}/api/v1/workflows/${WORKFLOW_ID}`;
+  console.log(`Deploying to ${putUrl} ...`);
+  await request({ url: putUrl, method: 'PUT' }, payload);
+  console.log('Workflow deployed successfully.');
+
+  // 3. Activate (unless --no-activate)
+  if (!NO_ACTIVATE) {
+    const activateUrl = `${N8N_BASE_URL}/api/v1/workflows/${WORKFLOW_ID}/activate`;
+    console.log('Activating workflow...');
+    try {
+      await request({ url: activateUrl, method: 'POST' });
+      console.log('Workflow activated.');
+    } catch (e) {
+      // Some n8n versions use PATCH on the workflow with active: true
+      console.log('Activate endpoint failed, trying PATCH...');
+      await request({ url: putUrl, method: 'PATCH' }, { active: true });
+      console.log('Workflow activated via PATCH.');
+    }
+  }
+
+  console.log('\nDone! Test by posting a URL in #markitdownurl on Slack.');
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error('Deploy failed:', e.message);
   process.exit(1);
 });
