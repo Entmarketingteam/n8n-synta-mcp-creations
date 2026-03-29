@@ -5,17 +5,12 @@
       "name": "Webhook (Slack events)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [
-        0,
-        0
-      ],
+      "position": [0, 0],
       "parameters": {
         "path": "slack-markitdown",
         "httpMethod": "POST",
         "responseMode": "responseNode",
-        "options": {
-          "onError": "continueRegularOutput"
-        }
+        "options": { "onError": "continueRegularOutput" }
       },
       "webhookId": "1e0452e7-0825-4001-9fd7-64a6ece12324"
     },
@@ -24,64 +19,73 @@
       "name": "Manual Trigger (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [
-        0,
-        220
-      ],
+      "position": [0, 300],
       "parameters": {}
     },
     {
-      "id": "normalize_inbound",
-      "name": "Normalize inbound (Slack → internal)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        240,
-        110
-      ],
+      "id": "url_verification_if",
+      "name": "Slack URL verification?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [240, 0],
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "options": {},
-        "assignments": {
-          "assignments": [
-            {
-              "id": "source",
-              "name": "source",
-              "value": "slack",
-              "type": "string"
-            },
-            {
-              "id": "channel_id",
-              "name": "channel_id",
-              "value": "={{ ($json.body && $json.body.event && ($json.body.event.channel || $json.body.event.channel_id)) || $json.channel || $json.channel_id || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "thread_ts",
-              "name": "thread_ts",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.ts) || $json.thread_ts || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "file_id",
-              "name": "file_id",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.file_id) || $json.file_id || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "filename",
-              "name": "filename",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.file && $json.body.event.file.name) || $json.filename || 'document' }}",
-              "type": "string"
-            },
-            {
-              "id": "ok",
-              "name": "ok",
-              "value": true,
-              "type": "boolean"
-            }
-          ]
+        "conditions": {
+          "combinator": "and",
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "url_verify",
+            "leftValue": "={{ ($json.body && $json.body.type) || $json.type || '' }}",
+            "rightValue": "url_verification",
+            "operator": { "type": "string", "operation": "equals" }
+          }]
+        }
+      }
+    },
+    {
+      "id": "respond_challenge",
+      "name": "Respond with challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [480, -120],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ challenge: ($json.body && $json.body.challenge) || $json.challenge || '' }) }}"
+      }
+    },
+    {
+      "id": "respond_ok",
+      "name": "Respond OK to Slack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [480, 60],
+      "parameters": { "respondWith": "noData" }
+    },
+    {
+      "id": "parse_event",
+      "name": "Parse Slack Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 60],
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nif (body.type !== 'event_callback') return [];\nconst ev = body.event || {};\n\n// Skip bot messages\nif (ev.bot_id || ev.subtype) return [];\n\nconst channel = ev.channel || ev.channel_id || '';\nconst ts = ev.ts || '';\nconst eventType = ev.type || '';\n\n// File shared event\nif (eventType === 'file_shared') {\n  return [{ json: {\n    path: 'file',\n    channel,\n    thread_ts: ts,\n    file_id: ev.file_id || (ev.file && ev.file.id) || '',\n    filename: (ev.file && ev.file.name) || 'document'\n  }}];\n}\n\n// Message event — extract URL\nif (eventType === 'message') {\n  const text = (ev.text || '').trim();\n  // Strip Slack's <url> or <url|label> wrapping, then match\n  const cleaned = text.replace(/<(https?:\\/\\/[^|>]+)[^>]*>/gi, '$1');\n  const match = cleaned.match(/https?:\\/\\/[^\\s<>]+/i);\n  if (!match) return [];\n  const url = match[0].replace(/[).,!?]+$/, '');\n  return [{ json: {\n    path: 'url',\n    channel,\n    thread_ts: ts,\n    url\n  }}];\n}\n\nreturn [];"
+      }
+    },
+    {
+      "id": "route_path",
+      "name": "File or URL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [960, 60],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "is_file",
+            "leftValue": "={{ $json.path }}",
+            "rightValue": "file",
+            "operator": { "type": "string", "operation": "equals" }
+          }]
         }
       }
     },
@@ -90,10 +94,7 @@
       "name": "Slack get file info",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.4,
-      "position": [
-        460,
-        110
-      ],
+      "position": [1200, -60],
       "parameters": {
         "operation": "get",
         "resource": "file",
@@ -113,16 +114,11 @@
       "name": "Download file from Slack",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [
-        560,
-        110
-      ],
+      "position": [1440, -60],
       "parameters": {
         "method": "GET",
         "url": "={{ $json.url_private_download }}",
-        "options": {
-          "timeout": 30000
-        },
+        "options": { "timeout": 30000 },
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "nodeCredentialType": "httpHeaderAuth"
@@ -135,83 +131,63 @@
       }
     },
     {
-      "id": "call_markitdown",
-      "name": "Call MarkItDown API",
+      "id": "call_markitdown_file",
+      "name": "Call MarkItDown API (file)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [
-        780,
-        110
-      ],
+      "position": [1680, -60],
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.MARKITDOWN_API_URL || $vars.tools && $vars.tools.markitdown && $vars.tools.markitdown.url || 'https://markitdown-api.railway.app' }}/convert",
+        "url": "={{ $env.MARKITDOWN_API_URL || 'https://markitdown-api.railway.app' }}/convert",
         "sendBody": true,
         "specifyBody": "multipart-form-data",
         "bodyParameters": {
-          "parameters": [
-            {
-              "parameterType": "formBinaryData",
-              "name": "file",
-              "inputDataFieldName": "data",
-              "mimeType": ""
-            }
-          ]
+          "parameters": [{
+            "parameterType": "formBinaryData",
+            "name": "file",
+            "inputDataFieldName": "data",
+            "mimeType": ""
+          }]
         },
-        "options": {
-          "timeout": 60000
-        },
+        "options": { "timeout": 60000 },
         "nodeCredentialType": "none",
         "contentType": "multipart-form-data"
       }
     },
     {
-      "id": "normalize_markitdown_response",
-      "name": "Normalize MarkItDown response",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1000,
-        110
-      ],
+      "id": "call_markitdown_url",
+      "name": "Call MarkItDown API (URL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1200, 180],
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "options": {},
-        "assignments": {
-          "assignments": [
-            {
-              "id": "channel_id",
-              "name": "channel_id",
-              "value": "={{ $('Normalize inbound (Slack → internal)').item.json.channel_id || $('Normalize message (URL)').item.json.channel_id }}",
-              "type": "string"
-            },
-            {
-              "id": "thread_ts",
-              "name": "thread_ts",
-              "value": "={{ $('Normalize inbound (Slack → internal)').item.json.thread_ts || $('Normalize message (URL)').item.json.thread_ts }}",
-              "type": "string"
-            },
-            {
-              "id": "ok",
-              "name": "ok",
-              "value": "={{ ($json.body && $json.body.markdown) || $json.markdown ? true : false }}",
-              "type": "boolean"
-            },
-            {
-              "id": "markdown",
-              "name": "markdown",
-              "value": "={{ ($json.body && $json.body.markdown) || $json.markdown || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "error",
-              "name": "error",
-              "value": "={{ ($json.body && $json.body.error) || $json.error || '' }}",
-              "type": "string"
-            }
-          ]
-        }
+        "method": "POST",
+        "url": "={{ $env.MARKITDOWN_API_URL || 'https://markitdown-api.railway.app' }}/convert",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $json.url }) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{
+            "name": "Content-Type",
+            "value": "application/json"
+          }]
+        },
+        "options": {
+          "timeout": 60000,
+          "response": { "response": { "fullResponse": true, "neverError": true } }
+        },
+        "nodeCredentialType": "none"
+      }
+    },
+    {
+      "id": "normalize_response",
+      "name": "Normalize MarkItDown response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 60],
+      "parameters": {
+        "jsCode": "// Get the MarkItDown API response\nconst input = $input.first().json;\nconst res = input.body !== undefined ? input.body : input;\n\n// Get channel context from Parse Slack Event (always in the execution path)\nconst ctx = $('Parse Slack Event').first().json;\nconst channel = ctx.channel || '';\nconst thread_ts = ctx.thread_ts || '';\n\n// Extract markdown\nconst markdown = (res && res.markdown) || '';\nconst error = (res && res.error) || '';\nconst ok = markdown.length > 0;\n\nreturn [{ json: { channel_id: channel, thread_ts, ok, markdown, error } }];"
       }
     },
     {
@@ -219,34 +195,17 @@
       "name": "Conversion OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [
-        1220,
-        110
-      ],
+      "position": [2160, 60],
       "parameters": {
         "conditions": {
           "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "Conversion_OK_",
-              "leftValue": "={{ $json.ok }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {
-          "caseSensitive": true,
-          "leftValue": "",
-          "typeValidation": "strict"
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "conv_ok",
+            "leftValue": "={{ $json.ok }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }]
         }
       }
     },
@@ -255,34 +214,19 @@
       "name": "OpenAI Chat",
       "type": "n8n-nodes-base.openAi",
       "typeVersion": 1.1,
-      "position": [
-        1340,
-        0
-      ],
+      "position": [2400, -60],
       "parameters": {
         "resource": "chat",
         "model": "gpt-4o-mini",
-        "messages": {
-          "values": [
-            {},
-            {}
-          ]
-        },
-        "options": {
-          "maxTokens": 1024
-        },
+        "messages": { "values": [{}, {}] },
+        "options": { "maxTokens": 1024 },
         "operation": "complete",
         "prompt": {
-          "messages": [
-            {
-              "values": [
-                {},
-                {}
-              ],
-              "role": "system",
-              "content": "Use the document (markdown) provided to answer or summarize. Be concise."
-            }
-          ]
+          "messages": [{
+            "values": [{}, {}],
+            "role": "system",
+            "content": "Use the document (markdown) provided to answer or summarize. Be concise."
+          }]
         }
       },
       "credentials": {
@@ -295,38 +239,11 @@
     {
       "id": "normalize_llm_response",
       "name": "Normalize LLM output",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1560,
-        0
-      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, -60],
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "options": {},
-        "assignments": {
-          "assignments": [
-            {
-              "id": "channel_id",
-              "name": "channel_id",
-              "value": "={{ $('Normalize MarkItDown response').item.json.channel_id }}",
-              "type": "string"
-            },
-            {
-              "id": "thread_ts",
-              "name": "thread_ts",
-              "value": "={{ $('Normalize MarkItDown response').item.json.thread_ts }}",
-              "type": "string"
-            },
-            {
-              "id": "llm_response",
-              "name": "llm_response",
-              "value": "={{ $json.message && $json.message.content || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content) || $json.text || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "const input = $input.first().json;\nconst ctx = $('Normalize MarkItDown response').first().json;\nconst llm = input.message && input.message.content\n  || (input.choices && input.choices[0] && input.choices[0].message && input.choices[0].message.content)\n  || input.text\n  || JSON.stringify(input);\nreturn [{ json: { channel_id: ctx.channel_id, thread_ts: ctx.thread_ts, llm_response: llm } }];"
       }
     },
     {
@@ -334,21 +251,12 @@
       "name": "Slack reply (success)",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.4,
-      "position": [
-        1780,
-        0
-      ],
+      "position": [2880, -60],
       "parameters": {
         "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $json.channel_id }}",
-          "mode": "id"
-        },
+        "channelId": { "__rl": true, "value": "={{ $json.channel_id }}", "mode": "id" },
         "text": "={{ $json.llm_response }}",
-        "otherOptions": {
-          "thread_ts": "={{ $json.thread_ts || undefined }}"
-        },
+        "otherOptions": { "thread_ts": "={{ $json.thread_ts || undefined }}" },
         "resource": "message",
         "operation": "post",
         "target": "channel"
@@ -365,21 +273,12 @@
       "name": "Slack reply (error)",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.4,
-      "position": [
-        1340,
-        220
-      ],
+      "position": [2400, 180],
       "parameters": {
         "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $json.channel_id }}",
-          "mode": "id"
-        },
+        "channelId": { "__rl": true, "value": "={{ $json.channel_id }}", "mode": "id" },
         "text": "=Sorry, conversion failed: {{ $json.error || 'Unknown error' }}",
-        "otherOptions": {
-          "thread_ts": "={{ $json.thread_ts || undefined }}"
-        },
+        "otherOptions": { "thread_ts": "={{ $json.thread_ts || undefined }}" },
         "resource": "message",
         "operation": "post",
         "target": "channel"
@@ -390,590 +289,60 @@
           "name": "Slack (MarkItDown app A0ACJ4HNKDY)"
         }
       }
-    },
-    {
-      "id": "event_type_if",
-      "name": "Event type (file vs message)",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        220,
-        0
-      ],
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "Event_type_(file_vs_",
-              "leftValue": "={{ ($json.body && $json.body.event && $json.body.event.type) || ($json.event && $json.event.type) || '' }}",
-              "rightValue": "file_shared",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {
-          "caseSensitive": true,
-          "leftValue": "",
-          "typeValidation": "strict"
-        }
-      }
-    },
-    {
-      "id": "not_bot_if",
-      "name": "Not from bot?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        220,
-        220
-      ],
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "Not_from_bot_",
-              "leftValue": "={{ ($json.body && $json.body.event && $json.body.event.bot_id) || ($json.event && $json.event.bot_id) || '' }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {
-          "caseSensitive": true,
-          "leftValue": "",
-          "typeValidation": "strict"
-        }
-      }
-    },
-    {
-      "id": "normalize_message",
-      "name": "Normalize message (URL)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        440,
-        220
-      ],
-      "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "options": {},
-        "assignments": {
-          "assignments": [
-            {
-              "id": "channel_id",
-              "name": "channel_id",
-              "value": "={{ ($json.body && $json.body.event && ($json.body.event.channel || $json.body.event.channel_id)) || $json.channel || $json.channel_id || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "thread_ts",
-              "name": "thread_ts",
-              "value": "={{ ($json.body && $json.body.event && $json.body.event.ts) || $json.thread_ts || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "url",
-              "name": "url",
-              "value": "={{ (($json.body && $json.body.event && $json.body.event.text) || $json.text || '').replace(/<(https?:\\/\\/[^|>]+)[^>]*>/i, '$1').match(/https?:\\/\\/[^\\s<>]+/i)?.[0] || '' }}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "has_url_if",
-      "name": "Has URL?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        660,
-        220
-      ],
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "Has_URL_",
-              "leftValue": "={{ $json.url }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty"
-              }
-            }
-          ]
-        },
-        "options": {
-          "caseSensitive": true,
-          "leftValue": "",
-          "typeValidation": "strict"
-        }
-      }
-    },
-    {
-      "id": "fetch_url",
-      "name": "Fetch URL",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        880,
-        120
-      ],
-      "parameters": {
-        "method": "GET",
-        "url": "={{ $json.url }}",
-        "options": {
-          "timeout": 30000
-        },
-        "nodeCredentialType": "none"
-      }
-    },
-    {
-      "id": "reply_context_message",
-      "name": "Reply context (message)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1100,
-        120
-      ],
-      "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "options": {},
-        "assignments": {
-          "assignments": [
-            {
-              "id": "channel_id",
-              "name": "channel_id",
-              "value": "={{ $('Normalize message (URL)').item.json.channel_id }}",
-              "type": "string"
-            },
-            {
-              "id": "thread_ts",
-              "name": "thread_ts",
-              "value": "={{ $('Normalize message (URL)').item.json.thread_ts }}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "reply_context_file",
-      "name": "Reply context (file)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        680,
-        110
-      ],
-      "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "options": {},
-        "assignments": {
-          "assignments": [
-            {
-              "id": "channel_id",
-              "name": "channel_id",
-              "value": "={{ $('Normalize inbound (Slack → internal)').item.json.channel_id }}",
-              "type": "string"
-            },
-            {
-              "id": "thread_ts",
-              "name": "thread_ts",
-              "value": "={{ $('Normalize inbound (Slack → internal)').item.json.thread_ts }}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "merge_node",
-      "name": "Merge (file or URL)",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        900,
-        0
-      ],
-      "parameters": {
-        "mode": "append",
-        "combineBy": "combineAll",
-        "options": {}
-      }
-    },
-    {
-      "id": "slack_reply_no_url",
-      "name": "Slack reply (no URL)",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.4,
-      "position": [
-        880,
-        320
-      ],
-      "parameters": {
-        "resource": "message",
-        "operation": "post",
-        "target": "channel",
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "={{ $json.channel_id }}",
-          "mode": "id"
-        },
-        "text": "Post a URL or upload a file to convert to markdown.",
-        "otherOptions": {
-          "thread_ts": "={{ $json.thread_ts || undefined }}"
-        }
-      },
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "PhBEyMsaxJ4k1bi7",
-          "name": "Slack (MarkItDown app A0ACJ4HNKDY)"
-        }
-      }
-    },
-    {
-      "id": "url_verification_if",
-      "name": "Slack URL verification?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        200,
-        0
-      ],
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "Slack_URL_verificati",
-              "leftValue": "={{ ($json.body && $json.body.type) || $json.type || '' }}",
-              "rightValue": "url_verification",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {
-          "caseSensitive": true,
-          "leftValue": "",
-          "typeValidation": "strict"
-        }
-      }
-    },
-    {
-      "id": "respond_challenge",
-      "name": "Respond with challenge",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        420,
-        -100
-      ],
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ challenge: ($json.body && $json.body.challenge) || $json.challenge || '' }) }}"
-      }
-    },
-    {
-      "id": "respond_ok",
-      "name": "Respond OK to Slack",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        300,
-        110
-      ],
-      "parameters": {
-        "respondWith": "noData"
-      }
     }
   ],
   "connections": {
-    "Manual Trigger (test)": {
-      "main": [
-        [
-          {
-            "node": "Normalize inbound (Slack → internal)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize inbound (Slack → internal)": {
-      "main": [
-        [
-          {
-            "node": "Slack get file info",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Slack get file info": {
-      "main": [
-        [
-          {
-            "node": "Download file from Slack",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call MarkItDown API": {
-      "main": [
-        [
-          {
-            "node": "Normalize MarkItDown response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize MarkItDown response": {
-      "main": [
-        [
-          {
-            "node": "Conversion OK?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Conversion OK?": {
-      "main": [
-        [
-          {
-            "node": "OpenAI Chat",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Slack reply (error)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat": {
-      "main": [
-        [
-          {
-            "node": "Normalize LLM output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize LLM output": {
-      "main": [
-        [
-          {
-            "node": "Slack reply (success)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Event type (file vs message)": {
-      "main": [
-        [
-          {
-            "node": "Normalize inbound (Slack → internal)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Not from bot?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Not from bot?": {
-      "main": [
-        [
-          {
-            "node": "Normalize message (URL)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize message (URL)": {
-      "main": [
-        [
-          {
-            "node": "Has URL?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has URL?": {
-      "main": [
-        [
-          {
-            "node": "Fetch URL",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Slack reply (no URL)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch URL": {
-      "main": [
-        [
-          {
-            "node": "Reply context (message)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Download file from Slack": {
-      "main": [
-        [
-          {
-            "node": "Reply context (file)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Reply context (file)": {
-      "main": [
-        [
-          {
-            "node": "Merge (file or URL)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Reply context (message)": {
-      "main": [
-        [
-          {
-            "node": "Merge (file or URL)",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge (file or URL)": {
-      "main": [
-        [
-          {
-            "node": "Call MarkItDown API",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook (Slack events)": {
-      "main": [
-        [
-          {
-            "node": "Slack URL verification?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Slack URL verification?", "type": "main", "index": 0 }]]
     },
     "Slack URL verification?": {
       "main": [
-        [
-          {
-            "node": "Respond with challenge",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond OK to Slack",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Respond with challenge", "type": "main", "index": 0 }],
+        [{ "node": "Respond OK to Slack", "type": "main", "index": 0 }]
       ]
     },
     "Respond OK to Slack": {
+      "main": [[{ "node": "Parse Slack Event", "type": "main", "index": 0 }]]
+    },
+    "Parse Slack Event": {
+      "main": [[{ "node": "File or URL?", "type": "main", "index": 0 }]]
+    },
+    "File or URL?": {
       "main": [
-        [
-          {
-            "node": "Event type (file vs message)",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Slack get file info", "type": "main", "index": 0 }],
+        [{ "node": "Call MarkItDown API (URL)", "type": "main", "index": 0 }]
       ]
+    },
+    "Slack get file info": {
+      "main": [[{ "node": "Download file from Slack", "type": "main", "index": 0 }]]
+    },
+    "Download file from Slack": {
+      "main": [[{ "node": "Call MarkItDown API (file)", "type": "main", "index": 0 }]]
+    },
+    "Call MarkItDown API (file)": {
+      "main": [[{ "node": "Normalize MarkItDown response", "type": "main", "index": 0 }]]
+    },
+    "Call MarkItDown API (URL)": {
+      "main": [[{ "node": "Normalize MarkItDown response", "type": "main", "index": 0 }]]
+    },
+    "Normalize MarkItDown response": {
+      "main": [[{ "node": "Conversion OK?", "type": "main", "index": 0 }]]
+    },
+    "Conversion OK?": {
+      "main": [
+        [{ "node": "OpenAI Chat", "type": "main", "index": 0 }],
+        [{ "node": "Slack reply (error)", "type": "main", "index": 0 }]
+      ]
+    },
+    "OpenAI Chat": {
+      "main": [[{ "node": "Normalize LLM output", "type": "main", "index": 0 }]]
+    },
+    "Normalize LLM output": {
+      "main": [[{ "node": "Slack reply (success)", "type": "main", "index": 0 }]]
+    },
+    "Manual Trigger (test)": {
+      "main": [[{ "node": "Parse Slack Event", "type": "main", "index": 0 }]]
     }
-  }
+  },
+  "settings": { "executionOrder": "v1" }
 }
