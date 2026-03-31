@@ -1,266 +1,612 @@
 # OpenClaw Action Plan — ENT Agency
-**Date:** February 27, 2026
+**Updated:** March 30, 2026 (original: February 27, 2026)
 **Server:** 45.55.236.188 (DigitalOcean)
-**Version:** OpenClaw 2026.2.3, Claude Opus 4.5
+**Version:** OpenClaw 2026.2.3, Claude Opus 4.5 (routing to be updated — see Phase 1)
 **Channels:** WhatsApp (+14406558502), Telegram (@ClawENTagencybot)
+**Source research:** 23 posts from OpenClaw Unboxed newsletter (March 2026)
 
 ---
 
-## Current State
+## Mental Model (New — Clarifies Everything)
 
-Claw is live on a dedicated DigitalOcean droplet with WhatsApp and Telegram channels working. Doppler manages 41 secrets as single source of truth. Workspace files (SOUL.md, TOOLS.md, SECURITY.md, AGENTS.md, USER.md, IDENTITY.md, MEMORY.md) enforce behavioral rules, trust levels, and Doppler-first architecture. An Instagram daily digest n8n workflow is built but not yet imported to entagency.app.n8n.cloud.
+OpenClaw is a **trigger + workflow system**, not "an agent that does things."
 
-Security posture is decent — gateway binds to localhost, nginx proxies with token auth, dedicated isolation — but there are real gaps in logging, cost monitoring, and backups. No structured logging of tool calls, no token usage tracking on Opus 4.5, and nothing preventing data loss from a bad command or droplet failure.
+```
+heartbeat  = awareness turn on every message (use tiny/cheap model only)
+cron       = precise scheduled jobs, isolated runs
+lobster    = deterministic workflow runner with approval gates + resume tokens
+llm-task   = structured outputs for individual AI steps
+memory     = plain markdown files on disk — the files ARE the source of truth
+```
 
-Research across the OpenClaw community (WhatsApp/Telegram channels, GitHub skills, awesome-usecases repo, claude-flow architecture, security guides) has been synthesized into prioritized recommendations below.
+**The original plan conflated heartbeat with cron.** Morning briefs and scheduled jobs should use `cron`, not heartbeat. Heartbeat runs on every agent turn and will silently drain tokens if assigned to Opus.
+
+---
+
+## ⚠️ Corrections to Original Plan
+
+| Original Assumption | Correction |
+|---|---|
+| Morning brief via heartbeat | Use `cron` for all scheduled jobs. Heartbeat ≠ scheduler. |
+| Opus 4.5 as default model | Heartbeat must use Haiku or cheaper. Opus only for complex judgment. |
+| Skills from ClawHub are reasonably safe | 13.4% have critical issues. Scan every skill before install. |
+| sessionKey = authorization | sessionKey is routing only — not an access control mechanism. |
+| Memory is a feature you enable | Memory is just files on disk. If it's not written, it doesn't exist. |
+| Structured logging via TOOLS.md instructions | Use `agents.defaults.compaction.memoryFlush` config to ensure critical state survives compaction. |
+
+---
+
+## Current State (as of late March 2026)
+
+Claw is live on DigitalOcean with WhatsApp and Telegram working. Doppler manages secrets. Workspace files (SOUL.md, TOOLS.md, SECURITY.md, AGENTS.md, USER.md, IDENTITY.md, MEMORY.md) are in place. The Instagram daily digest n8n workflow exists but is not yet imported. Security posture is decent but missing: structured cost tracking, skill supply chain hygiene, memory flush config, and a proper recovery ladder.
 
 ---
 
 ## Phase 1: Secure the Foundation (This Week)
 
-These are non-negotiable. A single incident in any of these areas could mean losing the entire setup or leaking client data.
+### 1.1 Rotate Compromised Keys ✅ (from original — still required)
 
-### 1.1 Rotate Compromised Keys
-Several API keys were exposed during setup sessions and are visible in conversation history.
-
-**Rotate in Doppler immediately:**
+Several API keys were exposed during setup sessions. Rotate in Doppler immediately:
 - Notion API token
 - OpenAI API key
 - Google service account credentials
 - Telegram bot token
 - OpenClaw gateway token
 
-**Process:** Generate new keys in each service → update in Doppler (`doppler secrets set KEY=value`) → restart OpenClaw service → verify each channel still works.
-
-**Time estimate:** 30-45 minutes
-
-### 1.2 Implement Backup Strategy
-Right now one bad `rm` or droplet failure loses everything.
-
-**Minimum viable backup:**
 ```bash
-# Add to crontab on the droplet
-# Daily backup of workspace + config to a remote location
+doppler secrets set KEY=value --project ent-agency-automation --config dev
+```
+Restart OpenClaw service and verify each channel after rotation.
+
+### 1.2 Enable Backups ✅ (from original — still required)
+
+**Fastest option:** Enable DigitalOcean droplet snapshots (~$2/mo). Done in 2 minutes via the DO console.
+
+**Proper backup script:**
+```bash
+# Add to crontab on droplet — daily 3am backup
 0 3 * * * tar czf /tmp/openclaw-backup-$(date +%Y%m%d).tar.gz \
   /home/openclaw/.openclaw/ \
   /etc/nginx/sites-available/ \
   /etc/systemd/system/openclaw* \
-  && doppler run -- rclone copy /tmp/openclaw-backup-$(date +%Y%m%d).tar.gz remote:openclaw-backups/ \
+  && rclone copy /tmp/openclaw-backup-$(date +%Y%m%d).tar.gz remote:openclaw-backups/ \
   && rm /tmp/openclaw-backup-$(date +%Y%m%d).tar.gz
 ```
 
-**Better option:** DigitalOcean droplet snapshots (weekly, automated via DO API or their backup add-on — $2/mo for the $6 droplet).
+### 1.3 Fix Heartbeat Model (NEW — Critical for Cost)
 
-**Time estimate:** 20 minutes for DO backups toggle, 1 hour for custom script
+The original plan runs Opus 4.5 everywhere. Heartbeat fires on every agent turn. This is the "quiet drain" the newsletter specifically warned about.
 
-### 1.3 Structured Logging
-Currently journalctl captures service logs, but there's no structured record of every tool call, API request, and cost.
-
-**Approach:** Add a logging wrapper or update TOOLS.md to instruct Claw to append structured entries to a log file:
+**Update `config → raw json` in the OpenClaw dashboard:**
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "groq/llama-3.1-8b-instant",
+        "fallbacks": [
+          "openrouter/z-ai/glm-4.5-air:free",
+          "openrouter/moonshotai/kimi-k2:free",
+          "anthropic/claude-opus-4-5"
+        ]
+      },
+      "heartbeat": {
+        "model": "ollama/qwen2.5:0.5b"
+      }
+    }
+  }
+}
 ```
-/home/openclaw/.openclaw/workspace/logs/YYYY-MM-DD.log
+
+This routes:
+- **Heartbeat (every turn awareness):** Local Qwen — zero API cost
+- **Standard tasks:** Groq free inference (fast, free tier)
+- **Fallbacks:** OpenRouter free models
+- **Break-glass only:** Opus 4.5 for complex judgment tasks
+
+Verify after applying:
+```bash
+openclaw models status --probe
+# Then in chat:
+/model status
 ```
 
-Each entry: timestamp, tool name, input summary, output summary, estimated tokens, success/failure.
+### 1.4 Install Local Fallback Model (NEW)
 
-This also feeds into the self-improving agent skill (Phase 2) — errors logged here get promoted to ERRORS.md.
+Prevents complete outages when cloud providers rate limit or go down:
+```bash
+ollama pull qwen2.5:0.5b
+ollama run qwen2.5:0.5b  # test it
+```
 
-**Time estimate:** 1 hour to implement and test
+### 1.5 Memory Flush Config (NEW — Critical for Data Persistence)
 
-### 1.4 Token Usage Monitoring
-On Opus 4.5, costs add up fast. No monitoring means no visibility until the bill arrives.
+Without this, important context gets silently dropped during compaction. The "agent forgot" problem is almost always this.
 
-**Options (pick one):**
-- **Anthropic API dashboard:** Check if OpenClaw exposes usage metrics or if the Anthropic console tracks per-key usage
-- **Smart model routing (from claude-flow concept):** Configure Claw to use a cheaper model for routine tasks (scheduling, simple lookups, message forwarding) and only invoke Opus for complex work (content strategy, brand pitch drafting, performance analysis). This is the single most transferable idea from the claude-flow research.
-- **Budget alerts:** Set a monthly token budget in Doppler as `MONTHLY_TOKEN_BUDGET` and have Claw check against it
+Add to OpenClaw config:
+```json
+{
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "memoryFlush": true
+      }
+    }
+  }
+}
+```
 
-**Time estimate:** 30 minutes for dashboard check, 2-3 hours for smart routing implementation
+This triggers a silent `NO_REPLY` housekeeping turn before compaction that writes durable notes to disk. Also ensure the agent workspace is NOT read-only — memory can't persist if write access is blocked.
+
+**Memory structure on disk (enforce this layout):**
+```
+~/.openclaw/workspace/
+  MEMORY.md          ← curated long-term facts (auto-injected every turn)
+  memory/
+    YYYY-MM-DD.md    ← daily append-only log (accessed via memory_search/memory_get)
+```
+
+### 1.6 Skill Supply Chain Audit (NEW — Security)
+
+13.4% of ClawHub skills have critical security issues. 36.82% have at least one flaw. Run this before trusting any installed skill:
+
+**Step 1 — Automated scan:**
+```bash
+uvx mcp-scan@latest --skills
+```
+
+**Step 2 — Manual grep for execution chains:**
+```bash
+grep -RInE "curl|wget|base64|chmod \+x|sudo|sh -c|powershell|Invoke-WebRequest|python -c" \
+~/.openclaw/workspace/skills 2>/dev/null | head -n 200
+```
+
+**Step 3 — Memory inspection (check for injected instructions):**
+```bash
+cat ~/.openclaw/memory/*
+# Look for: injected instructions, unexpected URLs, secrecy language, unusual task directives
+```
+
+**Step 4 — Outbound monitoring:**
+```bash
+lsof -i
+netstat -an | grep ESTABLISHED
+```
+
+**Red flags — do not install skills with:**
+- `curl | bash` patterns
+- Remote script fetching in setup steps
+- Password-protected zip downloads
+- Hidden instructions between legitimate content
+- Brand-new publisher with lots of uploads
+
+### 1.7 Token Usage Monitoring (from original — updated approach)
+
+**Native OpenClaw diagnostic:**
+```bash
+openclaw logs --follow
+openclaw doctor
+```
+
+Check the diagnostics export for: queue depth, run duration, context size, token usage, cost, message-processing spans.
+
+**Set routing guardrail in chat once:**
+```
+you are running on a multi-provider ai ladder.
+rules:
+- use primary model first
+- if provider returns 429 or timeout, move to next fallback immediately
+- never retry same provider more than once
+- use paid model only for deep reasoning or complex analysis
+- prefer free models for all short/routine tasks
+```
 
 ---
 
 ## Phase 2: Install High-Value Skills (Next 1-2 Weeks)
 
-These three skills were evaluated against 8+ options from the community. They're ranked by direct impact on ENT Agency operations.
+**Before installing any skill:** Run the audit commands from 1.6 above.
 
-### 2.1 Self-Improving Agent (Priority: Highest)
+### 2.1 Self-Improving Agent (Priority: Highest) ✅
+
 **Source:** clawhub.ai/pskoett/self-improving-agent
 **File:** Already downloaded to /mnt/user-data/uploads/self-improving-agent-1_0_11__1_.zip
 
-**What it does:** Creates a structured learning loop where errors, corrections, and new knowledge persist across sessions and get promoted into workspace files. Logs to `.learnings/` directory (LEARNINGS.md, ERRORS.md, FEATURE_REQUESTS.md). Important learnings get promoted to SOUL.md, AGENTS.md, TOOLS.md.
-
-**Why it matters for ENT Agency:** Claw currently loses context between sessions. This skill means every mistake gets recorded, every correction persists, and operational knowledge compounds over time. The workspace already has the exact file structure it expects.
-
-**Installation:** Extract zip → copy skill files to workspace → update SOUL.md to reference the learning loop → test with a deliberate error/correction cycle.
+Creates the learning loop: errors/corrections persist to `.learnings/` (LEARNINGS.md, ERRORS.md, FEATURE_REQUESTS.md) and get promoted to workspace files. Run skill scan before installing.
 
 **Time estimate:** 1-2 hours
 
-### 2.2 Humanizer (Priority: High)
+### 2.2 Humanizer (Priority: High) ✅
+
 **Source:** github.com/blader/humanizer (3.9k stars)
 
-**What it does:** Removes 24 AI-generated writing patterns across 4 categories (content, language, style, communication). Detects significance inflation, AI vocabulary, em dash overuse, chatbot artifacts, filler phrases. Usage: `/humanizer [text]` or natural language.
-
-**Why it matters for ENT Agency:** Every piece of content Claw helps draft for creators goes through this filter before publishing. Before/after examples are also useful training material for creators learning to spot AI tells in their own writing.
-
-**Installation:** Install as OpenClaw skill via ClawHub or manual workspace integration.
+Removes 24 AI writing patterns. Every piece of client-facing content goes through this. Run skill scan if installing via ClawHub.
 
 **Time estimate:** 30 minutes
 
-### 2.3 X Research Skill (Priority: Medium)
+### 2.3 Tool Reduction Audit (NEW — Priority: High)
+
+Before adding any more skills or tools, run this optimizer prompt on current tool configuration:
+
+```
+act as a systems optimizer for agent workflows.
+goal: reduce tool-induced failure without reducing the outcome.
+
+input:
+- workflow goal
+- current tools
+- tool descriptions
+
+tasks:
+1. find overlapping tools
+2. find tools that create ambiguity
+3. find tools that are rarely needed
+4. identify tools that should be conditional
+5. identify tools that should be replaced with deterministic functions
+6. reduce to the minimum viable toolset
+7. rank remaining tools by: necessity, risk, likelihood of incorrect selection
+
+output:
+- failure risks
+- tools to remove
+- tools to merge
+- simplified architecture
+- why this improves performance
+```
+
+Research found: removing 80% of tools improved success rate from 80% → 100%, cut execution time from ~275s to ~77s, tokens from ~102k to ~61k. More tools = more wrong decisions.
+
+**Rule before adding any tool:** Does this really change the outcome? Is there already overlap? Will this create confusion? What happens if it's used incorrectly?
+
+**Three bucket framework:** Force every tool into: retrieval / transformation / action. If it doesn't fit cleanly, you probably don't need it yet.
+
+### 2.4 X Research Skill (Priority: Low)
+
 **Source:** clawhub.ai/rohunvora/x-research-skill
 
-**What it does:** Monitors X/Twitter for mentions, trends, and competitor activity.
+Monitor creator mentions, track health/wellness trends, identify brand opportunities. Evaluate only after Phase 1 is complete and after running skill scan.
 
-**Why it matters for ENT Agency:** Monitor creator mentions, track health/wellness trends, identify potential brand partnership opportunities from trending conversations.
-
-**Time estimate:** 1 hour to evaluate and install
+**Time estimate:** 1 hour to evaluate + install
 
 ---
 
 ## Phase 3: Activate Core Workflows (Weeks 2-3)
 
-### 3.1 Morning Brief — 7am CT Daily Digest
-The Instagram daily digest n8n workflow is built (`instagram-daily-digest.json`) but not imported to entagency.app.n8n.cloud.
+### Workflow Validation Filter (NEW — Apply Before Building)
+
+Before building any new workflow, score it 1-5 on each dimension:
+
+| Dimension | What to measure |
+|---|---|
+| Frequency | How often does this task happen? |
+| Pain | How much does manual execution hurt? |
+| Dollar impact | Revenue saved/generated if automated? |
+| Error cost | What's the cost of an automation mistake? |
+| Approval friendliness | Can humans review before action? |
+| Integration simplicity | How many systems need to connect? |
+| Source-of-truth clarity | Is there one clear data owner? |
+| Measurability | Can you measure if it's working? |
+
+**Score guide:** 8-16 = content idea. 17-24 = interesting but weak. 25-32 = worth prototyping. **33-40 = build this.**
+
+**Good workflow format (concrete, not vague):**
+```
+scan inbox → classify messages → surface only stale leads → 
+draft reply → wait for approval → update CRM
+```
+
+Not: "check inbox and handle stuff intelligently"
+
+### 3.1 Morning Brief — 7am CT Daily Digest (Updated)
+
+**Correction from original plan:** Use `cron`, not heartbeat. Heartbeat runs on every turn and would fire the brief on every message, not at 7am.
+
+```json
+{
+  "cron": [
+    {
+      "name": "morning-brief",
+      "schedule": "0 7 * * 1-5",
+      "timezone": "America/Chicago",
+      "agent": "main",
+      "task": "Generate and deliver morning brief to Telegram"
+    }
+  ]
+}
+```
 
 **Steps:**
-1. Import workflow to n8n cloud
-2. Configure webhook integration between Claw and n8n
-3. Set up 7am CT cron trigger
-4. Test end-to-end: cron fires → n8n pulls data → formats digest → sends to Claw → Claw delivers via Telegram
+1. Import instagram-daily-digest.json workflow to entagency.app.n8n.cloud
+2. Configure webhook between Claw and n8n
+3. Set up cron trigger (above config)
+4. Test end-to-end: cron fires → n8n pulls data → formats digest → Claw delivers via Telegram
 
 **Expand over time to include:**
-- Creator posting schedule compliance (who posted, who didn't)
-- Affiliate revenue snapshots from LTK/Amazon
-- Brand partnership pipeline status from Airtable/Notion
-- Trending content opportunities (from X research skill)
+- Creator posting compliance (who posted, who didn't)
+- Affiliate revenue snapshots (LTK/Amazon)
+- Brand pipeline status from Airtable
+- Trending opportunities from X research skill
 
-**Time estimate:** 2-3 hours for initial setup, ongoing iteration
+**Time estimate:** 2-3 hours initial, ongoing iteration
 
-### 3.2 Content Factory Pattern
-Adapted from the awesome-usecases repo's Content Factory use case, tailored for ENT Agency.
+### 3.2 Content Factory Pattern (from original)
 
-**Architecture:**
+Architecture for ENT Agency:
 ```
-[Research Phase - 7am daily]
+[Research Phase — 7am daily via cron]
   Claw monitors: trending health/wellness topics, competitor creator content,
   brand campaign announcements, subreddit activity
 
-[Analysis Phase - triggered by research]
+[Analysis Phase — triggered by research via lobster workflow]
   Claw identifies: content opportunities mapped to specific creators,
   potential brand alignment, viral format patterns
 
-[Draft Phase - on demand or scheduled]
+[Draft Phase — on demand or scheduled]
   Claw drafts: caption suggestions, content briefs, pitch angles
   → runs through Humanizer skill before delivery
 
-[Distribution Phase - creator approval required]
-  Claw stages: cross-platform posting via n8n workflows
-  (Instagram, TikTok, LTK — never auto-publishes without approval)
+[Distribution Phase — APPROVAL GATE required]
+  Lobster workflow with resume token holds for creator approval
+  before any content goes live
 ```
 
-**Critical constraint:** Creator approval gate before any content goes live. This is a "least human in the loop" system, not a "no human in the loop" system. AGENTS.md already has approval workflow rules — this reinforces them.
+**Critical constraint:** Creator approval gate is non-negotiable. Use lobster's approval gate pattern (not just a prompt instruction). AGENTS.md rules reinforce this.
 
-**Time estimate:** Ongoing build, start with research phase only
+**Time estimate:** Ongoing, start with research phase only
 
-### 3.3 Multi-Agent Coordination (Future)
-From the awesome-usecases research: multiple specialized Claw instances coordinated through shared memory via a single Telegram chat. Pattern validated by community members running 4-15+ agents across multiple machines.
+### 3.3 Multi-Agent Coordination (Future Phase 4+)
 
-**ENT Agency version:**
-- **Strategy Agent:** Content calendar, brand partnership pipeline, competitive analysis
-- **Analytics Agent:** Platform data aggregation, performance reporting, trend detection
-- **Outreach Agent:** Brand pitch drafting, creator communication, follow-up sequences
-- **Operations Agent:** Invoice tracking, contract management, scheduling
+Do not start here. Get one Claw instance rock-solid first.
 
-**This is Phase 3+ territory.** Don't start here. Get one Claw instance rock-solid first, then consider splitting into specialized agents when the single instance hits context window or capability limits.
+**When ready, ENT Agency split:**
+- **Strategy Agent:** Content calendar, brand pipeline, competitive analysis
+- **Analytics Agent:** Platform data, performance reporting, trend detection
+- **Outreach Agent:** Brand pitches, creator communication, follow-ups
+- **Operations Agent:** Invoices, contracts, scheduling
+
+Sessions between agents communicate via `sessions_send`. Each agent has its own workspace and auth profile — credentials are NOT shared automatically.
 
 ---
 
 ## Phase 4: Hardening & Optimization (Ongoing)
 
-### 4.1 Security Practices from Community Research
-**Already doing well:**
-- ✅ Dedicated VPS (not running on personal machine)
-- ✅ Gateway bound to localhost with nginx proxy
-- ✅ Behavioral boundaries in SOUL.md and SECURITY.md
-- ✅ Doppler for secrets (not hardcoded)
+### 4.1 Security Audit Workflow (Updated + Expanded)
 
-**Gaps to close (beyond Phase 1):**
-- Add TruffleHog or similar pre-push secret scanning (lesson from Nathan's "Reef" setup — AI will happily hardcode secrets)
-- Implement trust level escalation for destructive operations (already in SECURITY.md, needs testing)
-- Regular security audit cron job (weekly scan of workspace files for leaked credentials)
+**Built-in OpenClaw audit — run weekly:**
+```bash
+openclaw security audit --deep
+openclaw security audit --fix   # applies safe deterministic remediations
+openclaw security audit --json  # for logging
+```
 
-### 4.2 Cost Optimization
-**Smart model routing** is the biggest lever. From claude-flow's architecture:
-- Simple tasks (message forwarding, scheduling, lookups) → cheaper/faster model
-- Complex tasks (content strategy, analysis, drafting) → Opus 4.5
-- Routine cron jobs → could potentially run on a local model to avoid API costs entirely
+The `--fix` flag handles: flipping `groupPolicy="open"` to allowlist, tightening redaction defaults, locking down permissions on sensitive state/config files.
 
-### 4.3 Workspace Knowledge Compound Loop
-With the self-improving agent installed, the learning loop becomes:
+**Additional hardening — run once:**
+```bash
+# Already doing:
+✅ Gateway bound to localhost with nginx proxy
+✅ Doppler for secrets
+✅ Dedicated VPS
+
+# Add:
+□ TruffleHog pre-commit hook (AI will hardcode secrets if not prevented)
+□ Weekly skill scan via uvx mcp-scan
+□ DM scope: per-channel-peer for shared inboxes (NOT "main" which merges all DMs)
+□ Session visibility audit: check tools.sessions.visibility setting
+```
+
+**DM scope fix (important for multi-user setups):**
+If more than one person can DM the agent, update config:
+```json
+{
+  "agents": {
+    "defaults": {
+      "session": {
+        "dmScope": "per-channel-peer"
+      }
+    }
+  }
+}
+```
+The default `"main"` merges all DM context into one session — a privacy/contamination issue.
+
+### 4.2 Hardening Config for Risky Workflows (NEW)
+
+For workflows touching client data, external APIs, or production systems:
+```json
+{
+  "agents": {
+    "defaults": {
+      "sandbox": {
+        "mode": "non-main",
+        "scope": "session",
+        "workspaceAccess": "none",
+        "workspaceRoot": "~/.openclaw/sandboxes",
+        "docker": {
+          "image": "openclaw-sandbox:bookworm-slim",
+          "workdir": "/workspace",
+          "readOnlyRoot": true,
+          "tmpfs": ["/tmp", "/var/tmp", "/run"]
+        }
+      }
+    }
+  },
+  "tools": {
+    "allow": ["read"],
+    "deny": ["exec", "write", "edit", "apply_patch", "browser", "gateway"]
+  }
+}
+```
+
+**Note:** `deny` always wins over `allow`. Denied tools are never sent to the model provider at all.
+
+### 4.3 Round-Robin Provider Routing for Cost Efficiency (NEW)
+
+LiteLLM as a routing layer cycles across multiple free providers instead of hammering one until rate limited:
+
+```
+Architecture:
+OpenClaw → LiteLLM router → [gemini-2.5-flash-lite | groq llama-3.3-70b | openrouter free rotation | ollama local]
+```
+
+**Free compute ladder in order:**
+1. `gemini-2.5-flash-lite` (Google free tier, fast)
+2. `groq/llama-3.3-70b-versatile` (very fast, generous free tier)
+3. OpenRouter free model rotation (backup)
+4. `ollama/qwen2.5:0.5b` (local safety net — never completely down)
+5. `anthropic/claude-opus-4-5` (break-glass only, complex judgment)
+
+Each provider has a "bucket" of daily API calls. Round-robin keeps all buckets partially full instead of draining one before moving on.
+
+**Keys to get:**
+- Groq: console.groq.com
+- OpenRouter: openrouter.ai (20 req/min free, daily caps)
+- Google: aistudio.google.com
+
+### 4.4 Workspace Knowledge Compound Loop (from original — updated)
+
+With the self-improving agent + memory flush config:
 ```
 Error/Correction occurs
   → Logged to ERRORS.md / LEARNINGS.md
-  → Important items promoted to SOUL.md, AGENTS.md, TOOLS.md
+  → Pre-compaction flush ensures it's written to disk before context clears
+  → Important items promoted to SOUL.md, AGENTS.md, TOOLS.md by self-improving agent
   → Claw's behavior improves across all future sessions
-  → Periodic review (monthly) to prune outdated learnings
+  → Monthly review: prune outdated learnings, promote best to SOUL.md
 ```
 
-This is the flywheel that makes Claw genuinely more useful over time rather than resetting to baseline every session.
+### 4.5 Governance Framework (NEW — Luffa-Inspired, No Tool Required)
+
+Even without adopting Luffa (an identity/governance layer for agents — still early/alpha), define these boundaries now for each workflow:
+
+For each automated workflow, document:
+1. **What actions must be logged?** (all tool calls touching client data)
+2. **Where is approval required?** (content publishing, CRM writes, any financial action)
+3. **What should never be autonomous?** (anything irreversible without human review)
+4. **How would you explain this behavior to a client?** (if you can't explain it, the system isn't complete)
+
+Simple test: _If behavior can't be explained clearly, the system isn't ready for production._
+
+Agents without defined identity and accountability are tools. Agents with them are systems. The governance layer is what lets you eventually scale to clients and team usage.
+
+### 4.6 Recovery Ladder — Bookmark This (NEW)
+
+When OpenClaw breaks, run this sequence before doing anything else:
+
+```bash
+# Step 1 — 60-second triage
+openclaw status
+openclaw status --all
+openclaw gateway probe
+openclaw gateway status
+openclaw doctor
+openclaw channels status --probe
+openclaw logs --follow
+
+# Step 2 — If auth/model smells wrong
+openclaw models status
+openclaw models status --probe  # live probe, sharper but slower
+
+# Step 3 — If memory feels stale/wrong
+openclaw memory status --deep
+# Check: is the right workspace active? Is memory writing to disk?
+
+# Step 4 — If bot is online but no replies reaching users
+# Check: pairing status, allowlists, mention gating, channel policy
+# NOT the model — it's almost never the model
+
+# Step 5 — Inspect installed skills
+openclaw skills
+openclaw skills check
+openclaw skills info <skill-name>
+```
+
+**Rule:** Never trust narration. Trust the smallest piece of evidence that proves where the break lives. Auth drift ≠ memory weirdness ≠ channel delivery failure. Each is a different fix.
+
+**Common root causes (not the model):**
+- Each agent has its own auth profile — credentials don't share automatically
+- Memory failure = workspace path issue, not a memory "feature" bug
+- Gateway is one trusted operator boundary — mixing trust levels causes weird behavior
+- "Bot online, no replies" = pairing/allowlist issue 90% of the time
 
 ---
 
-## Priority Matrix
+## Priority Matrix (Updated)
 
-| Task | Impact | Effort | Phase |
-|---|---|---|---|
-| Rotate compromised keys | 🔴 Critical | 30 min | 1 |
-| Enable DO backup snapshots | 🔴 Critical | 20 min | 1 |
-| Structured logging | 🟡 High | 1 hr | 1 |
-| Token usage monitoring | 🟡 High | 30 min | 1 |
-| Install self-improving agent | 🟡 High | 1-2 hr | 2 |
-| Install humanizer skill | 🟢 Medium | 30 min | 2 |
-| Import Instagram digest to n8n | 🟡 High | 2-3 hr | 3 |
-| Set up 7am morning brief cron | 🟡 High | 1 hr | 3 |
-| Test n8n webhook integration | 🟢 Medium | 1 hr | 3 |
-| Install X research skill | 🟢 Medium | 1 hr | 2 |
-| Content factory research phase | 🟢 Medium | Ongoing | 3 |
-| Smart model routing | 🟢 Medium | 2-3 hr | 4 |
-| Secret scanning (TruffleHog) | 🟢 Medium | 1 hr | 4 |
-| Multi-agent coordination | 🔵 Future | Significant | 4+ |
+| Task | Impact | Effort | Phase | Status |
+|---|---|---|---|---|
+| Rotate compromised keys | 🔴 Critical | 30 min | 1 | |
+| Enable DO backup snapshots | 🔴 Critical | 20 min | 1 | |
+| Fix heartbeat model to Haiku/local | 🔴 Critical | 15 min | 1 | NEW |
+| Memory flush config | 🔴 Critical | 15 min | 1 | NEW |
+| Install local Ollama fallback | 🟡 High | 20 min | 1 | NEW |
+| Skill supply chain audit (scan all installed) | 🟡 High | 30 min | 1 | NEW |
+| Tool reduction audit | 🟡 High | 1 hr | 2 | NEW |
+| Install self-improving agent | 🟡 High | 1-2 hr | 2 | |
+| Install humanizer skill | 🟢 Medium | 30 min | 2 | |
+| Import Instagram digest to n8n | 🟡 High | 2-3 hr | 3 | |
+| Set up 7am morning brief **via cron** | 🟡 High | 1 hr | 3 | Updated |
+| Configure free compute ladder (Groq/OpenRouter) | 🟡 High | 1 hr | 3 | NEW |
+| DM scope: per-channel-peer | 🟡 High | 10 min | 1 | NEW |
+| Workflow validation filter (score new workflows) | 🟢 Medium | Ongoing | 3 | NEW |
+| Content factory research phase | 🟢 Medium | Ongoing | 3 | |
+| TruffleHog pre-commit secret scanning | 🟢 Medium | 1 hr | 4 | |
+| Round-robin LiteLLM routing | 🟢 Medium | 2 hr | 4 | NEW |
+| Governance framework documentation | 🟢 Medium | 1 hr | 4 | NEW |
+| Weekly skill scan cron job | 🟢 Medium | 20 min | 4 | NEW |
+| Install X research skill | 🟢 Low | 1 hr | 2 | |
+| Luffa identity layer | 🔵 Watch | Significant | Future | NEW |
+| NemoClaw sandbox | 🔵 Watch | Significant | Future | NEW |
+| Multi-agent coordination | 🔵 Future | Significant | 4+ | |
+
+---
+
+## What NOT to Build (Lessons from Newsletter)
+
+- **Multi-agent swarms / self-improving loops / "autonomous business"** — builds cool, breaks immediately. Start with one boring workflow that runs every day without failing.
+- **Everything with heartbeat as scheduler** — heartbeat ≠ cron. Every heartbeat turn = token cost.
+- **Tools for everything** — adding tools hurts performance. Remove more than you add. Success rate and speed both improve with fewer tools.
+- **NemoClaw now** — alpha software, requires fresh OpenClaw install, not production-ready yet. Watch it but don't build on it.
+- **Luffa now** — no proven production footprint yet. The governance thinking is valuable; the tool is not ready.
+
+---
+
+## Definition of Done (Updated)
+
+**Phase 1 complete when:**
+- All compromised keys rotated and verified working
+- Automated backups running
+- Heartbeat running on cheap/local model, NOT Opus
+- Memory flush config applied and verified
+- All installed skills scanned with `uvx mcp-scan@latest --skills`
+- DM scope set to per-channel-peer
+
+**Phase 2 complete when:**
+- Tool reduction audit completed — removed anything redundant
+- Self-improving agent installed and tested with deliberate error/correction cycle
+- Humanizer skill functional via Telegram command
+- Free compute ladder configured (Groq primary + OpenRouter fallbacks)
+
+**Phase 3 complete when:**
+- Morning brief delivers to Telegram at 7am CT via cron (not heartbeat)
+- At least one n8n workflow running in production
+- Content research phase producing actionable creator content ideas
+- Each workflow has passed the buying-threshold filter (score 25+)
+
+**The north star:** Claw handles the operational overhead of managing 10-14 creators so Emily and Ethan can focus on strategy, relationships, and growing the agency. Every automation must pass: "Does this reduce human-in-the-loop burden while maintaining quality and creator trust?" And now also: "Can I explain exactly what the agent did and why?"
 
 ---
 
 ## Research Sources
 
-| Resource | Relevance |
+| Resource | What It Added |
 |---|---|
-| [awesome-openclaw-usecases](https://github.com/hesamsheikh/awesome-openclaw-usecases) (4.2k ★) | Content Factory, Multi-Agent Team, Second Brain, Self-Healing Server patterns |
-| [claude-flow](https://github.com/ruvnet/claude-flow) (14.9k ★) | Smart model routing concept, swarm architecture patterns, agent coordination |
-| [self-improving-agent](https://clawhub.ai/pskoett/self-improving-agent) | Structured learning loop for workspace files |
-| [humanizer](https://github.com/blader/humanizer) (3.9k ★) | AI writing pattern detection and removal |
-| [taskmaster](https://github.com/blader/taskmaster) | Completion checking concept (Claude Code specific, adapted for AGENTS.md rules) |
-| OpenClaw Security Best Practices (community doc) | 6 common mistakes framework, defense-in-depth patterns |
-| Miles Deutscher OpenClaw Guide | VPS setup validation, daily workflow patterns |
-| OpenClaw WhatsApp/Telegram community channels | Real-time community patterns, skill recommendations |
-
----
-
-## Definition of Done
-
-**Phase 1 complete when:**
-- All compromised keys rotated and verified working
-- Automated backups running (DO snapshots or custom script)
-- Structured logging producing daily log files
-- Token usage visible somewhere (dashboard or manual tracking)
-
-**Phase 2 complete when:**
-- Self-improving agent installed and tested with deliberate error/correction cycle
-- Humanizer skill functional via Telegram command
-- X research skill evaluated (install or reject with reasoning)
-
-**Phase 3 complete when:**
-- Morning brief delivers to Telegram at 7am CT daily
-- At least one n8n workflow running in production
-- Content research phase producing actionable creator content ideas
-
-**The north star:** Claw handles the operational overhead of managing 10-14 creators so Emily and Ethan can focus on strategy, relationships, and growing the agency. Every automation should pass the test: "Does this reduce the human-in-the-loop burden while maintaining quality and creator trust?"
+| OpenClaw Unboxed newsletter (23 posts, Mar 2026) | Architecture series, free compute ladder, skill supply chain security, memory flush config, recovery ladder, tool reduction research, governance framework, ClawReflex pattern |
+| awesome-openclaw-usecases (4.2k ★) | Content Factory, Multi-Agent Team, Self-Healing Server patterns |
+| claude-flow (14.9k ★) | Smart model routing, swarm architecture |
+| self-improving-agent (clawhub) | Structured learning loop |
+| humanizer (3.9k ★) | AI writing pattern detection |
+| OpenClaw Arch Series (Parts 1-6) | Systems-level understanding: sessions, memory, concurrency, security, tools, observability |
+| NemoClaw/OCTW analysis | Runtime containment vs tenant isolation distinction |
+| Snyk ToxicSkills audit (3,984 skills) | 13.4% critical issues; `uvx mcp-scan@latest` recommendation |
+| Koi Security audit (2,857 skills) | 341 malicious skills anatomy, attack patterns |
