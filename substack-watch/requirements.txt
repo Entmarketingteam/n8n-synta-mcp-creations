@@ -1,0 +1,6 @@
+Flask>=3.0.0
+gunicorn>=21.2.0
+APScheduler>=3.10.0
+requests>=2.31.0
+# (RSS parsed with the Python stdlib xml.etree — no feedparser needed)
+html2text>=2024.2.26
